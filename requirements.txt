@@ -39,3 +39,7 @@
 #   - Get into your virtual environment
 #   - Change the filename in the following URL to match your System, wxPython, and Python version
 #   - pip install -U -f https://extras.wxpython.org/wxPython4/extras/linux/gtk2/ubuntu-16.04/wxPython-4.0.0b2-cp27-cp27mu-linux_x86_64.whl wxPython
+
+coveralls==1.1
+coverage==4.2
+tox==2.9.1
