@@ -4,6 +4,7 @@ import wx
 
 
 class EpLaunchFrame(wx.Frame):
+
     def __init__(self, *args, **kwargs):
         # begin wxGlade: mainApplicationFrame.__init__
         kwargs["style"] = wx.DEFAULT_FRAME_STYLE
@@ -19,16 +20,19 @@ class EpLaunchFrame(wx.Frame):
         self.status_bar = self.CreateStatusBar(1)
         self.status_bar.SetStatusText('Status bar - reports on simulations in progress')
 
-        self._build_primary_toolbar()
-        self._build_out_toolbar()
-        self._build_menu_bar()
+        self.build_primary_toolbar()
+        self.build_out_toolbar()
+        self.build_menu_bar()
 
         self.__set_properties()
         self.__do_layout()
         # end wxGlade
 
-    def _build_primary_toolbar(self):
-        # tb = self.CreateToolBar( wx.TB_HORIZONTAL | wx.NO_BORDER | wx.TB_FLAT | wx.TB_TEXT )
+    def close_frame(self):
+        """May do additional things during close, including saving the current window state/settings"""
+        self.Close()
+
+    def build_primary_toolbar(self):
         self.tb = wx.ToolBar(self, style=wx.TB_HORIZONTAL | wx.NO_BORDER | wx.TB_FLAT | wx.TB_TEXT)
 
         t_size = (24, 24)
@@ -50,9 +54,14 @@ class EpLaunchFrame(wx.Frame):
 
         ch_id = wx.NewId()
         workflow_choices = [
-            "EnergyPlus SI (*.IDF)", "EnergyPlus IP (*.IDF)",
-            "AppGPostProcess (*.HTML)", "CalcSoilSurfTemp",
-            "CoeffCheck", "CoeffConv", "Basement", "Slab",
+            "EnergyPlus SI (*.IDF)",
+            "EnergyPlus IP (*.IDF)",
+            "AppGPostProcess (*.HTML)",
+            "CalcSoilSurfTemp",
+            "CoeffCheck",
+            "CoeffConv",
+            "Basement",
+            "Slab",
             "File Operations"
         ]
         workflow_choice = wx.Choice(self.tb, ch_id, choices=workflow_choices)
@@ -92,7 +101,7 @@ class EpLaunchFrame(wx.Frame):
 
         self.tb.Realize()
 
-    def _build_out_toolbar(self):
+    def build_out_toolbar(self):
         t_size = (16, 16)
         self.out_tb = wx.ToolBar(self, style=wx.TB_HORIZONTAL | wx.NO_BORDER | wx.TB_FLAT | wx.TB_TEXT)
         self.out_tb.SetToolBitmapSize(t_size)
@@ -138,21 +147,31 @@ class EpLaunchFrame(wx.Frame):
         )
         self.out_tb.Realize()
 
-    def _build_menu_bar(self):
+    def build_menu_bar(self):
+
         self.menu_bar = wx.MenuBar()
+
         file_menu = wx.Menu()
-        file_menu.Append(10, "Run File", "Run currently selected file for selected workflow")
-        file_menu.Append(11, "Cancel Selected", "Cancel selected files")
-        file_menu.Append(13, "Cancel All", "Cancel all queued files")
-        file_menu.Append(wx.ID_EXIT, 'Quit', 'Quit application')
+        menu_file_run = file_menu.Append(10, "Run File", "Run currently selected file for selected workflow")
+        self.Bind(wx.EVT_MENU, self.handle_menu_file_run, menu_file_run)
+        menu_file_cancel_selected = file_menu.Append(11, "Cancel Selected", "Cancel selected files")
+        self.Bind(wx.EVT_MENU, self.handle_menu_file_cancel_selected, menu_file_cancel_selected)
+        menu_file_cancel_all = file_menu.Append(13, "Cancel All", "Cancel all queued files")
+        self.Bind(wx.EVT_MENU, self.handle_menu_file_cancel_all, menu_file_cancel_all)
+        menu_file_quit = file_menu.Append(wx.ID_EXIT, 'Quit', 'Quit application')
+        self.Bind(wx.EVT_MENU, self.handle_menu_file_quit, menu_file_quit)
         self.menu_bar.Append(file_menu, '&File')
 
         edit_menu = wx.Menu()
-        edit_menu.Append(20, "Undo")
+        menu_edit_undo = edit_menu.Append(20, "Undo")
+        self.Bind(wx.EVT_MENU, self.handle_menu_edit_undo, menu_edit_undo)
         edit_menu.AppendSeparator()
-        edit_menu.Append(21, "Cut")
-        edit_menu.Append(22, "Copy")
-        edit_menu.Append(23, "Paste")
+        menu_edit_cut = edit_menu.Append(21, "Cut")
+        self.Bind(wx.EVT_MENU, self.handle_menu_edit_cut, menu_edit_cut)
+        menu_edit_copy = edit_menu.Append(22, "Copy")
+        self.Bind(wx.EVT_MENU, self.handle_menu_edit_copy, menu_edit_copy)
+        menu_edit_paste = edit_menu.Append(23, "Paste")
+        self.Bind(wx.EVT_MENU, self.handle_menu_edit_paste, menu_edit_paste)
         self.menu_bar.Append(edit_menu, "&Edit")
 
         folder_menu = wx.Menu()
@@ -325,3 +344,28 @@ class EpLaunchFrame(wx.Frame):
         sizer_main_app_vertical.Fit(self)
         self.Layout()
         # end wxGlade
+
+    def handle_menu_file_run(self, event):
+        self.status_bar.SetStatusText('Clicked File->Run')
+
+    def handle_menu_file_cancel_selected(self, event):
+        self.status_bar.SetStatusText('Clicked File->CancelSelected')
+
+    def handle_menu_file_cancel_all(self, event):
+        self.status_bar.SetStatusText('Clicked File->CancelAll')
+
+    def handle_menu_file_quit(self, event):
+        self.close_frame()
+        self.status_bar.SetStatusText('Quitting Program')
+
+    def handle_menu_edit_undo(self, event):
+        self.status_bar.SetStatusText('Clicked Edit->Undo')
+
+    def handle_menu_edit_cut(self, event):
+        self.status_bar.SetStatusText('Clicked Edit->Cut')
+
+    def handle_menu_edit_copy(self, event):
+        self.status_bar.SetStatusText('Clicked Edit->Copy')
+
+    def handle_menu_edit_paste(self, event):
+        self.status_bar.SetStatusText('Clicked Edit->Paste')
