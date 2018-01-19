@@ -1,4 +1,4 @@
-from distutils.core import setup
+from setuptools import setup
 
 setup(
     name='EPLaunch3',
@@ -10,4 +10,5 @@ setup(
     author_email='webmaster@doe.gov',
     description='Graphical Interface and Workflow Manager for EnergyPlus',
     scripts='eplaunch/runner.py',
+    test_suite="eplaunch.tests",
 )
