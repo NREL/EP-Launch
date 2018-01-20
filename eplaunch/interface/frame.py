@@ -3,6 +3,8 @@ from gettext import gettext as _
 import wx
 
 
+# wx callbacks need an event argument even though we usually don't use it, so the next line disables that check
+# noinspection PyUnusedLocal
 class EpLaunchFrame(wx.Frame):
 
     def __init__(self, *args, **kwargs):
@@ -12,6 +14,10 @@ class EpLaunchFrame(wx.Frame):
         self.window_1 = wx.SplitterWindow(self, wx.ID_ANY)
         self.window_1_pane_1 = wx.Panel(self.window_1, wx.ID_ANY)
         self.dir_ctrl_1 = wx.GenericDirCtrl(self.window_1_pane_1, -1, size=(200, 225), style=wx.DIRCTRL_DIR_ONLY)
+        tree = self.dir_ctrl_1.GetTreeCtrl()
+        self.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.handle_dir_item_selected, tree)
+        self.Bind(wx.EVT_TREE_ITEM_RIGHT_CLICK, self.handle_dir_right_click, tree)
+        self.Bind(wx.EVT_TREE_SEL_CHANGED, self.handle_dir_selection_changed, tree)
 
         self.window_1_pane_2 = wx.Panel(self.window_1, wx.ID_ANY)
         self.list_ctrl_files = wx.ListCtrl(self.window_1_pane_2, wx.ID_ANY,
@@ -19,6 +25,11 @@ class EpLaunchFrame(wx.Frame):
 
         self.status_bar = self.CreateStatusBar(1)
         self.status_bar.SetStatusText('Status bar - reports on simulations in progress')
+
+        # initialize these here in the constructor to hush up the compiler messages
+        self.tb = None
+        self.out_tb = None
+        self.menu_bar = None
 
         self.build_primary_toolbar()
         self.build_out_toolbar()
@@ -67,10 +78,12 @@ class EpLaunchFrame(wx.Frame):
         workflow_choice = wx.Choice(self.tb, ch_id, choices=workflow_choices)
         workflow_choice.SetSelection(0)
         self.tb.AddControl(workflow_choice)
+        self.Bind(wx.EVT_CHOICE, self.handle_choice_selection_change, workflow_choice)
 
-        self.tb.AddTool(
+        tb_weather = self.tb.AddTool(
             10, "Weather", file_open_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Weather", "Long help for 'Weather'", None
         )
+        self.Bind(wx.EVT_TOOL, self.handle_tb_weather, tb_weather)
         self.tb.AddTool(
             20, "Run", forward_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Run", "Long help for 'Run'", None
         )
@@ -369,3 +382,21 @@ class EpLaunchFrame(wx.Frame):
 
     def handle_menu_edit_paste(self, event):
         self.status_bar.SetStatusText('Clicked Edit->Paste')
+
+    def handle_dir_item_selected(self, event):
+        self.status_bar.SetStatusText("Dir-ItemSelected")
+        # event.Skip()
+
+    def handle_dir_right_click(self, event):
+        self.status_bar.SetStatusText("Dir-RightClick")
+        # event.Skip()
+
+    def handle_dir_selection_changed(self, event):
+        self.status_bar.SetStatusText("Dir-SelectionChanged")
+        # event.Skip()
+
+    def handle_choice_selection_change(self, event):
+        self.status_bar.SetStatusText('Choice selection changed to ' + event.String)
+
+    def handle_tb_weather(self, event):
+        self.status_bar.SetStatusText('Clicked Weather toolbar item')
