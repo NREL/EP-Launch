@@ -2,6 +2,7 @@ from gettext import gettext as _
 
 import wx
 
+from eplaunch.interface import settingdialog
 
 # wx callbacks need an event argument even though we usually don't use it, so the next line disables that check
 # noinspection PyUnusedLocal
@@ -105,9 +106,10 @@ class EpLaunchFrame(wx.Frame):
         self.tb.AddTool(
             80, "Update", up_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Update", "Long help for 'Update'", None
         )
-        self.tb.AddTool(
+        tb_settings = self.tb.AddTool(
             80, "Settings", page_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Settings", "Long help for 'Settings'",
             None)
+        self.Bind(wx.EVT_TOOL, self.handle_tb_settings, tb_settings)
         self.tb.AddTool(
             90, "Help", help_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
         )
@@ -400,3 +402,10 @@ class EpLaunchFrame(wx.Frame):
 
     def handle_tb_weather(self, event):
         self.status_bar.SetStatusText('Clicked Weather toolbar item')
+
+    def handle_tb_settings(self, event):
+        settings_dialog = settingdialog.SettingsDialog(None, title='Change Color Depth')
+        return_value = settings_dialog.ShowModal()
+        print(return_value)
+        # May need to refresh the main UI if something changed in the settings
+        settings_dialog.Destroy()
