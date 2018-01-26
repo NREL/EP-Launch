@@ -332,7 +332,8 @@ class EpLaunchFrame(wx.Frame):
         options_menu.AppendSeparator()
         menu_option_workflow_directories = options_menu.Append(72, "Workflow Directories...")
         self.Bind(wx.EVT_MENU, self.handle_menu_option_workflow_directories, menu_option_workflow_directories)
-        options_menu.Append(73, "Workflow Order...")
+        menu_workflow_order= options_menu.Append(73, "Workflow Order...")
+        self.Bind(wx.EVT_MENU, self.handle_menu_workflow_order, menu_workflow_order)
         options_menu.AppendSeparator()
 
         option_favorite_menu = wx.Menu()
@@ -483,3 +484,31 @@ class EpLaunchFrame(wx.Frame):
         print(return_value)
         # May need to refresh the main UI if something changed in the settings
         workflow_dir_dialog.Destroy()
+
+    def handle_menu_workflow_order(self,event):
+
+        items = [
+            "EnergyPlus SI (*.IDF)",
+            "EnergyPlus IP (*.IDF)",
+            "AppGPostProcess (*.HTML)",
+            "CalcSoilSurfTemp",
+            "CoeffCheck",
+            "CoeffConv",
+            "Basement",
+            "Slab",
+            "File Operations"
+        ]
+
+        order = [0, 1, 2, 3, 4, 5, 6, 7, 8]
+
+        dlg = wx.RearrangeDialog(None,
+                                 "Arrange the workflows in the order to appear in the toolbar",
+                                 "Workflow Order",
+                                 order, items)
+
+        if dlg.ShowModal() == wx.ID_OK:
+            order = dlg.GetOrder()
+           # for n in order:
+           #     if n >= 0:
+           #         wx.LogMessage("Your most preferred item is \"%s\"" % n)
+           #         break
