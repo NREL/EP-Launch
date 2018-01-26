@@ -1,0 +1,6 @@
+[run]
+omit =
+        /usr/*
+        .tox/*
+        *.pyenv*
+        setup.py
