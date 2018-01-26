@@ -3,6 +3,8 @@ from gettext import gettext as _
 import wx
 
 from eplaunch.interface import settingdialog
+from eplaunch.interface import workflow_directories_dialog
+
 
 # wx callbacks need an event argument even though we usually don't use it, so the next line disables that check
 # noinspection PyUnusedLocal
@@ -328,7 +330,8 @@ class EpLaunchFrame(wx.Frame):
         option_version_menu.Append(714,"EnergyPlus 8.9.0")
         options_menu.Append(71, "Version",option_version_menu)
         options_menu.AppendSeparator()
-        options_menu.Append(72, "Workflow Directories...")
+        menu_option_workflow_directories = options_menu.Append(72, "Workflow Directories...")
+        self.Bind(wx.EVT_MENU, self.handle_menu_option_workflow_directories, menu_option_workflow_directories)
         options_menu.Append(73, "Workflow Order...")
         options_menu.AppendSeparator()
 
@@ -473,3 +476,10 @@ class EpLaunchFrame(wx.Frame):
         print(return_value)
         # May need to refresh the main UI if something changed in the settings
         settings_dialog.Destroy()
+
+    def handle_menu_option_workflow_directories(self, event):
+        workflow_dir_dialog = workflow_directories_dialog.WorkflowDirectoriesDialog(None, title='Workflow Directories')
+        return_value = workflow_dir_dialog.ShowModal()
+        print(return_value)
+        # May need to refresh the main UI if something changed in the settings
+        workflow_dir_dialog.Destroy()
