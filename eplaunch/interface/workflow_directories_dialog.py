@@ -31,9 +31,9 @@ class WorkflowDirectoriesDialog(wx.Dialog):
 
         hbox_2 = wx.BoxSizer(wx.HORIZONTAL)
         ok_button = wx.Button(self, label='Ok')
-        close_button = wx.Button(self, label='Close')
+        cancel_button = wx.Button(self, label='Cancel')
         hbox_2.Add(ok_button, flag=wx.RIGHT, border=5)
-        hbox_2.Add(close_button, flag=wx.LEFT, border=5)
+        hbox_2.Add(cancel_button, flag=wx.LEFT, border=5)
 
         vbox.Add(pnl, proportion=1, flag=wx.ALL | wx.EXPAND, border=5)
         vbox.Add(hbox_1, flag=wx.ALIGN_CENTER | wx.TOP | wx.BOTTOM, border=10)
@@ -42,7 +42,7 @@ class WorkflowDirectoriesDialog(wx.Dialog):
         self.SetSizer(vbox)
 
         ok_button.Bind(wx.EVT_BUTTON, self.handle_close_ok)
-        close_button.Bind(wx.EVT_BUTTON, self.handle_close_cancel)
+        cancel_button.Bind(wx.EVT_BUTTON, self.handle_close_cancel)
 
     def handle_close_ok(self, e):
         # Do some saving here before closing it
