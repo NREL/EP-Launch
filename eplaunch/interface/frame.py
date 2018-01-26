@@ -3,6 +3,7 @@ from gettext import gettext as _
 import wx
 
 from eplaunch.interface import workflow_directories_dialog
+from eplaunch.interface import command_line_dialog
 
 
 # wx callbacks need an event argument even though we usually don't use it, so the next line disables that check
@@ -187,7 +188,7 @@ class EpLaunchFrame(wx.Frame):
         self.menu_bar.Append(edit_menu, "&Edit")
 
         folder_menu = wx.Menu()
-        recent_folder_menu = folder_menu.Append(31, "Recent")
+        recent_folder_menu = folder_menu.Append(31, "Recent", "Recent folders where a workflow as run.")
         folder_menu.AppendSeparator()
         folder_menu.Append(32, "c:\\EnergyPlus8-8-0")
         folder_menu.Append(33, "c:\\documents")
@@ -348,7 +349,8 @@ class EpLaunchFrame(wx.Frame):
         options_menu.Append(74, "Remote...")
         options_menu.AppendSeparator()
         options_menu.Append(71, "<workspacename> Options...")
-        options_menu.Append(71, "<workspacename> Command Line...")
+        menu_command_line = options_menu.Append(71, "<workspacename> Command Line...")
+        self.Bind(wx.EVT_MENU, self.handle_menu_command_line, menu_command_line)
         self.menu_bar.Append(options_menu, "&Settings")
 
         help_menu = wx.Menu()
@@ -500,3 +502,10 @@ class EpLaunchFrame(wx.Frame):
            #     if n >= 0:
            #         wx.LogMessage("Your most preferred item is \"%s\"" % n)
            #         break
+
+    def handle_menu_command_line(self,event):
+        cmdline_dialog = command_line_dialog.CommandLineDialog(None)
+        return_value = cmdline_dialog.ShowModal()
+        print(return_value)
+        # May need to refresh the main UI if something changed in the settings
+        cmdline_dialog.Destroy()
