@@ -16,7 +16,7 @@ class EpLaunchFrame(wx.Frame):
         self.window_1_pane_1 = wx.Panel(self.window_1, wx.ID_ANY)
         self.dir_ctrl_1 = wx.GenericDirCtrl(self.window_1_pane_1, -1, size=(200, 225), style=wx.DIRCTRL_DIR_ONLY)
         tree = self.dir_ctrl_1.GetTreeCtrl()
-        self.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.handle_dir_item_selected, tree)
+        #self.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.handle_dir_item_selected, tree)
         self.Bind(wx.EVT_TREE_ITEM_RIGHT_CLICK, self.handle_dir_right_click, tree)
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.handle_dir_selection_changed, tree)
 
