@@ -4,6 +4,7 @@ import wx
 
 from eplaunch.interface import workflow_directories_dialog
 from eplaunch.interface import command_line_dialog
+from eplaunch.interface import viewer_dialog
 
 
 # wx callbacks need an event argument even though we usually don't use it, so the next line disables that check
@@ -68,15 +69,15 @@ class EpLaunchFrame(wx.Frame):
 
         ch_id = wx.NewId()
         workflow_choices = [
-            "EnergyPlus SI (*.IDF)",
-            "EnergyPlus IP (*.IDF)",
-            "AppGPostProcess (*.HTML)",
-            "CalcSoilSurfTemp",
-            "CoeffCheck",
-            "CoeffConv",
-            "Basement",
-            "Slab",
-            "File Operations"
+            "EnergyPlus SI (*.idf, *.imf)",
+            "EnergyPlus IP (*.idf, *.imf)",
+            "AppGPostProcess (*.html)",
+            "CalcSoilSurfTemp (*.epw)",
+            "CoeffCheck (*.cci)",
+            "CoeffConv (*.coi)",
+            "Basement (*.idf)",
+            "Slab (*.idf)",
+            "File Operations (*.*)"
         ]
         workflow_choice = wx.Choice(self.tb, ch_id, choices=workflow_choices)
         workflow_choice.SetSelection(0)
@@ -108,55 +109,52 @@ class EpLaunchFrame(wx.Frame):
         self.tb.AddTool(
             80, "Update", up_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Update", "Long help for 'Update'", None
         )
-        self.tb.AddTool(
-            90, "Help", help_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
-        )
 
         self.tb.Realize()
 
     def build_out_toolbar(self):
-        t_size = (16, 16)
+        t_size = (24, 24)
         self.out_tb = wx.ToolBar(self, style=wx.TB_HORIZONTAL | wx.NO_BORDER | wx.TB_FLAT | wx.TB_TEXT)
         self.out_tb.SetToolBitmapSize(t_size)
 
         norm_bmp = wx.ArtProvider.GetBitmap(wx.ART_NORMAL_FILE, wx.ART_TOOLBAR, t_size)
 
         self.out_tb.AddTool(
-            10, "Tables", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
+            10, "Table.html", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
         )
         self.out_tb.AddTool(
-            10, "Meters", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
+            10, "Meters.csv", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
         )
         self.out_tb.AddTool(
-            10, "Variables", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
+            10, ".csv", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
         )
         self.out_tb.AddTool(
-            10, "Errors", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
+            10, ".err", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
         )
         self.out_tb.AddTool(
-            10, "RDD", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
+            10, ".rdd", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
         )
         self.out_tb.AddTool(
-            10, "MDD", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
+            10, ".eio", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
         )
         self.out_tb.AddSeparator()
         self.out_tb.AddTool(
-            10, "EIO", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
+            10, ".dxf", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
         )
         self.out_tb.AddTool(
-            10, "SVG", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
+            10, ".mtd", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
         )
         self.out_tb.AddTool(
-            10, "DXF", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
+            10, ".bnd", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
         )
         self.out_tb.AddTool(
-            10, "MTD", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
+            10, ".eso", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
         )
         self.out_tb.AddTool(
-            10, "ZSZ", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
+            10, ".mtr", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
         )
         self.out_tb.AddTool(
-            10, "SSZ", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
+            10, ".shd", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
         )
         self.out_tb.Realize()
 
@@ -346,10 +344,15 @@ class EpLaunchFrame(wx.Frame):
         option_recent_menu.Append(744,"Clear")
         options_menu.Append(74, "Recent",option_recent_menu)
 
-        options_menu.Append(74, "Remote...")
+        options_menu.Append(75, "Remote...")
+        menu_viewers = options_menu.Append(77, "Viewers...")
+        self.Bind(wx.EVT_MENU, self.handle_menu_viewers, menu_viewers)
         options_menu.AppendSeparator()
-        options_menu.Append(71, "<workspacename> Options...")
-        menu_command_line = options_menu.Append(71, "<workspacename> Command Line...")
+        menu_output_toolbar = options_menu.Append(761, "<workspacename> Output Toolbar...")
+        self.Bind(wx.EVT_MENU, self.handle_menu_output_toolbar, menu_output_toolbar)
+        menu_columns = options_menu.Append(762, "<workspacename> Columns...")
+        self.Bind(wx.EVT_MENU, self.handle_menu_columns, menu_columns)
+        menu_command_line = options_menu.Append(763, "<workspacename> Command Line...")
         self.Bind(wx.EVT_MENU, self.handle_menu_command_line, menu_command_line)
         self.menu_bar.Append(options_menu, "&Settings")
 
@@ -509,3 +512,56 @@ class EpLaunchFrame(wx.Frame):
         print(return_value)
         # May need to refresh the main UI if something changed in the settings
         cmdline_dialog.Destroy()
+
+    def handle_menu_output_toolbar(self,event):
+        items = [
+            "Table.htm.",
+            "Meters.csv",
+            ".csv",
+            ".err",
+            ".rdd",
+            ".eio",
+            ".dxf",
+            ".mtd",
+            ".bnd",
+            ".eso",
+            ".mtr"
+        ]
+
+        order = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+        dlg = wx.RearrangeDialog(None,
+                                 "Arrange the buttons on the output toolbar",
+                                 "<workspacename> Output Toolbar",
+                                 order, items)
+
+        if dlg.ShowModal() == wx.ID_OK:
+            order = dlg.GetOrder()
+
+    def handle_menu_columns(self,event):
+        items = [
+            "Status",
+            "File Name",
+            "Weather File",
+            "Size",
+            "Errors",
+            "EUI",
+            "Floor Area",
+        ]
+
+        order = [0, 1, 2, 3, 4, 5, 6]
+
+        dlg = wx.RearrangeDialog(None,
+                                 "Arrange the columns for the main grid",
+                                 "<workspacename> Columns",
+                                 order, items)
+
+        if dlg.ShowModal() == wx.ID_OK:
+            order = dlg.GetOrder()
+
+    def handle_menu_viewers(self,event):
+        file_viewer_dialog = viewer_dialog.ViewerDialog(None)
+        return_value = file_viewer_dialog.ShowModal()
+        print(return_value)
+        # May need to refresh the main UI if something changed in the settings
+        file_viewer_dialog.Destroy()
