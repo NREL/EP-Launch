@@ -16,12 +16,7 @@ class CommandLineDialog(wx.Dialog):
         pnl = wx.Panel(self)
         vbox = wx.BoxSizer(wx.VERTICAL)
 
-        sampleList = ['c:\EnergyPlusV8-6-0\workflows',
-                      'c:\EnergyPlusV8-7-0\workflows',
-                      'c:\EnergyPlusV8-8-0\workflows',
-                      'c:\EnergyPlusV8-9-0\workflows',]
-
-        instructions = wx.TextCtrl(pnl, 60, pos=(10,10), size= (750, 250), style=wx.TE_MULTILINE | wx.TE_READONLY)
+        instructions = wx.TextCtrl(pnl, size= (750, 250), style=wx.TE_MULTILINE | wx.TE_READONLY)
         instructions.AppendText("For workflow <workflowname> use the following command line arguments\n")
         instructions.AppendText("\n")
         instructions.AppendText("To create pauses in the simulation\n")
@@ -34,20 +29,21 @@ class CommandLineDialog(wx.Dialog):
         instructions.AppendText("  -digit\n")
         instructions.AppendText("\n")
         instructions.AppendText("\n")
+        vbox.Add(instructions, flag=wx.EXPAND|wx.ALL, border=10)
 
-        input = wx.TextCtrl(pnl, 61, pos=(10,270),size= (750, 20))
+        input = wx.TextCtrl(pnl)
         input.AppendText("parametric=true    pause=false")
+        vbox.Add(input, flag=wx.EXPAND|wx.ALL, border=10)
 
         hbox_1 = wx.BoxSizer(wx.HORIZONTAL)
-        ok_button = wx.Button(self, label='Ok')
-        cancel_button = wx.Button(self, label='Cancel')
+        ok_button = wx.Button(pnl, label='Ok')
+        cancel_button = wx.Button(pnl, label='Cancel')
         hbox_1.Add(ok_button, flag=wx.RIGHT, border=5)
         hbox_1.Add(cancel_button, flag=wx.LEFT, border=5)
 
-        vbox.Add(pnl, proportion=1, flag=wx.ALL | wx.EXPAND, border=5)
-        vbox.Add(hbox_1, flag=wx.ALIGN_CENTER | wx.TOP | wx.BOTTOM, border=10)
+        vbox.Add(hbox_1, flag=wx.ALIGN_RIGHT | wx.ALL, border=10)
 
-        self.SetSizer(vbox)
+        pnl.SetSizer(vbox)
 
         ok_button.Bind(wx.EVT_BUTTON, self.handle_close_ok)
         cancel_button.Bind(wx.EVT_BUTTON, self.handle_close_cancel)
