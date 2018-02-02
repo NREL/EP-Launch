@@ -12,19 +12,28 @@ from eplaunch.interface import viewer_dialog
 class EpLaunchFrame(wx.Frame):
 
     def __init__(self, *args, **kwargs):
-        # begin wxGlade: mainApplicationFrame.__init__
         kwargs["style"] = wx.DEFAULT_FRAME_STYLE
         wx.Frame.__init__(self, *args, **kwargs)
-        self.window_1 = wx.SplitterWindow(self, wx.ID_ANY)
-        self.window_1_pane_1 = wx.Panel(self.window_1, wx.ID_ANY)
-        self.dir_ctrl_1 = wx.GenericDirCtrl(self.window_1_pane_1, -1, size=(200, 225), style=wx.DIRCTRL_DIR_ONLY)
+        self.split_left_right = wx.SplitterWindow(self, wx.ID_ANY)
+
+        self.left_pane = wx.Panel(self.split_left_right, wx.ID_ANY)
+        self.dir_ctrl_1 = wx.GenericDirCtrl(self.left_pane, -1, size=(200, 225), style=wx.DIRCTRL_DIR_ONLY)
         tree = self.dir_ctrl_1.GetTreeCtrl()
         #self.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.handle_dir_item_selected, tree)
         self.Bind(wx.EVT_TREE_ITEM_RIGHT_CLICK, self.handle_dir_right_click, tree)
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.handle_dir_selection_changed, tree)
+    #
+        self.right_pane = wx.Panel(self.split_left_right, wx.ID_ANY)
+        self.split_top_bottom = wx.SplitterWindow(self.right_pane, wx.ID_ANY)
+        self.right_top_pane = wx.Panel(self.split_top_bottom, wx.ID_ANY)
 
-        self.window_1_pane_2 = wx.Panel(self.window_1, wx.ID_ANY)
-        self.list_ctrl_files = wx.ListCtrl(self.window_1_pane_2, wx.ID_ANY,
+        self.text_ctrl_1 = wx.TextCtrl(self.right_top_pane, wx.ID_ANY, style=wx.TE_MULTILINE)
+#        self.raw_files = wx.ListCtrl(self.right_top_pane, wx.ID_ANY,
+#                                           style=wx.LC_HRULES | wx.LC_REPORT | wx.LC_VRULES)
+    #
+        #self.right_bottom_pane = wx.Panel(self.split_left_right, wx.ID_ANY)
+        self.right_bottom_pane = wx.Panel(self.split_top_bottom, wx.ID_ANY)
+        self.list_ctrl_files = wx.ListCtrl(self.right_bottom_pane, wx.ID_ANY,
                                            style=wx.LC_HRULES | wx.LC_REPORT | wx.LC_VRULES)
 
         self.status_bar = self.CreateStatusBar(1)
@@ -41,7 +50,6 @@ class EpLaunchFrame(wx.Frame):
 
         self.__set_properties()
         self.__do_layout()
-        # end wxGlade
 
     def close_frame(self):
         """May do additional things during close, including saving the current window state/settings"""
@@ -379,7 +387,6 @@ class EpLaunchFrame(wx.Frame):
         self.SetMenuBar(self.menu_bar)
 
     def __set_properties(self):
-        # begin wxGlade: mainApplicationFrame.__set_properties
         self.SetTitle(_("EP-Launch 3"))
         self.list_ctrl_files.AppendColumn(_("Status"), format=wx.LIST_FORMAT_LEFT, width=-1)
         self.list_ctrl_files.AppendColumn(_("File Name"), format=wx.LIST_FORMAT_LEFT, width=-1)
@@ -407,26 +414,36 @@ class EpLaunchFrame(wx.Frame):
             self.list_ctrl_files.SetItem(index, 6, row[6])
             index = index + 1
 
-        self.window_1.SetMinimumPaneSize(20)
-        # end wxGlade
+        self.split_left_right.SetMinimumPaneSize(20)
+        self.split_top_bottom.SetMinimumPaneSize(20)
 
     def __do_layout(self):
-        # begin wxGlade: mainApplicationFrame.__do_layout
         sizer_main_app_vertical = wx.BoxSizer(wx.VERTICAL)
-        sizer_3 = wx.BoxSizer(wx.VERTICAL)
-        sizer_5 = wx.BoxSizer(wx.VERTICAL)
-        sizer_5.Add(self.dir_ctrl_1, 1, wx.EXPAND, 0)
-        self.window_1_pane_1.SetSizer(sizer_5)
-        sizer_3.Add(self.list_ctrl_files, 1, wx.EXPAND, 0)
-        self.window_1_pane_2.SetSizer(sizer_3)
-        self.window_1.SplitVertically(self.window_1_pane_1, self.window_1_pane_2)
+        sizer_right = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_left = wx.BoxSizer(wx.VERTICAL)
+        sizer_top = wx.BoxSizer(wx.VERTICAL)
+        sizer_bottom = wx.BoxSizer(wx.VERTICAL)
+        sizer_left.Add(self.dir_ctrl_1, 1, wx.EXPAND, 0)
+        self.left_pane.SetSizer(sizer_left)
+
+        sizer_top.Add(self.text_ctrl_1, 1, wx.EXPAND,0)
+        self.right_top_pane.SetSizer(sizer_top)
+
+        sizer_bottom.Add(self.list_ctrl_files,1,wx.EXPAND,0)
+        self.right_bottom_pane.SetSizer(sizer_bottom)
+
+        self.split_top_bottom.SplitHorizontally(self.right_top_pane, self.right_bottom_pane)
+
+        sizer_right.Add(self.right_pane, 1, wx.EXPAND, 0)
+        self.right_pane.SetSizer(sizer_right)
+
+        self.split_left_right.SplitVertically(self.left_pane, self.right_pane)
         sizer_main_app_vertical.Add(self.tb, 0, wx.EXPAND, 0)
         sizer_main_app_vertical.Add(self.out_tb, 0, wx.EXPAND, 0)
-        sizer_main_app_vertical.Add(self.window_1, 1, wx.EXPAND, 0)
+        sizer_main_app_vertical.Add(self.split_left_right, 1, wx.EXPAND, 0)
         self.SetSizer(sizer_main_app_vertical)
         sizer_main_app_vertical.Fit(self)
         self.Layout()
-        # end wxGlade
 
     def handle_menu_file_run(self, event):
         self.status_bar.SetStatusText('Clicked File->Run')
