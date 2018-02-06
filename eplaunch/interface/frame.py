@@ -434,10 +434,10 @@ class EpLaunchFrame(wx.Frame):
 
         self.split_top_bottom.SplitHorizontally(self.right_top_pane, self.right_bottom_pane)
 
-        sizer_right.Add(self.right_pane, 1, wx.EXPAND, 0)
+        sizer_right.Add(self.split_top_bottom, 1, wx.EXPAND, 0)
         self.right_pane.SetSizer(sizer_right)
 
-        self.split_left_right.SplitVertically(self.left_pane, self.right_pane)
+        self.split_left_right.SplitVertically(self.left_pane, self.right_pane) 
         sizer_main_app_vertical.Add(self.tb, 0, wx.EXPAND, 0)
         sizer_main_app_vertical.Add(self.out_tb, 0, wx.EXPAND, 0)
         sizer_main_app_vertical.Add(self.split_left_right, 1, wx.EXPAND, 0)
