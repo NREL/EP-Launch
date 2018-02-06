@@ -27,11 +27,9 @@ class EpLaunchFrame(wx.Frame):
         self.split_top_bottom = wx.SplitterWindow(self.right_pane, wx.ID_ANY)
         self.right_top_pane = wx.Panel(self.split_top_bottom, wx.ID_ANY)
 
-        self.text_ctrl_1 = wx.TextCtrl(self.right_top_pane, wx.ID_ANY, style=wx.TE_MULTILINE)
-#        self.raw_files = wx.ListCtrl(self.right_top_pane, wx.ID_ANY,
-#                                           style=wx.LC_HRULES | wx.LC_REPORT | wx.LC_VRULES)
-    #
-        #self.right_bottom_pane = wx.Panel(self.split_left_right, wx.ID_ANY)
+#        self.text_ctrl_1 = wx.TextCtrl(self.right_top_pane, wx.ID_ANY, style=wx.TE_MULTILINE)
+        self.raw_files = wx.ListCtrl(self.right_top_pane, wx.ID_ANY,
+                                           style=wx.LC_HRULES | wx.LC_REPORT | wx.LC_VRULES)
         self.right_bottom_pane = wx.Panel(self.split_top_bottom, wx.ID_ANY)
         self.list_ctrl_files = wx.ListCtrl(self.right_bottom_pane, wx.ID_ANY,
                                            style=wx.LC_HRULES | wx.LC_REPORT | wx.LC_VRULES)
@@ -414,6 +412,23 @@ class EpLaunchFrame(wx.Frame):
             self.list_ctrl_files.SetItem(index, 6, row[6])
             index = index + 1
 
+        self.raw_files.AppendColumn(_("File Name"),format=wx.LIST_FORMAT_LEFT,width=-1)
+        self.raw_files.AppendColumn(_("Date Modified"),format=wx.LIST_FORMAT_LEFT,width=-1)
+        self.raw_files.AppendColumn(_("Type"),format=wx.LIST_FORMAT_LEFT,width=-1)
+        self.raw_files.AppendColumn(_("Size"),format=wx.LIST_FORMAT_LEFT,width=-1)
+
+        rows = [
+            ["5Zone.idf", "9/17/2017 9:22 AM", "EnergyPlus Input File","153 KB"],
+            ["5Zone.html", "9/17/2017 9:22 AM", "Browser","5478 KB"]
+        ]
+        index = 0
+        for row in rows:
+            self.raw_files.InsertItem(index, row[0])
+            self.raw_files.SetItem(index, 1, row[1])
+            self.raw_files.SetItem(index, 2, row[2])
+            self.raw_files.SetItem(index, 3, row[3])
+            index = index + 1
+
         self.split_left_right.SetMinimumPaneSize(20)
         self.split_top_bottom.SetMinimumPaneSize(20)
 
@@ -426,7 +441,8 @@ class EpLaunchFrame(wx.Frame):
         sizer_left.Add(self.dir_ctrl_1, 1, wx.EXPAND, 0)
         self.left_pane.SetSizer(sizer_left)
 
-        sizer_top.Add(self.text_ctrl_1, 1, wx.EXPAND,0)
+        sizer_top.Add(self.raw_files, 1, wx.EXPAND,0)
+#        sizer_top.Add(self.text_ctrl_1, 1, wx.EXPAND,0)
         self.right_top_pane.SetSizer(sizer_top)
 
         sizer_bottom.Add(self.list_ctrl_files,1,wx.EXPAND,0)
@@ -437,7 +453,7 @@ class EpLaunchFrame(wx.Frame):
         sizer_right.Add(self.split_top_bottom, 1, wx.EXPAND, 0)
         self.right_pane.SetSizer(sizer_right)
 
-        self.split_left_right.SplitVertically(self.left_pane, self.right_pane) 
+        self.split_left_right.SplitVertically(self.left_pane, self.right_pane)
         sizer_main_app_vertical.Add(self.tb, 0, wx.EXPAND, 0)
         sizer_main_app_vertical.Add(self.out_tb, 0, wx.EXPAND, 0)
         sizer_main_app_vertical.Add(self.split_left_right, 1, wx.EXPAND, 0)
