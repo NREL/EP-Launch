@@ -24,14 +24,14 @@ class EpLaunchFrame(wx.Frame):
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.handle_dir_selection_changed, tree)
     #
         self.right_pane = wx.Panel(self.split_left_right, wx.ID_ANY)
+
         self.split_top_bottom = wx.SplitterWindow(self.right_pane, wx.ID_ANY)
         self.right_top_pane = wx.Panel(self.split_top_bottom, wx.ID_ANY)
-
-#        self.text_ctrl_1 = wx.TextCtrl(self.right_top_pane, wx.ID_ANY, style=wx.TE_MULTILINE)
-        self.raw_files = wx.ListCtrl(self.right_top_pane, wx.ID_ANY,
-                                           style=wx.LC_HRULES | wx.LC_REPORT | wx.LC_VRULES)
         self.right_bottom_pane = wx.Panel(self.split_top_bottom, wx.ID_ANY)
-        self.list_ctrl_files = wx.ListCtrl(self.right_bottom_pane, wx.ID_ANY,
+
+        self.raw_files = wx.ListCtrl(self.right_bottom_pane, wx.ID_ANY,
+                                           style=wx.LC_HRULES | wx.LC_REPORT | wx.LC_VRULES)
+        self.list_ctrl_files = wx.ListCtrl(self.right_top_pane, wx.ID_ANY,
                                            style=wx.LC_HRULES | wx.LC_REPORT | wx.LC_VRULES)
 
         self.status_bar = self.CreateStatusBar(1)
@@ -70,6 +70,7 @@ class EpLaunchFrame(wx.Frame):
         folder_bmp = wx.ArtProvider.GetBitmap(wx.ART_FOLDER, wx.ART_TOOLBAR, t_size)
         page_bmp = wx.ArtProvider.GetBitmap(wx.ART_HELP_PAGE, wx.ART_TOOLBAR, t_size)
         help_bmp = wx.ArtProvider.GetBitmap(wx.ART_HELP, wx.ART_TOOLBAR, t_size)
+        remove_bmp = wx.ArtProvider.GetBitmap(wx.ART_MINUS, wx.ART_TOOLBAR, t_size)
 
         self.tb.SetToolBitmapSize(t_size)
 
@@ -115,6 +116,11 @@ class EpLaunchFrame(wx.Frame):
         self.tb.AddTool(
             80, "Update", up_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Update", "Long help for 'Update'", None
         )
+
+        tb_hide_browser = self.tb.AddTool(
+            80, "Hide Browser", remove_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Update", "Long help for 'Hide Browser'", None
+        )
+        self.Bind(wx.EVT_TOOL, self.handle_tb_hide_browser, tb_hide_browser)
 
         self.tb.Realize()
 
@@ -441,11 +447,11 @@ class EpLaunchFrame(wx.Frame):
         sizer_left.Add(self.dir_ctrl_1, 1, wx.EXPAND, 0)
         self.left_pane.SetSizer(sizer_left)
 
-        sizer_top.Add(self.raw_files, 1, wx.EXPAND,0)
+        sizer_top.Add(self.list_ctrl_files,1,wx.EXPAND,0)
 #        sizer_top.Add(self.text_ctrl_1, 1, wx.EXPAND,0)
         self.right_top_pane.SetSizer(sizer_top)
 
-        sizer_bottom.Add(self.list_ctrl_files,1,wx.EXPAND,0)
+        sizer_bottom.Add(self.raw_files, 1, wx.EXPAND,0)
         self.right_bottom_pane.SetSizer(sizer_bottom)
 
         self.split_top_bottom.SplitHorizontally(self.right_top_pane, self.right_bottom_pane)
@@ -459,6 +465,7 @@ class EpLaunchFrame(wx.Frame):
         sizer_main_app_vertical.Add(self.split_left_right, 1, wx.EXPAND, 0)
         self.SetSizer(sizer_main_app_vertical)
         sizer_main_app_vertical.Fit(self)
+
         self.Layout()
 
     def handle_menu_file_run(self, event):
@@ -503,6 +510,14 @@ class EpLaunchFrame(wx.Frame):
 
     def handle_tb_weather(self, event):
         self.status_bar.SetStatusText('Clicked Weather toolbar item')
+
+    def handle_tb_hide_browser(self,event):
+        # the following remove the top pane of the right hand splitter
+        if self.split_top_bottom.IsSplit():
+            self.split_top_bottom.Unsplit(toRemove=self.right_bottom_pane)
+        else:
+            self.split_top_bottom.SplitHorizontally(self.right_top_pane, self.right_bottom_pane)
+
 
     def handle_menu_option_workflow_directories(self, event):
         workflow_dir_dialog = workflow_directories_dialog.WorkflowDirectoriesDialog(None, title='Workflow Directories')
