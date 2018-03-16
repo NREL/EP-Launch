@@ -118,7 +118,7 @@ class EpLaunchFrame(wx.Frame):
         )
 
         tb_hide_browser = self.tb.AddTool(
-            80, "Hide Browser", remove_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Update", "Long help for 'Hide Browser'", None
+            80, "File Browser", remove_bmp, wx.NullBitmap, wx.ITEM_CHECK, "File Browser", "Long help for 'File Browser'", None
         )
         self.Bind(wx.EVT_TOOL, self.handle_tb_hide_browser, tb_hide_browser)
 
@@ -455,6 +455,7 @@ class EpLaunchFrame(wx.Frame):
         self.right_bottom_pane.SetSizer(sizer_bottom)
 
         self.split_top_bottom.SplitHorizontally(self.right_top_pane, self.right_bottom_pane)
+        self.split_top_bottom.Unsplit(toRemove=self.right_bottom_pane)
 
         sizer_right.Add(self.split_top_bottom, 1, wx.EXPAND, 0)
         self.right_pane.SetSizer(sizer_right)
