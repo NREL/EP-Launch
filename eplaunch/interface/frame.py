@@ -2,26 +2,36 @@ from gettext import gettext as _
 
 import wx
 
-from eplaunch.interface import settingdialog
+from eplaunch.interface import workflow_directories_dialog
+from eplaunch.interface import command_line_dialog
+from eplaunch.interface import viewer_dialog
+
 
 # wx callbacks need an event argument even though we usually don't use it, so the next line disables that check
 # noinspection PyUnusedLocal
 class EpLaunchFrame(wx.Frame):
 
     def __init__(self, *args, **kwargs):
-        # begin wxGlade: mainApplicationFrame.__init__
         kwargs["style"] = wx.DEFAULT_FRAME_STYLE
         wx.Frame.__init__(self, *args, **kwargs)
-        self.window_1 = wx.SplitterWindow(self, wx.ID_ANY)
-        self.window_1_pane_1 = wx.Panel(self.window_1, wx.ID_ANY)
-        self.dir_ctrl_1 = wx.GenericDirCtrl(self.window_1_pane_1, -1, size=(200, 225), style=wx.DIRCTRL_DIR_ONLY)
+        self.split_left_right = wx.SplitterWindow(self, wx.ID_ANY)
+
+        self.left_pane = wx.Panel(self.split_left_right, wx.ID_ANY)
+        self.dir_ctrl_1 = wx.GenericDirCtrl(self.left_pane, -1, size=(200, 225), style=wx.DIRCTRL_DIR_ONLY)
         tree = self.dir_ctrl_1.GetTreeCtrl()
         #self.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.handle_dir_item_selected, tree)
         self.Bind(wx.EVT_TREE_ITEM_RIGHT_CLICK, self.handle_dir_right_click, tree)
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.handle_dir_selection_changed, tree)
+    #
+        self.right_pane = wx.Panel(self.split_left_right, wx.ID_ANY)
 
-        self.window_1_pane_2 = wx.Panel(self.window_1, wx.ID_ANY)
-        self.list_ctrl_files = wx.ListCtrl(self.window_1_pane_2, wx.ID_ANY,
+        self.split_top_bottom = wx.SplitterWindow(self.right_pane, wx.ID_ANY)
+        self.right_top_pane = wx.Panel(self.split_top_bottom, wx.ID_ANY)
+        self.right_bottom_pane = wx.Panel(self.split_top_bottom, wx.ID_ANY)
+
+        self.raw_files = wx.ListCtrl(self.right_bottom_pane, wx.ID_ANY,
+                                           style=wx.LC_HRULES | wx.LC_REPORT | wx.LC_VRULES)
+        self.list_ctrl_files = wx.ListCtrl(self.right_top_pane, wx.ID_ANY,
                                            style=wx.LC_HRULES | wx.LC_REPORT | wx.LC_VRULES)
 
         self.status_bar = self.CreateStatusBar(1)
@@ -38,7 +48,6 @@ class EpLaunchFrame(wx.Frame):
 
         self.__set_properties()
         self.__do_layout()
-        # end wxGlade
 
     def close_frame(self):
         """May do additional things during close, including saving the current window state/settings"""
@@ -61,20 +70,21 @@ class EpLaunchFrame(wx.Frame):
         folder_bmp = wx.ArtProvider.GetBitmap(wx.ART_FOLDER, wx.ART_TOOLBAR, t_size)
         page_bmp = wx.ArtProvider.GetBitmap(wx.ART_HELP_PAGE, wx.ART_TOOLBAR, t_size)
         help_bmp = wx.ArtProvider.GetBitmap(wx.ART_HELP, wx.ART_TOOLBAR, t_size)
+        remove_bmp = wx.ArtProvider.GetBitmap(wx.ART_MINUS, wx.ART_TOOLBAR, t_size)
 
         self.tb.SetToolBitmapSize(t_size)
 
         ch_id = wx.NewId()
         workflow_choices = [
-            "EnergyPlus SI (*.IDF)",
-            "EnergyPlus IP (*.IDF)",
-            "AppGPostProcess (*.HTML)",
-            "CalcSoilSurfTemp",
-            "CoeffCheck",
-            "CoeffConv",
-            "Basement",
-            "Slab",
-            "File Operations"
+            "EnergyPlus SI (*.idf, *.imf)",
+            "EnergyPlus IP (*.idf, *.imf)",
+            "AppGPostProcess (*.html)",
+            "CalcSoilSurfTemp (*.epw)",
+            "CoeffCheck (*.cci)",
+            "CoeffConv (*.coi)",
+            "Basement (*.idf)",
+            "Slab (*.idf)",
+            "File Operations (*.*)"
         ]
         workflow_choice = wx.Choice(self.tb, ch_id, choices=workflow_choices)
         workflow_choice.SetSelection(0)
@@ -106,59 +116,57 @@ class EpLaunchFrame(wx.Frame):
         self.tb.AddTool(
             80, "Update", up_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Update", "Long help for 'Update'", None
         )
-        tb_settings = self.tb.AddTool(
-            80, "Settings", page_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Settings", "Long help for 'Settings'",
-            None)
-        self.Bind(wx.EVT_TOOL, self.handle_tb_settings, tb_settings)
-        self.tb.AddTool(
-            90, "Help", help_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
+
+        tb_hide_browser = self.tb.AddTool(
+            80, "File Browser", remove_bmp, wx.NullBitmap, wx.ITEM_CHECK, "File Browser", "Long help for 'File Browser'", None
         )
+        self.Bind(wx.EVT_TOOL, self.handle_tb_hide_browser, tb_hide_browser)
 
         self.tb.Realize()
 
     def build_out_toolbar(self):
-        t_size = (16, 16)
+        t_size = (24, 24)
         self.out_tb = wx.ToolBar(self, style=wx.TB_HORIZONTAL | wx.NO_BORDER | wx.TB_FLAT | wx.TB_TEXT)
         self.out_tb.SetToolBitmapSize(t_size)
 
         norm_bmp = wx.ArtProvider.GetBitmap(wx.ART_NORMAL_FILE, wx.ART_TOOLBAR, t_size)
 
         self.out_tb.AddTool(
-            10, "Tables", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
+            10, "Table.html", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
         )
         self.out_tb.AddTool(
-            10, "Meters", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
+            10, "Meters.csv", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
         )
         self.out_tb.AddTool(
-            10, "Variables", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
+            10, ".csv", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
         )
         self.out_tb.AddTool(
-            10, "Errors", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
+            10, ".err", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
         )
         self.out_tb.AddTool(
-            10, "RDD", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
+            10, ".rdd", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
         )
         self.out_tb.AddTool(
-            10, "MDD", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
+            10, ".eio", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
         )
         self.out_tb.AddSeparator()
         self.out_tb.AddTool(
-            10, "EIO", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
+            10, ".dxf", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
         )
         self.out_tb.AddTool(
-            10, "SVG", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
+            10, ".mtd", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
         )
         self.out_tb.AddTool(
-            10, "DXF", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
+            10, ".bnd", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
         )
         self.out_tb.AddTool(
-            10, "MTD", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
+            10, ".eso", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
         )
         self.out_tb.AddTool(
-            10, "ZSZ", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
+            10, ".mtr", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
         )
         self.out_tb.AddTool(
-            10, "SSZ", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
+            10, ".shd", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
         )
         self.out_tb.Realize()
 
@@ -190,7 +198,7 @@ class EpLaunchFrame(wx.Frame):
         self.menu_bar.Append(edit_menu, "&Edit")
 
         folder_menu = wx.Menu()
-        folder_menu.Append(31, "Recent")
+        recent_folder_menu = folder_menu.Append(31, "Recent", "Recent folders where a workflow as run.")
         folder_menu.AppendSeparator()
         folder_menu.Append(32, "c:\\EnergyPlus8-8-0")
         folder_menu.Append(33, "c:\\documents")
@@ -206,6 +214,9 @@ class EpLaunchFrame(wx.Frame):
         folder_menu.Append(310, "Add Current Folder to Favorites")
         folder_menu.Append(311, "Remove Current Folder from Favorites")
         self.menu_bar.Append(folder_menu, "F&older")
+        # disable the menu items that are just information
+        self.menu_bar.Enable(31,False)
+        self.menu_bar.Enable(36,False)
 
         weather_menu = wx.Menu()
         weather_menu.Append(41, "Select..")
@@ -226,20 +237,32 @@ class EpLaunchFrame(wx.Frame):
         weather_menu.Append(411, "Add Weather to Favorites")
         weather_menu.Append(412, "Remove Weather from Favorites")
         self.menu_bar.Append(weather_menu, "&Weather")
+        # disable the menu items that are just information
+        self.menu_bar.Enable(42,False)
+        self.menu_bar.Enable(47,False)
 
         output_menu = wx.Menu()
-        output_menu.Append(501, "Table.csv")
-        output_menu.Append(502, "Table.tab")
-        output_menu.Append(503, "Table.txt")
-        output_menu.Append(504, "Table.html")
-        output_menu.Append(505, "Table.xml")
-        output_menu.Append(506, ".csv")
-        output_menu.Append(507, ".tab")
-        output_menu.Append(508, ".txt")
-        output_menu.Append(509, "Meter.csv")
-        output_menu.Append(510, "Meter.tab")
-        output_menu.Append(511, "Meter.txt")
-        output_menu.Append(512, "Variables")
+
+        out_table_menu = wx.Menu()
+        out_table_menu.Append(501, "Table.csv")
+        out_table_menu.Append(502, "Table.tab")
+        out_table_menu.Append(503, "Table.txt")
+        out_table_menu.Append(504, "Table.html")
+        out_table_menu.Append(505, "Table.xml")
+        output_menu.Append(599, "Table",out_table_menu)
+
+        out_variable_menu = wx.Menu()
+        out_variable_menu.Append(506, ".csv")
+        out_variable_menu.Append(507, ".tab")
+        out_variable_menu.Append(508, ".txt")
+        output_menu.Append(598, "Variables",out_variable_menu)
+
+        out_meter_menu = wx.Menu()
+        out_meter_menu.Append(509, "Meter.csv")
+        out_meter_menu.Append(510, "Meter.tab")
+        out_meter_menu.Append(511, "Meter.txt")
+        output_menu.Append(597, "Meter",out_meter_menu)
+
         output_menu.Append(513, ".err")
         output_menu.Append(514, ".end")
         output_menu.Append(515, ".rdd")
@@ -248,19 +271,29 @@ class EpLaunchFrame(wx.Frame):
         output_menu.Append(518, ".svg")
         output_menu.Append(519, ".dxf")
         output_menu.Append(520, ".mtd")
-        output_menu.Append(521, "Zsz.csv")
-        output_menu.Append(522, "Zsz.tab")
-        output_menu.Append(523, "Zsz.txt")
-        output_menu.Append(524, "Ssz.csv")
-        output_menu.Append(525, "Ssz.tab")
-        output_menu.Append(526, "Ssz.txt")
-        output_menu.Append(527, "DElight.in")
-        output_menu.Append(528, "DElight.out")
-        output_menu.Append(529, "DElight.eldmp")
-        output_menu.Append(530, "DElight.dfdmp")
-        output_menu.Append(531, "Map.csv")
-        output_menu.Append(532, "Map.tab")
-        output_menu.Append(533, "Map.txt")
+
+        out_sizing_menu = wx.Menu()
+        out_sizing_menu.Append(521, "Zsz.csv")
+        out_sizing_menu.Append(522, "Zsz.tab")
+        out_sizing_menu.Append(523, "Zsz.txt")
+        out_sizing_menu.Append(524, "Ssz.csv")
+        out_sizing_menu.Append(525, "Ssz.tab")
+        out_sizing_menu.Append(526, "Ssz.txt")
+        output_menu.Append(596, "Sizing",out_sizing_menu)
+
+        out_delight_menu = wx.Menu()
+        out_delight_menu.Append(527, "DElight.in")
+        out_delight_menu.Append(528, "DElight.out")
+        out_delight_menu.Append(529, "DElight.eldmp")
+        out_delight_menu.Append(530, "DElight.dfdmp")
+        output_menu.Append(595, "DElight",out_delight_menu)
+
+        out_map_menu = wx.Menu()
+        out_map_menu.Append(531, "Map.csv")
+        out_map_menu.Append(532, "Map.tab")
+        out_map_menu.Append(533, "Map.txt")
+        output_menu.Append(594, "Map",out_map_menu)
+
         output_menu.Append(534, "Screen.csv")
         output_menu.Append(535, ".expidf")
         output_menu.Append(536, ".epmidf")
@@ -279,14 +312,61 @@ class EpLaunchFrame(wx.Frame):
         output_menu.Append(549, ".rvaudit")
         output_menu.Append(550, ".sql")
         output_menu.Append(551, ".log")
-        output_menu.Append(552, ".bsmt")
-        output_menu.Append(553, "_bsmt.out")
-        output_menu.Append(554, "_bsmt.audit")
-        output_menu.Append(555, "_bsmt.csv")
-        output_menu.Append(556, ".slab")
-        output_menu.Append(557, "_slab.out")
-        output_menu.Append(558, "_slab.ger")
+
+        out_bsmt_menu = wx.Menu()
+        out_bsmt_menu.Append(552, ".bsmt")
+        out_bsmt_menu.Append(553, "_bsmt.out")
+        out_bsmt_menu.Append(554, "_bsmt.audit")
+        out_bsmt_menu.Append(555, "_bsmt.csv")
+        output_menu.Append(593, "bsmt",out_bsmt_menu)
+
+        out_slab_menu = wx.Menu()
+        out_slab_menu.Append(556, ".slab")
+        out_slab_menu.Append(557, "_slab.out")
+        out_slab_menu.Append(558, "_slab.ger")
+        output_menu.Append(592, "slab",out_slab_menu)
+
         self.menu_bar.Append(output_menu, "&Output")
+
+        options_menu = wx.Menu()
+        option_version_menu = wx.Menu()
+        option_version_menu.Append(711,"EnergyPlus 8.6.0")
+        option_version_menu.Append(712,"EnergyPlus 8.7.0")
+        option_version_menu.Append(713,"EnergyPlus 8.8.0")
+        option_version_menu.Append(714,"EnergyPlus 8.9.0")
+        options_menu.Append(71, "Version",option_version_menu)
+        options_menu.AppendSeparator()
+        menu_option_workflow_directories = options_menu.Append(72, "Workflow Directories...")
+        self.Bind(wx.EVT_MENU, self.handle_menu_option_workflow_directories, menu_option_workflow_directories)
+        menu_workflow_order= options_menu.Append(73, "Workflow Order...")
+        self.Bind(wx.EVT_MENU, self.handle_menu_workflow_order, menu_workflow_order)
+        options_menu.AppendSeparator()
+
+        option_favorite_menu = wx.Menu()
+        option_favorite_menu.Append(741,"4")
+        option_favorite_menu.Append(742,"8")
+        option_favorite_menu.Append(743,"12")
+        option_favorite_menu.Append(744,"Clear")
+        options_menu.Append(74, "Favorites",option_favorite_menu)
+
+        option_recent_menu = wx.Menu()
+        option_recent_menu.Append(741,"4")
+        option_recent_menu.Append(742,"8")
+        option_recent_menu.Append(743,"12")
+        option_recent_menu.Append(744,"Clear")
+        options_menu.Append(74, "Recent",option_recent_menu)
+
+        options_menu.Append(75, "Remote...")
+        menu_viewers = options_menu.Append(77, "Viewers...")
+        self.Bind(wx.EVT_MENU, self.handle_menu_viewers, menu_viewers)
+        options_menu.AppendSeparator()
+        menu_output_toolbar = options_menu.Append(761, "<workspacename> Output Toolbar...")
+        self.Bind(wx.EVT_MENU, self.handle_menu_output_toolbar, menu_output_toolbar)
+        menu_columns = options_menu.Append(762, "<workspacename> Columns...")
+        self.Bind(wx.EVT_MENU, self.handle_menu_columns, menu_columns)
+        menu_command_line = options_menu.Append(763, "<workspacename> Command Line...")
+        self.Bind(wx.EVT_MENU, self.handle_menu_command_line, menu_command_line)
+        self.menu_bar.Append(options_menu, "&Settings")
 
         help_menu = wx.Menu()
         help_menu.Append(61, "EnergyPlus Getting Started")
@@ -311,7 +391,6 @@ class EpLaunchFrame(wx.Frame):
         self.SetMenuBar(self.menu_bar)
 
     def __set_properties(self):
-        # begin wxGlade: mainApplicationFrame.__set_properties
         self.SetTitle(_("EP-Launch 3"))
         self.list_ctrl_files.AppendColumn(_("Status"), format=wx.LIST_FORMAT_LEFT, width=-1)
         self.list_ctrl_files.AppendColumn(_("File Name"), format=wx.LIST_FORMAT_LEFT, width=-1)
@@ -339,26 +418,56 @@ class EpLaunchFrame(wx.Frame):
             self.list_ctrl_files.SetItem(index, 6, row[6])
             index = index + 1
 
-        self.window_1.SetMinimumPaneSize(20)
-        # end wxGlade
+        self.raw_files.AppendColumn(_("File Name"),format=wx.LIST_FORMAT_LEFT,width=-1)
+        self.raw_files.AppendColumn(_("Date Modified"),format=wx.LIST_FORMAT_LEFT,width=-1)
+        self.raw_files.AppendColumn(_("Type"),format=wx.LIST_FORMAT_LEFT,width=-1)
+        self.raw_files.AppendColumn(_("Size"),format=wx.LIST_FORMAT_LEFT,width=-1)
+
+        rows = [
+            ["5Zone.idf", "9/17/2017 9:22 AM", "EnergyPlus Input File","153 KB"],
+            ["5Zone.html", "9/17/2017 9:22 AM", "Browser","5478 KB"]
+        ]
+        index = 0
+        for row in rows:
+            self.raw_files.InsertItem(index, row[0])
+            self.raw_files.SetItem(index, 1, row[1])
+            self.raw_files.SetItem(index, 2, row[2])
+            self.raw_files.SetItem(index, 3, row[3])
+            index = index + 1
+
+        self.split_left_right.SetMinimumPaneSize(20)
+        self.split_top_bottom.SetMinimumPaneSize(20)
 
     def __do_layout(self):
-        # begin wxGlade: mainApplicationFrame.__do_layout
         sizer_main_app_vertical = wx.BoxSizer(wx.VERTICAL)
-        sizer_3 = wx.BoxSizer(wx.VERTICAL)
-        sizer_5 = wx.BoxSizer(wx.VERTICAL)
-        sizer_5.Add(self.dir_ctrl_1, 1, wx.EXPAND, 0)
-        self.window_1_pane_1.SetSizer(sizer_5)
-        sizer_3.Add(self.list_ctrl_files, 1, wx.EXPAND, 0)
-        self.window_1_pane_2.SetSizer(sizer_3)
-        self.window_1.SplitVertically(self.window_1_pane_1, self.window_1_pane_2)
+        sizer_right = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_left = wx.BoxSizer(wx.VERTICAL)
+        sizer_top = wx.BoxSizer(wx.VERTICAL)
+        sizer_bottom = wx.BoxSizer(wx.VERTICAL)
+        sizer_left.Add(self.dir_ctrl_1, 1, wx.EXPAND, 0)
+        self.left_pane.SetSizer(sizer_left)
+
+        sizer_top.Add(self.list_ctrl_files,1,wx.EXPAND,0)
+#        sizer_top.Add(self.text_ctrl_1, 1, wx.EXPAND,0)
+        self.right_top_pane.SetSizer(sizer_top)
+
+        sizer_bottom.Add(self.raw_files, 1, wx.EXPAND,0)
+        self.right_bottom_pane.SetSizer(sizer_bottom)
+
+        self.split_top_bottom.SplitHorizontally(self.right_top_pane, self.right_bottom_pane)
+        self.split_top_bottom.Unsplit(toRemove=self.right_bottom_pane)
+
+        sizer_right.Add(self.split_top_bottom, 1, wx.EXPAND, 0)
+        self.right_pane.SetSizer(sizer_right)
+
+        self.split_left_right.SplitVertically(self.left_pane, self.right_pane)
         sizer_main_app_vertical.Add(self.tb, 0, wx.EXPAND, 0)
         sizer_main_app_vertical.Add(self.out_tb, 0, wx.EXPAND, 0)
-        sizer_main_app_vertical.Add(self.window_1, 1, wx.EXPAND, 0)
+        sizer_main_app_vertical.Add(self.split_left_right, 1, wx.EXPAND, 0)
         self.SetSizer(sizer_main_app_vertical)
         sizer_main_app_vertical.Fit(self)
+
         self.Layout()
-        # end wxGlade
 
     def handle_menu_file_run(self, event):
         self.status_bar.SetStatusText('Clicked File->Run')
@@ -403,9 +512,105 @@ class EpLaunchFrame(wx.Frame):
     def handle_tb_weather(self, event):
         self.status_bar.SetStatusText('Clicked Weather toolbar item')
 
-    def handle_tb_settings(self, event):
-        settings_dialog = settingdialog.SettingsDialog(None, title='Change Color Depth')
-        return_value = settings_dialog.ShowModal()
+    def handle_tb_hide_browser(self,event):
+        # the following remove the top pane of the right hand splitter
+        if self.split_top_bottom.IsSplit():
+            self.split_top_bottom.Unsplit(toRemove=self.right_bottom_pane)
+        else:
+            self.split_top_bottom.SplitHorizontally(self.right_top_pane, self.right_bottom_pane)
+
+
+    def handle_menu_option_workflow_directories(self, event):
+        workflow_dir_dialog = workflow_directories_dialog.WorkflowDirectoriesDialog(None, title='Workflow Directories')
+        return_value = workflow_dir_dialog.ShowModal()
         print(return_value)
         # May need to refresh the main UI if something changed in the settings
-        settings_dialog.Destroy()
+        workflow_dir_dialog.Destroy()
+
+    def handle_menu_workflow_order(self,event):
+
+        items = [
+            "EnergyPlus SI (*.IDF)",
+            "EnergyPlus IP (*.IDF)",
+            "AppGPostProcess (*.HTML)",
+            "CalcSoilSurfTemp",
+            "CoeffCheck",
+            "CoeffConv",
+            "Basement",
+            "Slab",
+            "File Operations"
+        ]
+
+        order = [0, 1, 2, 3, 4, 5, 6, 7, 8]
+
+        dlg = wx.RearrangeDialog(None,
+                                 "Arrange the workflows in the order to appear in the toolbar",
+                                 "Workflow Order",
+                                 order, items)
+
+        if dlg.ShowModal() == wx.ID_OK:
+            order = dlg.GetOrder()
+           # for n in order:
+           #     if n >= 0:
+           #         wx.LogMessage("Your most preferred item is \"%s\"" % n)
+           #         break
+
+    def handle_menu_command_line(self,event):
+        cmdline_dialog = command_line_dialog.CommandLineDialog(None)
+        return_value = cmdline_dialog.ShowModal()
+        print(return_value)
+        # May need to refresh the main UI if something changed in the settings
+        cmdline_dialog.Destroy()
+
+    def handle_menu_output_toolbar(self,event):
+        items = [
+            "Table.htm.",
+            "Meters.csv",
+            ".csv",
+            ".err",
+            ".rdd",
+            ".eio",
+            ".dxf",
+            ".mtd",
+            ".bnd",
+            ".eso",
+            ".mtr"
+        ]
+
+        order = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+        dlg = wx.RearrangeDialog(None,
+                                 "Arrange the buttons on the output toolbar",
+                                 "<workspacename> Output Toolbar",
+                                 order, items)
+
+        if dlg.ShowModal() == wx.ID_OK:
+            order = dlg.GetOrder()
+
+    def handle_menu_columns(self,event):
+        items = [
+            "Status",
+            "File Name",
+            "Weather File",
+            "Size",
+            "Errors",
+            "EUI",
+            "Floor Area",
+        ]
+
+        order = [0, 1, 2, 3, 4, 5, 6]
+
+        dlg = wx.RearrangeDialog(None,
+                                 "Arrange the columns for the main grid",
+                                 "<workspacename> Columns",
+                                 order, items)
+
+        if dlg.ShowModal() == wx.ID_OK:
+            order = dlg.GetOrder()
+
+    def handle_menu_viewers(self,event):
+        file_viewer_dialog = viewer_dialog.ViewerDialog(None)
+        return_value = file_viewer_dialog.ShowModal()
+        print(return_value)
+        # May need to refresh the main UI if something changed in the settings
+        file_viewer_dialog.Destroy()

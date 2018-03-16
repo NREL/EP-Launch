@@ -57,6 +57,54 @@ The following shows a concept of the initial GUI:
 
 ![](./images/Sketch_of_eplaunch_GUI_concept.PNG)
 
+## Workflow
+
+Information about each workflow will be stored in a text editable file (probably YAML) in a Workflow subdirectory (c:\EnergyPlusV8-9-0\Workflow) and will contain information to run a program plus all the specifications on what happens before and after and how the workflow is displayed in the EP-Launch interface. This approach will let other developers and power users make custom workflows for their projects.
+
+The workflow files would need to contain:
+
+- Name: Name of the workflow (maybe that is just the name of the file)
+- Help: 
+  + Info: <string> “Docstring” for the workflow that shows up when hovering over the workflow selector
+  + Menu: <names of files> What help files should appear in the help menu and help icon
+- EnergyPlus
+  + MinVersion <version string> (for example 8.6.0)
+  + MaxVersion <version string> (for example 8.9.0 – probably not used very often)
+- Extensions: 
+  + Input: <strings> Input file extension(s)
+  + Output: <strings> Output file extension (which all get deleted prior to running workflow – listed in the default order for the output toolbar)
+  + OutputIcon:<filepath>
+- CommandToolbar:
+  + UseSelectFile: <Boolean>
+  + SelectFileName: <string> (usually weather)
+  + UseIDFEditor:<Boolean>
+  + UseTextEditor:<Boolean>
+  + UseCustomEditor:<Boolean>
+  + CustomEditor: <file path>
+  + CustomEditorIcon: <filepath>
+- Workflow Option
+  + Parameter <string>
+  + PossibleValues <strings>
+  + Help <string>
+- Command lines:
+  + DirectoryScanner: <command line with optional parameters> (usually to check versions)
+  + BeforeRun: <command line with optional parameters> (can be repeated)
+  + Run: <command line with optional parameters> (EnergyPlus,etc..)
+  + AfterRun <command line with optional parameters>
+  + ResultExtractor <command line with optional parameters>
+  + CrashDetector <command line with optional parameters>
+- Column: (can be repeated, in default order)
+  + Heading: <string>
+  + Key:<string> (used with the ResultExtractor)
+  + DefaultVisible: <boolean> 
+  + Flag: (can be repeated)
+  + Expression: <string or logical expression> (can be used to highlight cell or maybe row)
+  + Color: <string> (color to change cell)
+
+
+
+
+
 
 
 ## Existing EP-Launch Screen Shots
