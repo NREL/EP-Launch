@@ -454,6 +454,7 @@ class EpLaunchFrame(wx.Frame):
         sizer_bottom.Add(self.raw_files, 1, wx.EXPAND,0)
         self.right_bottom_pane.SetSizer(sizer_bottom)
 
+        #not sure why but it works better if you make the split and unplit it right away
         self.split_top_bottom.SplitHorizontally(self.right_top_pane, self.right_bottom_pane)
         self.split_top_bottom.Unsplit(toRemove=self.right_bottom_pane)
 
