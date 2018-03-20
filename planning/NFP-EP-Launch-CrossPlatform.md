@@ -57,6 +57,31 @@ The following shows a concept of the initial GUI:
 
 ![](./images/Sketch_of_eplaunch_GUI_concept.PNG)
 
+## Current GUI 
+
+As of March 20, 2018.
+
+![](./images/EP3-main.PNG)
+![](./images/EP3-main-with-raw-files.PNG)
+![](./images/EP3-menu-file.PNG)
+![](./images/EP3-menu-edit.PNG)
+![](./images/EP3-menu-folder.PNG)
+![](./images/EP3-menu-weather.PNG)
+![](./images/EP3-menu-output.PNG)
+![](./images/EP3-menu-settings.PNG)
+![](./images/EP3-menu-settings-version.PNG)
+![](./images/EP3-menu-settings-workflow-directories.PNG)
+![](./images/EP3-menu-settings-workflow-order.PNG)
+![](./images/EP3-menu-settings-favorites.PNG)
+![](./images/EP3-menu-settings-recent.PNG)
+![](./images/EP3-menu-settings-viewer.PNG)
+![](./images/EP3-menu-settings-output-toolbar.PNG)
+![](./images/EP3-menu-settings-columns.PNG)
+![](./images/EP3-menu-settings-command-line.PNG)
+![](./images/EP3-menu-help.PNG)
+
+
+
 ## Workflow
 
 Information about each workflow will be stored in a text editable file (probably YAML) in a Workflow subdirectory (c:\EnergyPlusV8-9-0\Workflow) and will contain information to run a program plus all the specifications on what happens before and after and how the workflow is displayed in the EP-Launch interface. This approach will let other developers and power users make custom workflows for their projects.
@@ -102,12 +127,137 @@ The workflow files would need to contain:
   + Color: <string> (color to change cell)
 
 
+## Specific EnergyPlus Options and Utilities
+
+A survey was done of all the command line options for the EnergyPlus.exe, the EPL-RUN.bat file, the EP-Launch 2.x Utility tab, and all utilities that are distributed with the EnergyPlus installer to determine what will be supported by the new cross platform EP-Launch 3.x. The new version of EP-Launch will be using what is termed "workflows" that are defined as Python scripts and correspond to each type of file extension. 
+
+### Command Line EnergyPlus
+
+  + The option --annual could be hand edited by user in the workflow command line options but normallly the IDF file would determine if it was an annual run or not
+  + The option --output-directory will be the directory of the IDF file and will be part of EnergyPlusIDF workflow
+  + The option --design-day could be hand edited by user in the workflow command line options but normallly the IDF file would determine if it was a design day only run or not
+  + The option --help will not be supported
+  + The option --idd will be part of the EnergyPlusIDF workflow and will be the normal directory of the IDD
+  + The option --epmacro will NOT BE used directly and instead EPMacro will be called separately by the EnergyPlusIDF workflow so that ExpandObjects can be called after it which needs to be called separately since basement and slab may be invoked after ExpandObjects.
+  + The option --output-prefix will be the based on the name of the IDF file and will be part of EnergyPlusIDF workflow
+  + The option --readvars will NOT BE used directly and instead ReadVarsESO will be called separately by the EnergyPlusIDF workflow so that convertESOMTR can be called before it
+  + The option --output-suffix will be L (legacy) and changing it will probably cause the workflow not to work properly. If we want a different output suffix to be used that should be determined soon.
+  + The option --version may be used by the software to double check the version of the exe but will not be needed by the user
+  + The option --weather will be part of the EnergyPlusIDF workflow and will be the file chosen by the user
+  + The option --expandobjects will NOT BE used directly and instead ExpandObjects will be called separately by the EnergyPlusIDF workflow so that basement and slab can be called after it.
+
+### EPL-RUN.bat batch file version of running EnergyPlus
+
+The order that is used in EPL-RUN.BAT file is EPMacro, ExpandObjects, basement, slab, EnergyPlus, convertESOMTR, ReadVarsESO, HVAC-Diagram, FMU(?), CSVproc. Due to this order, several command line options for EnergyPlus.exe will not be used. Examined all the arguments to the EPL-RUN.bat file. It is time to abandon the batch file since limited to only Windows platform. The current EPL-RUN.bat command line options:
+
+- %epin% or %1 contains the file with full path and no extensions for input files
+- %epout% or %2 contains the file with full path and no extensions for output files
+- %epinext% or %3 contains the extension of the file selected from the EP-Launch
+       program.  Could be imf or idf -- having this parameter ensures that the
+       correct user selected file will be used in the run.
+- %epwthr% or %4 contains the file with full path and extension for the weather file
+- %eptype% or %5 contains either "EP" or "NONE" to indicate if a weather file is used
+- %pausing% or %6 contains Y if pause should occur between major portions of
+       batch file
+- %maxcol% or %7 contains "250" if limited to 250 columns otherwise contains
+       "nolimit" if unlimited (used when calling readVarsESO)
+- %convESO% or %8 contains Y if convertESOMTR program should be called
+- %procCSV% or %9 contains Y if csvProc program should be called
+
+Part of the effort will be to create the main Python script that replaces the EPL-RUN.bat file as the main EnergyPlus workflow that includes the same sequence:
+
+  + call EPMacro (if an IMF file)
+  + call ExpandObjects
+  + call basement.exe if .bsmt file is found for compatibility
+  + call slab.exe if .slab file is found for compatibility
+  + call EnergyPlus 
+  + call convertESOMTR (for IP units version of the EnergyPlusIDF workflow)
+  + call ReadVarsESO
+  + call HVAC-Diagram 
+  + call CSVproc as an option
+
+In addition:
+
+  + include support for "pausing" for debugging (if a console window approach is used)
+  + drop support for "maxcol" (Excel has more than 256 columns since 2007, Open Office Calc since version 3 in 2008, although Google sheets is limited to 256)
+
+### EP-Launch 2.x "Utility" Tab options
+
+For each fo the utilities shown on the EP-Launch 2.x Utility tab, the following assessment was made:
+
+  + No workflow to support separate method of calling Basement since obsolete
+  + Include separate workflow for calling CalcSoilSurfTemp
+  + Include separate workflow for calling CoeffCheck
+  + Include separate workflow for calling CoeffConv
+  + No workflow to support separate method of calling Slab since obsolete
+  + No workflow to support separate method of calling Weather processor (due to no command line argument to pass, this could be fixed)
+  + Include workflow for calling AppGPostProcess (MISSING FROM 8.8.0 INSALL WAS IN 8.5.0 SEE #6128)
+  + Inlude seperate workflow for calling IDFVersionUpdater (this will require change to IDFVersionUpdater to accept a command line argument)
+  + No workflow to support separate method of calling EPDrawGUI (due to no command line argument to pass, this could be fixed)
+  + No workflow to support separate method of calling EP-Compare (due to no command line argument to pass, this could be fixed)
+
+### EXEs and Utilities that Ship with EnergyPlus
+
+An assessment was made of each EXE and utility that gets installed with EnergyPlus.
+
+  + parametricpreprocessor - NOT SURE YET HOW IT WILL BE USED
+  + FMUParser - HOW IS THIS CURRENTLY USED?
+  + CurveFitTool.xlsm - DO WE WANT A WAY TO INVOKE THIS?
+  + IceStorageCurveFitTool.xlsm - DO WE WANT A WAY TO INVOKE THIS?
+  + view3D.exe/ViewFactorInterface.xls - HOW IS THIS CURRENTLY USED?
+  + IDF Editor - Will be invoked directly as editor for IDF files, maybe part of workflow for custom editor
+  + IDFVersionUpdater - If updated to accept a command line parameter, will be invoked directly as the version updater for IDF files and IMF files as part of workflow
+  + Transition-Vx-x-x-to-Vx-x-x - Invoked only through IDFVersionUpdater (this is a change from current EP-Launch that will use it directly) assuming that IDFVersionUpdater is updated to accept a command line parameter. If not, then we should call transition like it is done now.
+  + EnergyPlus - already described
+  + EP-Launch - already described
+  + EPMacro - already described
+  + ExpandObjects - already described
+  + CSVproc - already described
+  + HVAC-Diagram - already described
+  + ReadVarsESO - already described
+  + convertESOMTR - already described
+  + EP-Compare - already described
+  + CalcSoilSurfTemp - already described
+  + CoeffCheck - already described
+  + CoeffConv - already described
+  + EPDrawGUI - already described
+  + basement - already described
+  + slab - already described
+  + Weather - already described
+  + AppGPostProcessor - already described
+
+### EP-Launch 2.x Code Review 
+  + Method of checking for new versions/releases of EnergyPlus
+  + Method of opening folder containing referenced file
+  + Method of finding program associated with a file extension (or file type)
+
+### Conclusions/Questions
+
+- Are their other utilities that don't ship with EnergyPlus that we want to include?
+
+- Update IDFVersionUpdater to accept a command line option of the file to be updated.
+
+- If effort is available, convert the following utilities to accept command line options and add new workflows otherwise add new GitHuv issues to suggest adding command line options
+  + Weather processor 
+  + EPDrawGUI 
+  + EP-Compare
+
+ - Add a new GitHub issue to suggest new command line switches to EnergyPlus for invoking basement, slab, and convertESOMTR. The lack of this support causes the EnergyPlusIDF workflow not to be able to use as many other command line options.
+
+- What should we do with ParametricPreprocessor? This may be related to a more general question of what do we do about the group wizard and group files that the current EP-Launch 2.x version supports.
+
+- Viewing CSV files with a spreadsheet program is especially problemattic. Do we want to include developing a CSV viewing application that does not lock the file so that simulations can be run even when they are open and will automatically reload the CSV file contents when the file is updated? Or at least add new GitHub issue on the topic.
+
+- Need to understand how FMUParser is invoked and make sure workflow can support it.
+
+- What about view3D.exe/ViewFactorInterface.xls?
+
+- What about CurveFitTool.xlsm/IceStorageCurveFitTool.xlsm?
+
+- AppGPostProcess needs to be part of installer (see #6128)
 
 
-
-
-
-## Existing EP-Launch Screen Shots
+## Old EP-Launch 2.x Screen Shots
 
 For reference the following shows the screen shot sof the current version of EP-Launch which shows many of the features that are available with the current version.
 
