@@ -231,13 +231,13 @@ An assessment was made of each EXE and utility that gets installed with EnergyPl
   + Method of opening folder containing referenced file
   + Method of finding program associated with a file extension (or file type)
 
-### Conclusions/Questions
+### Recommendations/Questions
 
 - Are their other utilities that don't ship with EnergyPlus that we want to include?
 
 - Update IDFVersionUpdater to accept a command line option of the file to be updated.
 
-- If effort is available, convert the following utilities to accept command line options and add new workflows otherwise add new GitHuv issues to suggest adding command line options
+- If effort is available, convert the following utilities to accept command line options and add new workflows otherwise add new GitHub issues to suggest adding command line options
   + Weather processor 
   + EPDrawGUI 
   + EP-Compare
@@ -255,6 +255,43 @@ An assessment was made of each EXE and utility that gets installed with EnergyPl
 - What about CurveFitTool.xlsm/IceStorageCurveFitTool.xlsm?
 
 - AppGPostProcess needs to be part of installer (see #6128)
+
+### Conclusions on Specific Utilities and Options
+
+Based on the conclusions from a conference call on March 27, 2018 the following approach will be taken regarding utilities and options.
+
+- Add Github issue for IP unit conversions for ESO output and try to address issue so that it can be used by EP-Launch3
+- Add Github issue for EnergyPlus to run Basement and Slab and have new command line options to do this and try to address issue so that it can be used by EP-Launch3
+- Add Github issue to add command line options for Weather processor, EPDrawGUI, and EP-Compare
+- Update IDFVersionUpdater to take a file name to be updated as a command line option and also have a command line option to specify the final version number and if possible, support a non-interactive mode or else use Transition only.
+- Add Github issue suggesting a new viewer for CSV files
+- No support will be added for FMUParser or the CurveFitTool spreadsheets
+- Include some basic file operations such as rename, duplicate, copy, paste, delete in context menu
+- When providing epJSON file to/from IDF conversion, make sure it does not stomp on original file
+
+The list of workflows are:
+
+- EnergyPlus IDF (can be SI or IP output)
+- EnergyPlus epJSON (can be SI or IP output)
+- EnergyPlus IMF (can be SI or IP output)
+- CalcSoilSurfTemp
+- CoeffCheck
+- CoeffConv
+- IDFVersionUpdater
+- AppGPostProcess
+- ParametricPreprocessor PPIDF (can be SI or IP output) Note that this is a new file extension.
+
+Future workflows, for the EP-Launch 3.1 release may include EPG Group files (from EPLaunch 2.x), EPDrawGUI, EP-Compare, Weather processer, and additional file operations.
+
+Next steps:
+
+- Implement features from the GUI mockup
+- Define the calls for the workflow API
+- Define the overall architecture for the entire application
+- Define how the local cache file works
+
+
+
 
 
 ## Old EP-Launch 2.x Screen Shots
