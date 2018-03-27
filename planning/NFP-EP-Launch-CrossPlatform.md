@@ -277,6 +277,7 @@ The list of workflows are:
 - CalcSoilSurfTemp
 - CoeffCheck
 - CoeffConv
+- View3D
 - IDFVersionUpdater
 - AppGPostProcess
 - ParametricPreprocessor PPIDF (can be SI or IP output) Note that this is a new file extension.
