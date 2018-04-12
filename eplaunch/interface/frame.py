@@ -1,6 +1,8 @@
 from gettext import gettext as _
 
 import wx
+import os
+import time
 
 from eplaunch.interface import workflow_directories_dialog
 from eplaunch.interface import command_line_dialog
@@ -88,6 +90,8 @@ class EpLaunchFrame(wx.Frame):
         ]
         workflow_choice = wx.Choice(self.tb, ch_id, choices=workflow_choices)
         workflow_choice.SetSelection(0)
+        self.current_workflow = workflow_choices[0]
+        self.current_extension = ".idf"
         self.tb.AddControl(workflow_choice)
         self.Bind(wx.EVT_CHOICE, self.handle_choice_selection_change, workflow_choice)
 
@@ -421,7 +425,7 @@ class EpLaunchFrame(wx.Frame):
         self.raw_files.AppendColumn(_("File Name"),format=wx.LIST_FORMAT_LEFT,width=-1)
         self.raw_files.AppendColumn(_("Date Modified"),format=wx.LIST_FORMAT_LEFT,width=-1)
         self.raw_files.AppendColumn(_("Type"),format=wx.LIST_FORMAT_LEFT,width=-1)
-        self.raw_files.AppendColumn(_("Size"),format=wx.LIST_FORMAT_LEFT,width=-1)
+        self.raw_files.AppendColumn(_("Size"),format=wx.LIST_FORMAT_RIGHT,width=-1)
 
         rows = [
             ["5Zone.idf", "9/17/2017 9:22 AM", "EnergyPlus Input File","153 KB"],
@@ -504,8 +508,11 @@ class EpLaunchFrame(wx.Frame):
         # event.Skip()
 
     def handle_dir_selection_changed(self, event):
-        self.status_bar.SetStatusText("Dir-SelectionChanged")
-        # event.Skip()
+        #self.status_bar.SetStatusText("Dir-SelectionChanged")
+        self.directory_name = self.dir_ctrl_1.GetPath()
+        self.status_bar.SetStatusText( self.directory_name)
+        self.update_file_lists()
+        event.Skip()
 
     def handle_choice_selection_change(self, event):
         self.status_bar.SetStatusText('Choice selection changed to ' + event.String)
@@ -615,3 +622,36 @@ class EpLaunchFrame(wx.Frame):
         print(return_value)
         # May need to refresh the main UI if something changed in the settings
         file_viewer_dialog.Destroy()
+
+    def update_file_lists(self):
+        self.list_ctrl_files.DeleteAllItems()
+        index =0
+        files = os.listdir(self.directory_name)
+        for file in files:
+            if file.endswith(self.current_extension):
+                self.list_ctrl_files.InsertItem(index, "")
+                self.list_ctrl_files.SetItem(index, 1, file)
+                self.list_ctrl_files.SetItem(index, 2, "")
+                self.list_ctrl_files.SetItem(index, 3, "")
+                self.list_ctrl_files.SetItem(index, 4, "")
+                self.list_ctrl_files.SetItem(index, 5, "")
+                self.list_ctrl_files.SetItem(index, 6, "")
+                index = index + 1
+        self.list_ctrl_files.SetColumnWidth(1,-1) #autosize column width
+        
+        self.raw_files.DeleteAllItems()
+        index = 0
+        for file in files:
+            file_with_path = os.path.join(self.directory_name, file)
+            self.raw_files.InsertItem(index, file)
+            file_modified_time = time.localtime( os.path.getmtime(file_with_path) )
+            self.raw_files.SetItem(index, 1, time.asctime(file_modified_time)) # date modified
+            root, ext = os.path.splitext(file_with_path)
+            self.raw_files.SetItem(index, 2, ext) # type
+            self.raw_files.SetItem(index, 3, '{0:12,.0f} KB'.format(os.path.getsize(file_with_path) / 1024)) # size
+            index = index + 1
+        self.raw_files.SetColumnWidth(0,-1 )
+        self.raw_files.SetColumnWidth(1,-1 )
+        self.raw_files.SetColumnWidth(2,-1 )
+        self.raw_files.SetColumnWidth(3,-1 )
+
