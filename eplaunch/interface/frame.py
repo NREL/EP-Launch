@@ -5,7 +5,8 @@ import wx
 from eplaunch.interface import command_line_dialog
 from eplaunch.interface import viewer_dialog
 from eplaunch.interface import workflow_directories_dialog
-from eplaunch.interface.workflows import manager as workflow_manager
+from eplaunch.workflows import manager as workflow_manager
+
 
 # wx callbacks need an event argument even though we usually don't use it, so the next line disables that check
 # noinspection PyUnusedLocal
@@ -19,7 +20,7 @@ class EpLaunchFrame(wx.Frame):
         self.left_pane = wx.Panel(self.split_left_right, wx.ID_ANY)
         self.dir_ctrl_1 = wx.GenericDirCtrl(self.left_pane, -1, size=(200, 225), style=wx.DIRCTRL_DIR_ONLY)
         tree = self.dir_ctrl_1.GetTreeCtrl()
-        #self.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.handle_dir_item_selected, tree)
+        # self.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.handle_dir_item_selected, tree)
         self.Bind(wx.EVT_TREE_ITEM_RIGHT_CLICK, self.handle_dir_right_click, tree)
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.handle_dir_selection_changed, tree)
     #

@@ -19,13 +19,13 @@ def get_workflows(workflow_path=None):
 
     workflows = map(form_module, workflow_files)
     # import parent module / namespace
-    importlib.import_module('eplaunch.interface.workflows.builtin.workflows')
+    importlib.import_module('eplaunch.workflows.builtin.workflows')
     modules = []
     for workflow in workflows:
         if '__init__' in workflow:
             continue
         if not workflow.startswith('__'):
-            modules.append(importlib.import_module(workflow, package="eplaunch.interface.workflows.builtin.workflows"))
+            modules.append(importlib.import_module(workflow, package="eplaunch.workflows.builtin.workflows"))
 
     workflow_classes = []
     for this_module in modules:

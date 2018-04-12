@@ -1,4 +1,4 @@
-from eplaunch.interface.workflows.base import BaseWorkflow
+from eplaunch.workflows.base import BaseWorkflow
 
 
 class EnergyPlusWorkflowSI(BaseWorkflow):
