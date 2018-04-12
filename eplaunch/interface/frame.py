@@ -2,10 +2,10 @@ from gettext import gettext as _
 
 import wx
 
-from eplaunch.interface import workflow_directories_dialog
 from eplaunch.interface import command_line_dialog
 from eplaunch.interface import viewer_dialog
-
+from eplaunch.interface import workflow_directories_dialog
+from eplaunch.interface.workflows import manager as workflow_manager
 
 # wx callbacks need an event argument even though we usually don't use it, so the next line disables that check
 # noinspection PyUnusedLocal
@@ -75,17 +75,36 @@ class EpLaunchFrame(wx.Frame):
         self.tb.SetToolBitmapSize(t_size)
 
         ch_id = wx.NewId()
-        workflow_choices = [
-            "EnergyPlus SI (*.idf, *.imf)",
-            "EnergyPlus IP (*.idf, *.imf)",
-            "AppGPostProcess (*.html)",
-            "CalcSoilSurfTemp (*.epw)",
-            "CoeffCheck (*.cci)",
-            "CoeffConv (*.coi)",
-            "Basement (*.idf)",
-            "Slab (*.idf)",
-            "File Operations (*.*)"
-        ]
+        # workflow_choices = [
+        #     "EnergyPlus SI (*.idf, *.imf)",
+        #     "EnergyPlus IP (*.idf, *.imf)",
+        #     "AppGPostProcess (*.html)",
+        #     "CalcSoilSurfTemp (*.epw)",
+        #     "CoeffCheck (*.cci)",
+        #     "CoeffConv (*.coi)",
+        #     "Basement (*.idf)",
+        #     "Slab (*.idf)",
+        #     "File Operations (*.*)"
+        # ]
+        workflow_choices = []
+        built_in_workflow_classes = workflow_manager.get_workflows()
+        for workflow_class in built_in_workflow_classes:
+            workflow_instance = workflow_class()
+            workflow_name = workflow_instance.name()
+            workflow_file_types = workflow_instance.get_file_types()
+
+            file_type_string = "("
+            first = True
+            for file_type in workflow_file_types:
+                if first:
+                    first = False
+                else:
+                    file_type_string += ", "
+                file_type_string += file_type
+            file_type_string += ")"
+
+            workflow_choices.append("%s %s" % (workflow_name, file_type_string))
+
         workflow_choice = wx.Choice(self.tb, ch_id, choices=workflow_choices)
         workflow_choice.SetSelection(0)
         self.tb.AddControl(workflow_choice)
@@ -520,7 +539,6 @@ class EpLaunchFrame(wx.Frame):
         else:
             self.split_top_bottom.SplitHorizontally(self.right_top_pane, self.right_bottom_pane)
 
-
     def handle_menu_option_workflow_directories(self, event):
         workflow_dir_dialog = workflow_directories_dialog.WorkflowDirectoriesDialog(None, title='Workflow Directories')
         return_value = workflow_dir_dialog.ShowModal()
@@ -551,10 +569,10 @@ class EpLaunchFrame(wx.Frame):
 
         if dlg.ShowModal() == wx.ID_OK:
             order = dlg.GetOrder()
-           # for n in order:
-           #     if n >= 0:
-           #         wx.LogMessage("Your most preferred item is \"%s\"" % n)
-           #         break
+            # for n in order:
+            #     if n >= 0:
+            #         wx.LogMessage("Your most preferred item is \"%s\"" % n)
+            #         break
 
     def handle_menu_command_line(self,event):
         cmdline_dialog = command_line_dialog.CommandLineDialog(None)
