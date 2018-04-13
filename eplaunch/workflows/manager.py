@@ -1,4 +1,5 @@
-import importlib
+# import importlib
+from importlib import util as import_util
 import inspect
 import os
 import re
@@ -14,18 +15,15 @@ def get_workflows(workflow_path=None):
     py_search_regex = re.compile('.py$', re.IGNORECASE)
     workflow_files = filter(py_search_regex.search, os.listdir(workflow_path))
 
-    def form_module(fp):
-        return '.' + os.path.splitext(fp)[0]
-
-    workflows = map(form_module, workflow_files)
-    # import parent module / namespace
-    importlib.import_module('eplaunch.workflows.builtin.workflows')
     modules = []
-    for workflow in workflows:
-        if '__init__' in workflow:
+    for this_file in workflow_files:
+        if '__init__.py' in this_file:
             continue
-        if not workflow.startswith('__'):
-            modules.append(importlib.import_module(workflow, package="eplaunch.workflows.builtin.workflows"))
+        this_file_path = os.path.join(workflow_path, this_file)
+        module_spec = import_util.spec_from_file_location('workflow_module', this_file_path)
+        module = import_util.module_from_spec(module_spec)
+        modules.append(module)
+        module_spec.loader.exec_module(module)
 
     workflow_classes = []
     for this_module in modules:
@@ -41,4 +39,6 @@ def get_workflows(workflow_path=None):
             workflow_base_class_name = 'BaseWorkflow'
             if num_inheritance == 1 and workflow_base_class_name in base_class_name:
                 workflow_classes.append(this_class_type)
+
+    workflow_classes.sort(key=lambda w: w.__name__)
     return workflow_classes

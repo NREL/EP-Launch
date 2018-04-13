@@ -1,16 +1,16 @@
 from eplaunch.workflows.base import BaseWorkflow
 
 
-class AppGPostProcessWorkflow(BaseWorkflow):
+class SlabWorkflow(BaseWorkflow):
 
     def name(self):
-        return "AppGPostProcess"
+        return "Basement"
 
     def description(self):
-        return "Run Appendix G Post-processor"
+        return "Run Slab Pre-processor"
 
     def get_file_types(self):
-        return ["*.html"]
+        return ["*.idf"]
 
     def get_extra_data(self):
         return {"Hey, it's extra": "data"}

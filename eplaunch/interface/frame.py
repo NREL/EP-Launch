@@ -76,17 +76,7 @@ class EpLaunchFrame(wx.Frame):
         self.tb.SetToolBitmapSize(t_size)
 
         ch_id = wx.NewId()
-        # workflow_choices = [
-        #     "EnergyPlus SI (*.idf, *.imf)",
-        #     "EnergyPlus IP (*.idf, *.imf)",
-        #     "AppGPostProcess (*.html)",
-        #     "CalcSoilSurfTemp (*.epw)",
-        #     "CoeffCheck (*.cci)",
-        #     "CoeffConv (*.coi)",
-        #     "Basement (*.idf)",
-        #     "Slab (*.idf)",
-        #     "File Operations (*.*)"
-        # ]
+
         workflow_choices = []
         built_in_workflow_classes = workflow_manager.get_workflows()
         for workflow_class in built_in_workflow_classes:

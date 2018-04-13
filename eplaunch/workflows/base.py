@@ -6,9 +6,6 @@ class BaseWorkflow(object):
     def description(self):
         raise NotImplementedError("description function needs to be implemented in derived workflow class")
 
-    def entry_point(self):
-        raise NotImplementedError("entry_point needs to be implemented in derived workflow class")
-
     def get_file_types(self):
         raise NotImplementedError("get_file_types needs to be implemented in derived workflow class")
 

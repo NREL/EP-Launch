@@ -1,16 +1,16 @@
 from eplaunch.workflows.base import BaseWorkflow
 
 
-class AppGPostProcessWorkflow(BaseWorkflow):
+class CalcSoilSurfTempWorkflow(BaseWorkflow):
 
     def name(self):
-        return "AppGPostProcess"
+        return "CalcSoilSurfTemp"
 
     def description(self):
-        return "Run Appendix G Post-processor"
+        return "Run CalcSoilSurfTemp Preprocessor"
 
     def get_file_types(self):
-        return ["*.html"]
+        return ["*.epw"]
 
     def get_extra_data(self):
         return {"Hey, it's extra": "data"}

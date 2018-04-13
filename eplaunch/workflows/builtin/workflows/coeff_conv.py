@@ -1,16 +1,16 @@
 from eplaunch.workflows.base import BaseWorkflow
 
 
-class AppGPostProcessWorkflow(BaseWorkflow):
+class CoeffConvWorkflow(BaseWorkflow):
 
     def name(self):
-        return "AppGPostProcess"
+        return "CoeffConv"
 
     def description(self):
-        return "Run Appendix G Post-processor"
+        return "Run CoeffConv"
 
     def get_file_types(self):
-        return ["*.html"]
+        return ["*.coi"]
 
     def get_extra_data(self):
         return {"Hey, it's extra": "data"}

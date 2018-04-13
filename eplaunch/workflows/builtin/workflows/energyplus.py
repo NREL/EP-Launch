@@ -9,9 +9,6 @@ class EnergyPlusWorkflowSI(BaseWorkflow):
     def description(self):
         return "Run EnergyPlus with SI unit system"
 
-    def entry_point(self):
-        return "Hey it's EnergyPlus entry point!"
-
     def get_file_types(self):
         return ["*.idf", "*.imf"]
 
@@ -26,9 +23,6 @@ class EnergyPlusWorkflowIP(BaseWorkflow):
 
     def description(self):
         return "Run EnergyPlus with IP unit system"
-
-    def entry_point(self):
-        return "Hey it's EnergyPlus entry point!"
 
     def get_file_types(self):
         return ["*.idf", "*.imf"]
