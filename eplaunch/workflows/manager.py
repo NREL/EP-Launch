@@ -7,7 +7,7 @@ import re
 
 def get_workflows(workflow_path=None):
     this_file_directory_path = os.path.dirname(os.path.realpath(__file__))
-    built_in_workflow_directory = os.path.join(this_file_directory_path, 'builtin', 'workflows')
+    built_in_workflow_directory = os.path.join(this_file_directory_path, 'default')
 
     if not workflow_path:
         workflow_path = built_in_workflow_directory
@@ -30,13 +30,13 @@ def get_workflows(workflow_path=None):
         class_members = inspect.getmembers(this_module, inspect.isclass)
         for this_class in class_members:
             this_class_name, this_class_type = this_class
-            # so right here, we could check the issubclass, but this will also match for the BaseWorkflow, which
+            # so right here, we could check the issubclass, but this will also match for the BaseEPLaunch3Workflow, which
             # is likely imported in each workflow class.  No need to do that.  For now I'm going to check the direct
             # parent class of this class to verify we only get direct descendants.  We can evaluate this later.
-            # if issubclass(this_class_type, BaseWorkflow):
+            # if issubclass(this_class_type, BaseEPLaunch3Workflow):
             num_inheritance = len(this_class_type.__bases__)
             base_class_name = this_class_type.__bases__[0].__name__
-            workflow_base_class_name = 'BaseWorkflow'
+            workflow_base_class_name = 'BaseEPLaunch3Workflow'
             if num_inheritance == 1 and workflow_base_class_name in base_class_name:
                 workflow_classes.append(this_class_type)
 

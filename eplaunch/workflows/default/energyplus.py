@@ -1,7 +1,7 @@
-from eplaunch.workflows.base import BaseWorkflow
+from eplaunch.workflows.base import BaseEPLaunch3Workflow
 
 
-class EnergyPlusWorkflowSI(BaseWorkflow):
+class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
 
     def name(self):
         return "EnergyPlus SI"
@@ -16,7 +16,7 @@ class EnergyPlusWorkflowSI(BaseWorkflow):
         return {"Hey, it's extra": "data"}
 
 
-class EnergyPlusWorkflowIP(BaseWorkflow):
+class EnergyPlusWorkflowIP(BaseEPLaunch3Workflow):
 
     def name(self):
         return "EnergyPlus IP"

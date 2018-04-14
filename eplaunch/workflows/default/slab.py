@@ -1,7 +1,7 @@
-from eplaunch.workflows.base import BaseWorkflow
+from eplaunch.workflows.base import BaseEPLaunch3Workflow
 
 
-class SlabWorkflow(BaseWorkflow):
+class SlabWorkflow(BaseEPLaunch3Workflow):
 
     def name(self):
         return "Basement"

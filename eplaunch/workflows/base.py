@@ -1,4 +1,4 @@
-class BaseWorkflow(object):
+class BaseEPLaunch3Workflow(object):
 
     def name(self):
         raise NotImplementedError("name function needs to be implemented in derived workflow class")

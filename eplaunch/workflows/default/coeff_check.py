@@ -1,7 +1,7 @@
-from eplaunch.workflows.base import BaseWorkflow
+from eplaunch.workflows.base import BaseEPLaunch3Workflow
 
 
-class CoeffCheckWorkflow(BaseWorkflow):
+class CoeffCheckWorkflow(BaseEPLaunch3Workflow):
 
     def name(self):
         return "CoeffCheck"
