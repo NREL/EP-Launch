@@ -15,3 +15,10 @@ class BaseEPLaunch3Workflow(object):
         :return: Dictionary of string, string
         """
         return {}
+
+    def get_interface_columns(self):
+        """
+        Returns an array of column names for the interface; defaults to empty so it is not required
+        :return:
+        """
+        return []

@@ -1,0 +1,20 @@
+{
+  "workflows": {
+    "EnergyPlus SI": {
+      "files": {
+        "5Zone.idf": {
+          "Errors [-]": 5,
+          "Floor Area [m2]": 5000
+        },
+        "6Zone.idf": {
+          "Errors [-]": 5,
+          "Floor Area [m2]": 6000
+        },
+        "8Zone.idf": {
+          "Errors [-]": 5,
+          "Floor Area [m2]": 7000
+        }
+      }
+    }
+  }
+}

@@ -1,8 +1,9 @@
+import json
+import os
+import time
 from gettext import gettext as _
 
 import wx
-import os
-import time
 
 from eplaunch.interface import command_line_dialog
 from eplaunch.interface import viewer_dialog
@@ -13,7 +14,6 @@ from eplaunch.workflows import manager as workflow_manager
 # wx callbacks need an event argument even though we usually don't use it, so the next line disables that check
 # noinspection PyUnusedLocal
 class EpLaunchFrame(wx.Frame):
-
     def __init__(self, *args, **kwargs):
         kwargs["style"] = wx.DEFAULT_FRAME_STYLE
         wx.Frame.__init__(self, *args, **kwargs)
@@ -25,7 +25,7 @@ class EpLaunchFrame(wx.Frame):
         # self.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.handle_dir_item_selected, tree)
         self.Bind(wx.EVT_TREE_ITEM_RIGHT_CLICK, self.handle_dir_right_click, tree)
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.handle_dir_selection_changed, tree)
-    #
+        #
         self.right_pane = wx.Panel(self.split_left_right, wx.ID_ANY)
 
         self.split_top_bottom = wx.SplitterWindow(self.right_pane, wx.ID_ANY)
@@ -33,7 +33,7 @@ class EpLaunchFrame(wx.Frame):
         self.right_bottom_pane = wx.Panel(self.split_top_bottom, wx.ID_ANY)
 
         self.raw_files = wx.ListCtrl(self.right_bottom_pane, wx.ID_ANY,
-                                           style=wx.LC_HRULES | wx.LC_REPORT | wx.LC_VRULES)
+                                     style=wx.LC_HRULES | wx.LC_REPORT | wx.LC_VRULES)
         self.list_ctrl_files = wx.ListCtrl(self.right_top_pane, wx.ID_ANY,
                                            style=wx.LC_HRULES | wx.LC_REPORT | wx.LC_VRULES)
 
@@ -44,10 +44,13 @@ class EpLaunchFrame(wx.Frame):
         self.tb = None
         self.out_tb = None
         self.menu_bar = None
+        self.current_workflow = None
+        self.workflow_instances = None
 
         self.build_primary_toolbar()
         self.build_out_toolbar()
         self.build_menu_bar()
+        self.reset_list_columns()
 
         self.__set_properties()
         self.__do_layout()
@@ -80,9 +83,11 @@ class EpLaunchFrame(wx.Frame):
         ch_id = wx.NewId()
 
         workflow_choices = []
+        self.workflow_instances = []
         built_in_workflow_classes = workflow_manager.get_workflows()
         for workflow_class in built_in_workflow_classes:
             workflow_instance = workflow_class()
+            self.workflow_instances.append(workflow_instance)
             workflow_name = workflow_instance.name()
             workflow_file_types = workflow_instance.get_file_types()
 
@@ -98,10 +103,11 @@ class EpLaunchFrame(wx.Frame):
 
             workflow_choices.append("%s %s" % (workflow_name, file_type_string))
 
+        # Need tp handle if there aren't any workflows
         workflow_choice = wx.Choice(self.tb, ch_id, choices=workflow_choices)
         workflow_choice.SetSelection(0)
-        self.current_workflow = workflow_choices[0]
-        self.current_extension = ".idf"
+        self.current_workflow = self.workflow_instances[0]
+        # self.current_extension = ".idf"
         self.tb.AddControl(workflow_choice)
         self.Bind(wx.EVT_CHOICE, self.handle_choice_selection_change, workflow_choice)
 
@@ -132,7 +138,8 @@ class EpLaunchFrame(wx.Frame):
         )
 
         tb_hide_browser = self.tb.AddTool(
-            80, "File Browser", remove_bmp, wx.NullBitmap, wx.ITEM_CHECK, "File Browser", "Long help for 'File Browser'", None
+            80, "File Browser", remove_bmp, wx.NullBitmap, wx.ITEM_CHECK, "File Browser",
+            "Long help for 'File Browser'", None
         )
         self.Bind(wx.EVT_TOOL, self.handle_tb_hide_browser, tb_hide_browser)
 
@@ -229,8 +236,8 @@ class EpLaunchFrame(wx.Frame):
         folder_menu.Append(311, "Remove Current Folder from Favorites")
         self.menu_bar.Append(folder_menu, "F&older")
         # disable the menu items that are just information
-        self.menu_bar.Enable(31,False)
-        self.menu_bar.Enable(36,False)
+        self.menu_bar.Enable(31, False)
+        self.menu_bar.Enable(36, False)
 
         weather_menu = wx.Menu()
         weather_menu.Append(41, "Select..")
@@ -252,8 +259,8 @@ class EpLaunchFrame(wx.Frame):
         weather_menu.Append(412, "Remove Weather from Favorites")
         self.menu_bar.Append(weather_menu, "&Weather")
         # disable the menu items that are just information
-        self.menu_bar.Enable(42,False)
-        self.menu_bar.Enable(47,False)
+        self.menu_bar.Enable(42, False)
+        self.menu_bar.Enable(47, False)
 
         output_menu = wx.Menu()
 
@@ -263,19 +270,19 @@ class EpLaunchFrame(wx.Frame):
         out_table_menu.Append(503, "Table.txt")
         out_table_menu.Append(504, "Table.html")
         out_table_menu.Append(505, "Table.xml")
-        output_menu.Append(599, "Table",out_table_menu)
+        output_menu.Append(599, "Table", out_table_menu)
 
         out_variable_menu = wx.Menu()
         out_variable_menu.Append(506, ".csv")
         out_variable_menu.Append(507, ".tab")
         out_variable_menu.Append(508, ".txt")
-        output_menu.Append(598, "Variables",out_variable_menu)
+        output_menu.Append(598, "Variables", out_variable_menu)
 
         out_meter_menu = wx.Menu()
         out_meter_menu.Append(509, "Meter.csv")
         out_meter_menu.Append(510, "Meter.tab")
         out_meter_menu.Append(511, "Meter.txt")
-        output_menu.Append(597, "Meter",out_meter_menu)
+        output_menu.Append(597, "Meter", out_meter_menu)
 
         output_menu.Append(513, ".err")
         output_menu.Append(514, ".end")
@@ -293,20 +300,20 @@ class EpLaunchFrame(wx.Frame):
         out_sizing_menu.Append(524, "Ssz.csv")
         out_sizing_menu.Append(525, "Ssz.tab")
         out_sizing_menu.Append(526, "Ssz.txt")
-        output_menu.Append(596, "Sizing",out_sizing_menu)
+        output_menu.Append(596, "Sizing", out_sizing_menu)
 
         out_delight_menu = wx.Menu()
         out_delight_menu.Append(527, "DElight.in")
         out_delight_menu.Append(528, "DElight.out")
         out_delight_menu.Append(529, "DElight.eldmp")
         out_delight_menu.Append(530, "DElight.dfdmp")
-        output_menu.Append(595, "DElight",out_delight_menu)
+        output_menu.Append(595, "DElight", out_delight_menu)
 
         out_map_menu = wx.Menu()
         out_map_menu.Append(531, "Map.csv")
         out_map_menu.Append(532, "Map.tab")
         out_map_menu.Append(533, "Map.txt")
-        output_menu.Append(594, "Map",out_map_menu)
+        output_menu.Append(594, "Map", out_map_menu)
 
         output_menu.Append(534, "Screen.csv")
         output_menu.Append(535, ".expidf")
@@ -332,43 +339,43 @@ class EpLaunchFrame(wx.Frame):
         out_bsmt_menu.Append(553, "_bsmt.out")
         out_bsmt_menu.Append(554, "_bsmt.audit")
         out_bsmt_menu.Append(555, "_bsmt.csv")
-        output_menu.Append(593, "bsmt",out_bsmt_menu)
+        output_menu.Append(593, "bsmt", out_bsmt_menu)
 
         out_slab_menu = wx.Menu()
         out_slab_menu.Append(556, ".slab")
         out_slab_menu.Append(557, "_slab.out")
         out_slab_menu.Append(558, "_slab.ger")
-        output_menu.Append(592, "slab",out_slab_menu)
+        output_menu.Append(592, "slab", out_slab_menu)
 
         self.menu_bar.Append(output_menu, "&Output")
 
         options_menu = wx.Menu()
         option_version_menu = wx.Menu()
-        option_version_menu.Append(711,"EnergyPlus 8.6.0")
-        option_version_menu.Append(712,"EnergyPlus 8.7.0")
-        option_version_menu.Append(713,"EnergyPlus 8.8.0")
-        option_version_menu.Append(714,"EnergyPlus 8.9.0")
-        options_menu.Append(71, "Version",option_version_menu)
+        option_version_menu.Append(711, "EnergyPlus 8.6.0")
+        option_version_menu.Append(712, "EnergyPlus 8.7.0")
+        option_version_menu.Append(713, "EnergyPlus 8.8.0")
+        option_version_menu.Append(714, "EnergyPlus 8.9.0")
+        options_menu.Append(71, "Version", option_version_menu)
         options_menu.AppendSeparator()
         menu_option_workflow_directories = options_menu.Append(72, "Workflow Directories...")
         self.Bind(wx.EVT_MENU, self.handle_menu_option_workflow_directories, menu_option_workflow_directories)
-        menu_workflow_order= options_menu.Append(73, "Workflow Order...")
+        menu_workflow_order = options_menu.Append(73, "Workflow Order...")
         self.Bind(wx.EVT_MENU, self.handle_menu_workflow_order, menu_workflow_order)
         options_menu.AppendSeparator()
 
         option_favorite_menu = wx.Menu()
-        option_favorite_menu.Append(741,"4")
-        option_favorite_menu.Append(742,"8")
-        option_favorite_menu.Append(743,"12")
-        option_favorite_menu.Append(744,"Clear")
-        options_menu.Append(74, "Favorites",option_favorite_menu)
+        option_favorite_menu.Append(741, "4")
+        option_favorite_menu.Append(742, "8")
+        option_favorite_menu.Append(743, "12")
+        option_favorite_menu.Append(744, "Clear")
+        options_menu.Append(74, "Favorites", option_favorite_menu)
 
         option_recent_menu = wx.Menu()
-        option_recent_menu.Append(741,"4")
-        option_recent_menu.Append(742,"8")
-        option_recent_menu.Append(743,"12")
-        option_recent_menu.Append(744,"Clear")
-        options_menu.Append(74, "Recent",option_recent_menu)
+        option_recent_menu.Append(741, "4")
+        option_recent_menu.Append(742, "8")
+        option_recent_menu.Append(743, "12")
+        option_recent_menu.Append(744, "Clear")
+        options_menu.Append(74, "Recent", option_recent_menu)
 
         options_menu.Append(75, "Remote...")
         menu_viewers = options_menu.Append(77, "Viewers...")
@@ -387,7 +394,7 @@ class EpLaunchFrame(wx.Frame):
         help_menu.Append(62, "EnergyPlus Input Output Reference")
         help_menu.Append(63, "EnergyPlus Output Details and Examples")
         help_menu.Append(64, "EnergyPlus Engineering Reference")
-        help_menu.Append(65, "EnergyPlus Auxiliar Programs")
+        help_menu.Append(65, "EnergyPlus Auxiliary Programs")
         help_menu.Append(66, "Application Guide for Plant Loops")
         help_menu.Append(67, "Application Guide for EMS")
         help_menu.Append(68, "Using EnergyPlus for Compliance")
@@ -404,42 +411,62 @@ class EpLaunchFrame(wx.Frame):
 
         self.SetMenuBar(self.menu_bar)
 
+    def reset_list_columns(self):
+        self.list_ctrl_files.DeleteAllColumns()
+        self.list_ctrl_files.AppendColumn(_("File Name"), format=wx.LIST_FORMAT_LEFT, width=-1)
+        current_workflow_columns = self.current_workflow.get_interface_columns()
+        for current_column in current_workflow_columns:
+            self.list_ctrl_files.AppendColumn(_(current_column), format=wx.LIST_FORMAT_LEFT, width=-1)
+
+    def get_files_in_directory(self):
+        return ["5Zone.idf", "6Zone.idf", "7Zone.idf", "8Zone.idf"]
+
+    def reset_file_list(self):
+        # this will mimic for now the effect of having a JSON cache file in the folder
+        # some of this should eventually be in a function handling the "Changed directory" event
+        this_dir = os.path.dirname(os.path.realpath(__file__))
+        file_blob = open(os.path.join(this_dir, 'fake_cache_file.json'), 'r').read()
+        content = json.loads(file_blob)
+        workflows = content['workflows']
+        current_workflow_name = self.current_workflow.name()
+        files_in_workflow = {}
+        if current_workflow_name in workflows:
+            files_in_workflow = workflows[current_workflow_name]['files']
+        files_in_dir = self.get_files_in_directory()
+        rows = []
+        for file_name in files_in_dir:
+            row = [file_name]
+            if file_name in files_in_workflow:
+                cached_file_info = workflows[current_workflow_name]['files'][file_name]
+                for column in self.current_workflow.get_interface_columns():
+                    if column in cached_file_info:
+                        row.append(cached_file_info[column])
+            rows.append(row)
+
+        self.list_ctrl_files.DeleteAllItems()
+        for row in rows:
+            self.list_ctrl_files.Append(row)
+
     def __set_properties(self):
         self.SetTitle(_("EP-Launch 3"))
-        self.list_ctrl_files.AppendColumn(_("Status"), format=wx.LIST_FORMAT_LEFT, width=-1)
-        self.list_ctrl_files.AppendColumn(_("File Name"), format=wx.LIST_FORMAT_LEFT, width=-1)
-        self.list_ctrl_files.AppendColumn(_("Weather File"), format=wx.LIST_FORMAT_LEFT, width=-1)
-        self.list_ctrl_files.AppendColumn(_("Size"), format=wx.LIST_FORMAT_LEFT, width=-1)
-        self.list_ctrl_files.AppendColumn(_("Errors"), format=wx.LIST_FORMAT_LEFT, width=-1)
-        self.list_ctrl_files.AppendColumn(_("EUI"), format=wx.LIST_FORMAT_LEFT, width=-1)
-        self.list_ctrl_files.AppendColumn(_("Floor Area"), format=wx.LIST_FORMAT_LEFT, width=-1)
+        # self.list_ctrl_files.AppendColumn(_("Status"), format=wx.LIST_FORMAT_LEFT, width=-1)
+        # self.list_ctrl_files.AppendColumn(_("File Name"), format=wx.LIST_FORMAT_LEFT, width=-1)
+        # self.list_ctrl_files.AppendColumn(_("Weather File"), format=wx.LIST_FORMAT_LEFT, width=-1)
+        # self.list_ctrl_files.AppendColumn(_("Size"), format=wx.LIST_FORMAT_LEFT, width=-1)
+        # self.list_ctrl_files.AppendColumn(_("Errors"), format=wx.LIST_FORMAT_LEFT, width=-1)
+        # self.list_ctrl_files.AppendColumn(_("EUI"), format=wx.LIST_FORMAT_LEFT, width=-1)
+        # self.list_ctrl_files.AppendColumn(_("Floor Area"), format=wx.LIST_FORMAT_LEFT, width=-1)
+
+        self.reset_file_list()
+
+        self.raw_files.AppendColumn(_("File Name"), format=wx.LIST_FORMAT_LEFT, width=-1)
+        self.raw_files.AppendColumn(_("Date Modified"), format=wx.LIST_FORMAT_LEFT, width=-1)
+        self.raw_files.AppendColumn(_("Type"), format=wx.LIST_FORMAT_LEFT, width=-1)
+        self.raw_files.AppendColumn(_("Size"), format=wx.LIST_FORMAT_RIGHT, width=-1)
 
         rows = [
-            ["Running", "5Zone.idf", "Chicago.TMY", "8172", "-", "-", "-"],
-            ["Complete", "6Zone.idf", "Chicago.TMY", "9847", "0", "1.58", "765"],
-            ["Old", "7Zone.idf", "Chicago.TMY", "8172", "-", "-", "-"],
-            ["Queued", "8Zone.idf", "Chicago.TMY", "8172", "-", "-", "-"]
-        ]
-
-        index = 0
-        for row in rows:
-            self.list_ctrl_files.InsertItem(index, row[0])
-            self.list_ctrl_files.SetItem(index, 1, row[1])
-            self.list_ctrl_files.SetItem(index, 2, row[2])
-            self.list_ctrl_files.SetItem(index, 3, row[3])
-            self.list_ctrl_files.SetItem(index, 4, row[4])
-            self.list_ctrl_files.SetItem(index, 5, row[5])
-            self.list_ctrl_files.SetItem(index, 6, row[6])
-            index = index + 1
-
-        self.raw_files.AppendColumn(_("File Name"),format=wx.LIST_FORMAT_LEFT,width=-1)
-        self.raw_files.AppendColumn(_("Date Modified"),format=wx.LIST_FORMAT_LEFT,width=-1)
-        self.raw_files.AppendColumn(_("Type"),format=wx.LIST_FORMAT_LEFT,width=-1)
-        self.raw_files.AppendColumn(_("Size"),format=wx.LIST_FORMAT_RIGHT,width=-1)
-
-        rows = [
-            ["5Zone.idf", "9/17/2017 9:22 AM", "EnergyPlus Input File","153 KB"],
-            ["5Zone.html", "9/17/2017 9:22 AM", "Browser","5478 KB"]
+            ["5Zone.idf", "9/17/2017 9:22 AM", "EnergyPlus Input File", "153 KB"],
+            ["5Zone.html", "9/17/2017 9:22 AM", "Browser", "5478 KB"]
         ]
         index = 0
         for row in rows:
@@ -461,14 +488,14 @@ class EpLaunchFrame(wx.Frame):
         sizer_left.Add(self.dir_ctrl_1, 1, wx.EXPAND, 0)
         self.left_pane.SetSizer(sizer_left)
 
-        sizer_top.Add(self.list_ctrl_files,1,wx.EXPAND,0)
-#        sizer_top.Add(self.text_ctrl_1, 1, wx.EXPAND,0)
+        sizer_top.Add(self.list_ctrl_files, 1, wx.EXPAND, 0)
+        #        sizer_top.Add(self.text_ctrl_1, 1, wx.EXPAND,0)
         self.right_top_pane.SetSizer(sizer_top)
 
-        sizer_bottom.Add(self.raw_files, 1, wx.EXPAND,0)
+        sizer_bottom.Add(self.raw_files, 1, wx.EXPAND, 0)
         self.right_bottom_pane.SetSizer(sizer_bottom)
 
-        #not sure why but it works better if you make the split and unplit it right away
+        # not sure why but it works better if you make the split and unplit it right away
         self.split_top_bottom.SplitHorizontally(self.right_top_pane, self.right_bottom_pane)
         self.split_top_bottom.Unsplit(toRemove=self.right_bottom_pane)
 
@@ -518,19 +545,22 @@ class EpLaunchFrame(wx.Frame):
         # event.Skip()
 
     def handle_dir_selection_changed(self, event):
-        #self.status_bar.SetStatusText("Dir-SelectionChanged")
+        # self.status_bar.SetStatusText("Dir-SelectionChanged")
         self.directory_name = self.dir_ctrl_1.GetPath()
-        self.status_bar.SetStatusText( self.directory_name)
+        self.status_bar.SetStatusText(self.directory_name)
         self.update_file_lists()
         event.Skip()
 
     def handle_choice_selection_change(self, event):
+        self.current_workflow = self.workflow_instances[event.Selection]
+        self.reset_list_columns()
+        self.reset_file_list()
         self.status_bar.SetStatusText('Choice selection changed to ' + event.String)
 
     def handle_tb_weather(self, event):
         self.status_bar.SetStatusText('Clicked Weather toolbar item')
 
-    def handle_tb_hide_browser(self,event):
+    def handle_tb_hide_browser(self, event):
         # the following remove the top pane of the right hand splitter
         if self.split_top_bottom.IsSplit():
             self.split_top_bottom.Unsplit(toRemove=self.right_bottom_pane)
@@ -544,7 +574,7 @@ class EpLaunchFrame(wx.Frame):
         # May need to refresh the main UI if something changed in the settings
         workflow_dir_dialog.Destroy()
 
-    def handle_menu_workflow_order(self,event):
+    def handle_menu_workflow_order(self, event):
 
         items = [
             "EnergyPlus SI (*.IDF)",
@@ -572,14 +602,14 @@ class EpLaunchFrame(wx.Frame):
             #         wx.LogMessage("Your most preferred item is \"%s\"" % n)
             #         break
 
-    def handle_menu_command_line(self,event):
+    def handle_menu_command_line(self, event):
         cmdline_dialog = command_line_dialog.CommandLineDialog(None)
         return_value = cmdline_dialog.ShowModal()
         print(return_value)
         # May need to refresh the main UI if something changed in the settings
         cmdline_dialog.Destroy()
 
-    def handle_menu_output_toolbar(self,event):
+    def handle_menu_output_toolbar(self, event):
         items = [
             "Table.htm.",
             "Meters.csv",
@@ -604,7 +634,7 @@ class EpLaunchFrame(wx.Frame):
         if dlg.ShowModal() == wx.ID_OK:
             order = dlg.GetOrder()
 
-    def handle_menu_columns(self,event):
+    def handle_menu_columns(self, event):
         items = [
             "Status",
             "File Name",
@@ -625,7 +655,7 @@ class EpLaunchFrame(wx.Frame):
         if dlg.ShowModal() == wx.ID_OK:
             order = dlg.GetOrder()
 
-    def handle_menu_viewers(self,event):
+    def handle_menu_viewers(self, event):
         file_viewer_dialog = viewer_dialog.ViewerDialog(None)
         return_value = file_viewer_dialog.ShowModal()
         print(return_value)
@@ -634,7 +664,7 @@ class EpLaunchFrame(wx.Frame):
 
     def update_file_lists(self):
         self.list_ctrl_files.DeleteAllItems()
-        index =0
+        index = 0
         files = os.listdir(self.directory_name)
         for file in files:
             if file.endswith(self.current_extension):
@@ -646,21 +676,20 @@ class EpLaunchFrame(wx.Frame):
                 self.list_ctrl_files.SetItem(index, 5, "")
                 self.list_ctrl_files.SetItem(index, 6, "")
                 index = index + 1
-        self.list_ctrl_files.SetColumnWidth(1,-1) #autosize column width
-        
+        self.list_ctrl_files.SetColumnWidth(1, -1)  # autosize column width
+
         self.raw_files.DeleteAllItems()
         index = 0
         for file in files:
             file_with_path = os.path.join(self.directory_name, file)
             self.raw_files.InsertItem(index, file)
-            file_modified_time = time.localtime( os.path.getmtime(file_with_path) )
-            self.raw_files.SetItem(index, 1, time.asctime(file_modified_time)) # date modified
+            file_modified_time = time.localtime(os.path.getmtime(file_with_path))
+            self.raw_files.SetItem(index, 1, time.asctime(file_modified_time))  # date modified
             root, ext = os.path.splitext(file_with_path)
-            self.raw_files.SetItem(index, 2, ext) # type
-            self.raw_files.SetItem(index, 3, '{0:12,.0f} KB'.format(os.path.getsize(file_with_path) / 1024)) # size
+            self.raw_files.SetItem(index, 2, ext)  # type
+            self.raw_files.SetItem(index, 3, '{0:12,.0f} KB'.format(os.path.getsize(file_with_path) / 1024))  # size
             index = index + 1
-        self.raw_files.SetColumnWidth(0,-1 )
-        self.raw_files.SetColumnWidth(1,-1 )
-        self.raw_files.SetColumnWidth(2,-1 )
-        self.raw_files.SetColumnWidth(3,-1 )
-
+        self.raw_files.SetColumnWidth(0, -1)
+        self.raw_files.SetColumnWidth(1, -1)
+        self.raw_files.SetColumnWidth(2, -1)
+        self.raw_files.SetColumnWidth(3, -1)

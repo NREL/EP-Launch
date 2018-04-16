@@ -14,3 +14,6 @@ class AppGPostProcessWorkflow(BaseEPLaunch3Workflow):
 
     def get_extra_data(self):
         return {"Hey, it's extra": "data"}
+
+    def get_interface_columns(self):
+        return ['AppG Errors [-]', 'AppG Something [-]']
