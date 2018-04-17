@@ -1,6 +1,6 @@
 import time
 
-from eplaunch.workflows.base import BaseEPLaunch3Workflow
+from eplaunch.workflows.base import BaseEPLaunch3Workflow, EPLaunch3WorkflowResponse
 
 
 class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
@@ -20,8 +20,12 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
     def get_interface_columns(self):
         return ['Errors [-]', 'Floor Area [m2]', 'EUI [J]']
 
-    def main(self):
-        time.sleep(10)
+    def main(self, args):
+        for i in range(5):
+            time.sleep(1)
+            if self.abort:
+                return EPLaunch3WorkflowResponse(success=False, message="Abort command accepted!")
+        return EPLaunch3WorkflowResponse(success=True, message="Ran EnergyPlus OK!")
 
 
 class EnergyPlusWorkflowIP(BaseEPLaunch3Workflow):
@@ -38,5 +42,5 @@ class EnergyPlusWorkflowIP(BaseEPLaunch3Workflow):
     def get_extra_data(self):
         return {"Hey, it's extra": "data"}
 
-    def main(self):
+    def main(self, args):
         pass

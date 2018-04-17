@@ -1,4 +1,14 @@
+class EPLaunch3WorkflowResponse(object):
+
+    def __init__(self, success, message, **extra_data):
+        self.success = success
+        self.message = message
+        self.extra_data = extra_data
+
+
 class BaseEPLaunch3Workflow(object):
+
+    abort = False
 
     def name(self):
         raise NotImplementedError("name function needs to be implemented in derived workflow class")
@@ -23,5 +33,9 @@ class BaseEPLaunch3Workflow(object):
         """
         return []
 
-    def main(self):
+    def main(self, args):
+        """
+        The actual running operation for the workflow, should check self.abort periodically to allow exiting
+        :return: Should return an EPLaunch3WorkflowResponse instance
+        """
         raise NotImplementedError("main function needs to be implemented in derived workflow class")

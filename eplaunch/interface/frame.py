@@ -5,11 +5,12 @@ from gettext import gettext as _
 
 import wx
 
-from eplaunch.interface.exceptions import EPLaunchDevException
+from eplaunch.interface.exceptions import EPLaunchDevException, EPLaunchWorkflowFormulationException
 from eplaunch.interface import command_line_dialog
 from eplaunch.interface import viewer_dialog
 from eplaunch.interface import workflow_directories_dialog
 from eplaunch.workflows import manager as workflow_manager
+from eplaunch.interface.workflow_processing import event_result, WorkerThread
 
 
 # wx callbacks need an event argument even though we usually don't use it, so the next line disables that check
@@ -28,6 +29,7 @@ class EpLaunchFrame(wx.Frame):
         self.Bind(wx.EVT_TREE_ITEM_RIGHT_CLICK, self.handle_dir_right_click, tree)
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.handle_dir_selection_changed, tree)
         #
+        event_result(self, self.handle_workflow_done)
         self.right_pane = wx.Panel(self.split_left_right, wx.ID_ANY)
 
         self.split_top_bottom = wx.SplitterWindow(self.right_pane, wx.ID_ANY)
@@ -53,6 +55,9 @@ class EpLaunchFrame(wx.Frame):
         self.menu_output_toolbar = None
         self.menu_columns = None
         self.menu_command_line = None
+
+        # this is currently just a single background thread, eventually we'll need to keep a list of them
+        self.workflow_worker = None
 
         # these are things that only need to be done once, at least for now
         self.build_primary_toolbar()
@@ -97,12 +102,13 @@ class EpLaunchFrame(wx.Frame):
         tb_weather = self.tb.AddTool(
             10, "Weather", file_open_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Weather", "Long help for 'Weather'", None
         )
-        self.Bind(wx.EVT_TOOL, self.handle_tb_weather, tb_weather)
+        self.tb.Bind(wx.EVT_TOOL, self.handle_tb_weather, tb_weather)
 
         forward_bmp = wx.ArtProvider.GetBitmap(wx.ART_GO_FORWARD, wx.ART_TOOLBAR, t_size)
-        self.tb.AddTool(
+        tb_run = self.tb.AddTool(
             20, "Run", forward_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Run", "Long help for 'Run'", None
         )
+        self.tb.Bind(wx.EVT_TOOL, self.handle_tb_run, tb_run)
 
         error_bmp = wx.ArtProvider.GetBitmap(wx.ART_ERROR, wx.ART_TOOLBAR, t_size)
         self.tb.AddTool(
@@ -563,6 +569,28 @@ class EpLaunchFrame(wx.Frame):
 
     def handle_menu_file_run(self, event):
         self.status_bar.SetStatusText('Clicked File->Run')
+        if not self.workflow_worker:
+            self.status_bar.SetLabel('Starting computation')
+            self.workflow_worker = WorkerThread(self, self.current_workflow, None)
+
+    def handle_tb_run(self, event):
+        self.status_bar.SetStatusText('Clicked Run Toolbar Item')
+        if not self.workflow_worker:
+            self.status_bar.SetLabel('Starting computation')
+            self.workflow_worker = WorkerThread(self, self.current_workflow, None)
+
+    def handle_workflow_done(self, event):
+        status_message = 'Invalid workflow response'
+        try:
+            successful = event.data.success
+            if successful:
+                status_message = 'Successfully completed a workflow: ' + event.data.message
+            else:
+                status_message = 'Workflow failed: ' + event.data.message
+        except Exception as e:
+            status_message = 'Workflow response was invalid'
+        self.status_bar.SetStatusText(status_message)
+        self.workflow_worker = None
 
     def handle_menu_file_cancel_selected(self, event):
         self.status_bar.SetStatusText('Clicked File->CancelSelected')

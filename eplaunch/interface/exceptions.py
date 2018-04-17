@@ -6,3 +6,7 @@ class EPLaunchFileException(Exception):
 
 class EPLaunchDevException(Exception):
     pass
+
+
+class EPLaunchWorkflowFormulationException(Exception):
+    pass
