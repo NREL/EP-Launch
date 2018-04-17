@@ -20,12 +20,12 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
     def get_interface_columns(self):
         return ['Errors [-]', 'Floor Area [m2]', 'EUI [J]']
 
-    def main(self, args):
+    def main(self, file_path, args):
         for i in range(5):
             time.sleep(1)
             if self.abort:
                 return EPLaunch3WorkflowResponse(success=False, message="Abort command accepted!")
-        return EPLaunch3WorkflowResponse(success=True, message="Ran EnergyPlus OK!")
+        return EPLaunch3WorkflowResponse(success=True, message="Ran EnergyPlus OK for file: %s!" % file_path)
 
 
 class EnergyPlusWorkflowIP(BaseEPLaunch3Workflow):
@@ -42,5 +42,5 @@ class EnergyPlusWorkflowIP(BaseEPLaunch3Workflow):
     def get_extra_data(self):
         return {"Hey, it's extra": "data"}
 
-    def main(self, args):
+    def main(self, file_path, args):
         pass

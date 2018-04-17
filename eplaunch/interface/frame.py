@@ -5,21 +5,43 @@ from gettext import gettext as _
 
 import wx
 
-from eplaunch.interface.exceptions import EPLaunchDevException, EPLaunchWorkflowFormulationException
 from eplaunch.interface import command_line_dialog
 from eplaunch.interface import viewer_dialog
 from eplaunch.interface import workflow_directories_dialog
-from eplaunch.workflows import manager as workflow_manager
+from eplaunch.interface.exceptions import EPLaunchDevException
 from eplaunch.interface.workflow_processing import event_result, WorkerThread
+from eplaunch.workflows import manager as workflow_manager
 
 
 # wx callbacks need an event argument even though we usually don't use it, so the next line disables that check
 # noinspection PyUnusedLocal
 class EpLaunchFrame(wx.Frame):
+    class Identifiers:
+        ToolBarRunButtonID = 20
 
     def __init__(self, *args, **kwargs):
         kwargs["style"] = wx.DEFAULT_FRAME_STYLE
         wx.Frame.__init__(self, *args, **kwargs)
+
+        # initialize these here (and early) in the constructor to hush up the compiler messages
+        self.tb = None
+        self.out_tb = None
+        self.tb_run = None
+        self.menu_file_run = None
+        self.menu_bar = None
+        self.current_workflow = None
+        self.workflow_instances = None
+        self.workflow_choice = None
+        self.directory_name = None
+        self.current_file_name = None
+        self.menu_output_toolbar = None
+        self.menu_columns = None
+        self.menu_command_line = None
+
+        # this is currently just a single background thread, eventually we'll need to keep a list of them
+        self.workflow_worker = None
+
+        # this splitter stuff needs to go into a lower level function
         self.split_left_right = wx.SplitterWindow(self, wx.ID_ANY)
 
         self.left_pane = wx.Panel(self.split_left_right, wx.ID_ANY)
@@ -28,6 +50,8 @@ class EpLaunchFrame(wx.Frame):
         # self.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.handle_dir_item_selected, tree)
         self.Bind(wx.EVT_TREE_ITEM_RIGHT_CLICK, self.handle_dir_right_click, tree)
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.handle_dir_selection_changed, tree)
+        self.dir_ctrl_1.SelectPath("/home/edwin")
+
         #
         event_result(self, self.handle_workflow_done)
         self.right_pane = wx.Panel(self.split_left_right, wx.ID_ANY)
@@ -40,24 +64,9 @@ class EpLaunchFrame(wx.Frame):
                                      style=wx.LC_HRULES | wx.LC_REPORT | wx.LC_VRULES)
         self.list_ctrl_files = wx.ListCtrl(self.right_top_pane, wx.ID_ANY,
                                            style=wx.LC_HRULES | wx.LC_REPORT | wx.LC_VRULES)
-
+        self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.handle_list_ctrl_selection, self.list_ctrl_files)
         self.status_bar = self.CreateStatusBar(1)
         self.status_bar.SetStatusText('Status bar - reports on simulations in progress')
-
-        # initialize these here in the constructor to hush up the compiler messages
-        self.tb = None
-        self.out_tb = None
-        self.menu_bar = None
-        self.current_workflow = None
-        self.workflow_instances = None
-        self.workflow_choice = None
-        self.directory_name = None
-        self.menu_output_toolbar = None
-        self.menu_columns = None
-        self.menu_command_line = None
-
-        # this is currently just a single background thread, eventually we'll need to keep a list of them
-        self.workflow_worker = None
 
         # these are things that only need to be done once, at least for now
         self.build_primary_toolbar()
@@ -67,12 +76,15 @@ class EpLaunchFrame(wx.Frame):
         self.split_left_right.SetMinimumPaneSize(20)
         self.split_top_bottom.SetMinimumPaneSize(20)
         self.reset_raw_list_columns()
-        self.__do_layout()
+        self.layout_frame()
 
         # these are things that need to be done frequently
         self.update_control_list_columns()
         self.update_file_lists()
         self.update_workflow_dependent_menu_items()
+
+    def handle_list_ctrl_selection(self, event):
+        self.current_file_name = event.Item.Text
 
     def close_frame(self):
         """May do additional things during close, including saving the current window state/settings"""
@@ -105,10 +117,11 @@ class EpLaunchFrame(wx.Frame):
         self.tb.Bind(wx.EVT_TOOL, self.handle_tb_weather, tb_weather)
 
         forward_bmp = wx.ArtProvider.GetBitmap(wx.ART_GO_FORWARD, wx.ART_TOOLBAR, t_size)
-        tb_run = self.tb.AddTool(
-            20, "Run", forward_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Run", "Long help for 'Run'", None
+        self.tb_run = self.tb.AddTool(
+            self.Identifiers.ToolBarRunButtonID, "Run", forward_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Run",
+            "Long help for 'Run'", None
         )
-        self.tb.Bind(wx.EVT_TOOL, self.handle_tb_run, tb_run)
+        self.tb.Bind(wx.EVT_TOOL, self.handle_tb_run, self.tb_run)
 
         error_bmp = wx.ArtProvider.GetBitmap(wx.ART_ERROR, wx.ART_TOOLBAR, t_size)
         self.tb.AddTool(
@@ -233,8 +246,8 @@ class EpLaunchFrame(wx.Frame):
         self.menu_bar = wx.MenuBar()
 
         file_menu = wx.Menu()
-        menu_file_run = file_menu.Append(10, "Run File", "Run currently selected file for selected workflow")
-        self.Bind(wx.EVT_MENU, self.handle_menu_file_run, menu_file_run)
+        self.menu_file_run = file_menu.Append(10, "Run File", "Run currently selected file for selected workflow")
+        self.Bind(wx.EVT_MENU, self.handle_menu_file_run, self.menu_file_run)
         menu_file_cancel_selected = file_menu.Append(11, "Cancel Selected", "Cancel selected files")
         self.Bind(wx.EVT_MENU, self.handle_menu_file_cancel_selected, menu_file_cancel_selected)
         menu_file_cancel_all = file_menu.Append(13, "Cancel All", "Cancel all queued files")
@@ -535,7 +548,7 @@ class EpLaunchFrame(wx.Frame):
         self.raw_files.SetColumnWidth(0, -1)
         self.raw_files.SetColumnWidth(1, -1)
 
-    def __do_layout(self):
+    def layout_frame(self):
         sizer_main_app_vertical = wx.BoxSizer(wx.VERTICAL)
         sizer_right = wx.BoxSizer(wx.HORIZONTAL)
         sizer_left = wx.BoxSizer(wx.VERTICAL)
@@ -567,17 +580,29 @@ class EpLaunchFrame(wx.Frame):
 
         self.Layout()
 
+    def run_workflow(self):
+        if self.directory_name and self.current_file_name:
+            if not self.workflow_worker:
+                self.status_bar.SetLabel('Starting workflow')
+                full_file_path = os.path.join(self.directory_name, self.current_file_name)
+                self.workflow_worker = WorkerThread(self, self.current_workflow, full_file_path, None)
+                self.tb_run.Enable(False)
+                self.tb.Realize()
+                # self.menu_file_run.Enable(False)
+            else:
+                self.status_bar.SetLabel('A workflow is already running, concurrence will come soon...')
+        else:
+            self.status_bar.SetLabel(
+                'Error: Make sure you select a directory in the tree and a file in the control list'
+            )
+
     def handle_menu_file_run(self, event):
         self.status_bar.SetStatusText('Clicked File->Run')
-        if not self.workflow_worker:
-            self.status_bar.SetLabel('Starting computation')
-            self.workflow_worker = WorkerThread(self, self.current_workflow, None)
+        self.run_workflow()
 
     def handle_tb_run(self, event):
         self.status_bar.SetStatusText('Clicked Run Toolbar Item')
-        if not self.workflow_worker:
-            self.status_bar.SetLabel('Starting computation')
-            self.workflow_worker = WorkerThread(self, self.current_workflow, None)
+        self.run_workflow()
 
     def handle_workflow_done(self, event):
         status_message = 'Invalid workflow response'
@@ -591,6 +616,7 @@ class EpLaunchFrame(wx.Frame):
             status_message = 'Workflow response was invalid'
         self.status_bar.SetStatusText(status_message)
         self.workflow_worker = None
+        self.tb.EnableTool(self.Identifiers.ToolBarRunButtonID, True)
 
     def handle_menu_file_cancel_selected(self, event):
         self.status_bar.SetStatusText('Clicked File->CancelSelected')
@@ -625,8 +651,11 @@ class EpLaunchFrame(wx.Frame):
     def handle_dir_selection_changed(self, event):
         # self.status_bar.SetStatusText("Dir-SelectionChanged")
         self.directory_name = self.dir_ctrl_1.GetPath()
-        self.status_bar.SetStatusText(self.directory_name)
-        self.update_file_lists()
+        try:
+            self.status_bar.SetStatusText(self.directory_name)
+            self.update_file_lists()
+        except:  # status_bar and things may not exist during initialization, just ignore
+            pass
         event.Skip()
 
     def handle_choice_selection_change(self, event):
