@@ -90,7 +90,7 @@ class EpLaunchFrame(wx.Frame):
         self.workflow_instances, workflow_choice_strings = self.update_workflow_list()
         self.workflow_choice = wx.Choice(self.tb, ch_id, choices=workflow_choice_strings)
         self.tb.AddControl(self.workflow_choice)
-        self.Bind(wx.EVT_CHOICE, self.handle_choice_selection_change, self.workflow_choice)
+        self.tb.Bind(wx.EVT_CHOICE, self.handle_choice_selection_change, self.workflow_choice)
 
         if not self.workflow_instances:
             self.current_workflow = None
@@ -143,7 +143,7 @@ class EpLaunchFrame(wx.Frame):
             80, "File Browser", remove_bmp, wx.NullBitmap, wx.ITEM_CHECK, "File Browser",
             "Long help for 'File Browser'", None
         )
-        self.Bind(wx.EVT_TOOL, self.handle_tb_hide_browser, tb_hide_browser)
+        self.tb.Bind(wx.EVT_TOOL, self.handle_tb_hide_browser, tb_hide_browser)
 
         self.tb.Realize()
 
@@ -256,7 +256,7 @@ class EpLaunchFrame(wx.Frame):
         self.menu_bar.Append(edit_menu, "&Edit")
 
         folder_menu = wx.Menu()
-        recent_folder_menu = folder_menu.Append(31, "Recent", "Recent folders where a workflow as run.")
+        recent_folder_menu = folder_menu.Append(31, "Recent", "Recent folders where a workflow was run.")
         folder_menu.AppendSeparator()
         folder_menu.Append(32, "c:\\EnergyPlus8-8-0")
         folder_menu.Append(33, "c:\\documents")
