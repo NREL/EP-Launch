@@ -14,3 +14,6 @@ class CoeffCheckWorkflow(BaseEPLaunch3Workflow):
 
     def get_extra_data(self):
         return {"Hey, it's extra": "data"}
+
+    def main(self):
+        pass

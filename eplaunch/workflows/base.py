@@ -22,3 +22,6 @@ class BaseEPLaunch3Workflow(object):
         :return:
         """
         return []
+
+    def main(self):
+        raise NotImplementedError("main function needs to be implemented in derived workflow class")
