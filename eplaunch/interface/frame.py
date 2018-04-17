@@ -1,7 +1,6 @@
 import fnmatch
 import json
 import os
-import time
 from gettext import gettext as _
 
 import wx
@@ -16,6 +15,7 @@ from eplaunch.workflows import manager as workflow_manager
 # wx callbacks need an event argument even though we usually don't use it, so the next line disables that check
 # noinspection PyUnusedLocal
 class EpLaunchFrame(wx.Frame):
+
     def __init__(self, *args, **kwargs):
         kwargs["style"] = wx.DEFAULT_FRAME_STYLE
         wx.Frame.__init__(self, *args, **kwargs)
@@ -48,10 +48,15 @@ class EpLaunchFrame(wx.Frame):
         self.menu_bar = None
         self.current_workflow = None
         self.workflow_instances = None
+        self.workflow_choice = None
+        self.directory_name = None
+        self.menu_output_toolbar = None
+        self.menu_columns = None
+        self.menu_command_line = None
 
         # these are things that only need to be done once, at least for now
         self.build_primary_toolbar()
-        self.build_out_toolbar()
+        self.build_output_toolbar()
         self.build_menu_bar()
         self.SetTitle(_("EP-Launch 3"))
         self.split_left_right.SetMinimumPaneSize(20)
@@ -59,42 +64,95 @@ class EpLaunchFrame(wx.Frame):
         self.reset_raw_list_columns()
         self.__do_layout()
 
-        self.reset_control_list_columns()
-        self.reset_file_lists()
+        # these are things that need to be done frequently
+        self.update_control_list_columns()
+        self.update_file_lists()
+        self.update_workflow_dependent_menu_items()
 
     def close_frame(self):
         """May do additional things during close, including saving the current window state/settings"""
         self.Close()
 
     def build_primary_toolbar(self):
+
         self.tb = wx.ToolBar(self, style=wx.TB_HORIZONTAL | wx.NO_BORDER | wx.TB_FLAT | wx.TB_TEXT)
 
         t_size = (24, 24)
-        # new_bmp =  wx.ArtProvider.GetBitmap(wx.ART_NEW, wx.ART_TOOLBAR, t_size)
-        # open_bmp = wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN, wx.ART_TOOLBAR, t_size)
-        # copy_bmp = wx.ArtProvider.GetBitmap(wx.ART_COPY, wx.ART_TOOLBAR, t_size)
-        # paste_bmp= wx.ArtProvider.GetBitmap(wx.ART_PASTE, wx.ART_TOOLBAR, t_size)
-        forward_bmp = wx.ArtProvider.GetBitmap(wx.ART_GO_FORWARD, wx.ART_TOOLBAR, t_size)
-        error_bmp = wx.ArtProvider.GetBitmap(wx.ART_ERROR, wx.ART_TOOLBAR, t_size)
-
-        file_open_bmp = wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN, wx.ART_TOOLBAR, t_size)
-        exe_bmp = wx.ArtProvider.GetBitmap(wx.ART_EXECUTABLE_FILE, wx.ART_TOOLBAR, t_size)
-        up_bmp = wx.ArtProvider.GetBitmap(wx.ART_GO_UP, wx.ART_TOOLBAR, t_size)
-        folder_bmp = wx.ArtProvider.GetBitmap(wx.ART_FOLDER, wx.ART_TOOLBAR, t_size)
-        page_bmp = wx.ArtProvider.GetBitmap(wx.ART_HELP_PAGE, wx.ART_TOOLBAR, t_size)
-        help_bmp = wx.ArtProvider.GetBitmap(wx.ART_HELP, wx.ART_TOOLBAR, t_size)
-        remove_bmp = wx.ArtProvider.GetBitmap(wx.ART_MINUS, wx.ART_TOOLBAR, t_size)
-
         self.tb.SetToolBitmapSize(t_size)
 
         ch_id = wx.NewId()
 
-        workflow_choices = []
-        self.workflow_instances = []
+        self.workflow_instances, workflow_choice_strings = self.update_workflow_list()
+        self.workflow_choice = wx.Choice(self.tb, ch_id, choices=workflow_choice_strings)
+        self.tb.AddControl(self.workflow_choice)
+        self.Bind(wx.EVT_CHOICE, self.handle_choice_selection_change, self.workflow_choice)
+
+        if not self.workflow_instances:
+            self.current_workflow = None
+        else:
+            self.current_workflow = self.workflow_instances[0]
+            self.workflow_choice.SetSelection(0)
+
+        file_open_bmp = wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN, wx.ART_TOOLBAR, t_size)
+        tb_weather = self.tb.AddTool(
+            10, "Weather", file_open_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Weather", "Long help for 'Weather'", None
+        )
+        self.Bind(wx.EVT_TOOL, self.handle_tb_weather, tb_weather)
+
+        forward_bmp = wx.ArtProvider.GetBitmap(wx.ART_GO_FORWARD, wx.ART_TOOLBAR, t_size)
+        self.tb.AddTool(
+            20, "Run", forward_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Run", "Long help for 'Run'", None
+        )
+
+        error_bmp = wx.ArtProvider.GetBitmap(wx.ART_ERROR, wx.ART_TOOLBAR, t_size)
+        self.tb.AddTool(
+            30, "Cancel", error_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Cancel", "Long help for 'Cancel'",
+            None)
+
+        self.tb.AddSeparator()
+
+        exe_bmp = wx.ArtProvider.GetBitmap(wx.ART_EXECUTABLE_FILE, wx.ART_TOOLBAR, t_size)
+        self.tb.AddTool(
+            40, "IDF Editor", exe_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "IDF Editor", "Long help for 'IDF Editor'", None
+        )
+        self.tb.AddTool(
+            50, "Text Editor", exe_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Text Editor", "Long help for 'Text Editor'",
+            None
+        )
+
+        self.tb.AddSeparator()
+
+        folder_bmp = wx.ArtProvider.GetBitmap(wx.ART_FOLDER, wx.ART_TOOLBAR, t_size)
+        self.tb.AddTool(
+            80, "Explorer", folder_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Explorer", "Long help for 'Explorer'", None
+        )
+
+        up_bmp = wx.ArtProvider.GetBitmap(wx.ART_GO_UP, wx.ART_TOOLBAR, t_size)
+        self.tb.AddTool(
+            80, "Update", up_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Update", "Long help for 'Update'", None
+        )
+
+        remove_bmp = wx.ArtProvider.GetBitmap(wx.ART_MINUS, wx.ART_TOOLBAR, t_size)
+        tb_hide_browser = self.tb.AddTool(
+            80, "File Browser", remove_bmp, wx.NullBitmap, wx.ITEM_CHECK, "File Browser",
+            "Long help for 'File Browser'", None
+        )
+        self.Bind(wx.EVT_TOOL, self.handle_tb_hide_browser, tb_hide_browser)
+
+        self.tb.Realize()
+
+    @staticmethod
+    def update_workflow_list():
+
+        workflow_choice_strings = []
+        workflow_instances = []
+
+        # "built-in" workflow classes will ultimately just be a couple core things that are packaged up with the tool
+        # we will then also search through the workflow directories and get all available workflows from there as well
         built_in_workflow_classes = workflow_manager.get_workflows()
         for workflow_class in built_in_workflow_classes:
             workflow_instance = workflow_class()
-            self.workflow_instances.append(workflow_instance)
+            workflow_instances.append(workflow_instance)
             workflow_name = workflow_instance.name()
             workflow_file_types = workflow_instance.get_file_types()
 
@@ -108,51 +166,17 @@ class EpLaunchFrame(wx.Frame):
                 file_type_string += file_type
             file_type_string += ")"
 
-            workflow_choices.append("%s %s" % (workflow_name, file_type_string))
+            workflow_choice_strings.append("%s %s" % (workflow_name, file_type_string))
 
-        # Need tp handle if there aren't any workflows
-        workflow_choice = wx.Choice(self.tb, ch_id, choices=workflow_choices)
-        workflow_choice.SetSelection(0)
-        self.current_workflow = self.workflow_instances[0]
-        # self.current_extension = ".idf"
-        self.tb.AddControl(workflow_choice)
-        self.Bind(wx.EVT_CHOICE, self.handle_choice_selection_change, workflow_choice)
+        return workflow_instances, workflow_choice_strings
 
-        tb_weather = self.tb.AddTool(
-            10, "Weather", file_open_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Weather", "Long help for 'Weather'", None
-        )
-        self.Bind(wx.EVT_TOOL, self.handle_tb_weather, tb_weather)
-        self.tb.AddTool(
-            20, "Run", forward_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Run", "Long help for 'Run'", None
-        )
-        self.tb.AddTool(
-            30, "Cancel", error_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Cancel", "Long help for 'Cancel'",
-            None)
-        self.tb.AddSeparator()
-        self.tb.AddTool(
-            40, "IDF Editor", exe_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "IDF Editor", "Long help for 'IDF Editor'", None
-        )
-        self.tb.AddTool(
-            50, "Text Editor", exe_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Text Editor", "Long help for 'Text Editor'",
-            None
-        )
-        self.tb.AddSeparator()
-        self.tb.AddTool(
-            80, "Explorer", folder_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Explorer", "Long help for 'Explorer'", None
-        )
-        self.tb.AddTool(
-            80, "Update", up_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Update", "Long help for 'Update'", None
-        )
+    def update_workflow_dependent_menu_items(self):
+        current_workflow_name = self.current_workflow.name()
+        self.menu_output_toolbar.SetText("%s Output Toolbar..." % current_workflow_name)
+        self.menu_columns.SetText("%s Columns..." % current_workflow_name)
+        self.menu_command_line.SetText("%s Command Line..." % current_workflow_name)
 
-        tb_hide_browser = self.tb.AddTool(
-            80, "File Browser", remove_bmp, wx.NullBitmap, wx.ITEM_CHECK, "File Browser",
-            "Long help for 'File Browser'", None
-        )
-        self.Bind(wx.EVT_TOOL, self.handle_tb_hide_browser, tb_hide_browser)
-
-        self.tb.Realize()
-
-    def build_out_toolbar(self):
+    def build_output_toolbar(self):
         t_size = (24, 24)
         self.out_tb = wx.ToolBar(self, style=wx.TB_HORIZONTAL | wx.NO_BORDER | wx.TB_FLAT | wx.TB_TEXT)
         self.out_tb.SetToolBitmapSize(t_size)
@@ -388,12 +412,12 @@ class EpLaunchFrame(wx.Frame):
         menu_viewers = options_menu.Append(77, "Viewers...")
         self.Bind(wx.EVT_MENU, self.handle_menu_viewers, menu_viewers)
         options_menu.AppendSeparator()
-        menu_output_toolbar = options_menu.Append(761, "<workspacename> Output Toolbar...")
-        self.Bind(wx.EVT_MENU, self.handle_menu_output_toolbar, menu_output_toolbar)
-        menu_columns = options_menu.Append(762, "<workspacename> Columns...")
-        self.Bind(wx.EVT_MENU, self.handle_menu_columns, menu_columns)
-        menu_command_line = options_menu.Append(763, "<workspacename> Command Line...")
-        self.Bind(wx.EVT_MENU, self.handle_menu_command_line, menu_command_line)
+        self.menu_output_toolbar = options_menu.Append(761, "<workspacename> Output Toolbar...")
+        self.Bind(wx.EVT_MENU, self.handle_menu_output_toolbar, self.menu_output_toolbar)
+        self.menu_columns = options_menu.Append(762, "<workspacename> Columns...")
+        self.Bind(wx.EVT_MENU, self.handle_menu_columns, self.menu_columns)
+        self.menu_command_line = options_menu.Append(763, "<workspacename> Command Line...")
+        self.Bind(wx.EVT_MENU, self.handle_menu_command_line, self.menu_command_line)
         self.menu_bar.Append(options_menu, "&Settings")
 
         help_menu = wx.Menu()
@@ -418,7 +442,7 @@ class EpLaunchFrame(wx.Frame):
 
         self.SetMenuBar(self.menu_bar)
 
-    def reset_control_list_columns(self):
+    def update_control_list_columns(self):
         self.list_ctrl_files.DeleteAllColumns()
         self.list_ctrl_files.AppendColumn(_("File Name"), format=wx.LIST_FORMAT_LEFT, width=-1)
         current_workflow_columns = self.current_workflow.get_interface_columns()
@@ -444,7 +468,7 @@ class EpLaunchFrame(wx.Frame):
         file_list.sort(key=lambda x: x['name'])
         return file_list
 
-    def reset_file_lists(self):
+    def update_file_lists(self):
 
         # for now this will pick up the dummy cache file here in the source tree
         # this will eventually pick up the currently selected directory and find a cache file there
@@ -521,9 +545,9 @@ class EpLaunchFrame(wx.Frame):
         sizer_bottom.Add(self.raw_files, 1, wx.EXPAND, 0)
         self.right_bottom_pane.SetSizer(sizer_bottom)
 
-        # not sure why but it works better if you make the split and unplit it right away
+        # not sure why but it works better if you make the split and unsplit it right away
         self.split_top_bottom.SplitHorizontally(self.right_top_pane, self.right_bottom_pane)
-        self.split_top_bottom.Unsplit(toRemove=self.right_bottom_pane)
+        # self.split_top_bottom.Unsplit(toRemove=self.right_bottom_pane)
 
         sizer_right.Add(self.split_top_bottom, 1, wx.EXPAND, 0)
         self.right_pane.SetSizer(sizer_right)
@@ -574,13 +598,14 @@ class EpLaunchFrame(wx.Frame):
         # self.status_bar.SetStatusText("Dir-SelectionChanged")
         self.directory_name = self.dir_ctrl_1.GetPath()
         self.status_bar.SetStatusText(self.directory_name)
-        self.reset_file_lists()
+        self.update_file_lists()
         event.Skip()
 
     def handle_choice_selection_change(self, event):
         self.current_workflow = self.workflow_instances[event.Selection]
-        self.reset_control_list_columns()
-        self.reset_file_lists()
+        self.update_control_list_columns()
+        self.update_file_lists()
+        self.update_workflow_dependent_menu_items()
         self.status_bar.SetStatusText('Choice selection changed to ' + event.String)
 
     def handle_tb_weather(self, event):
