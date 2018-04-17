@@ -1,10 +1,34 @@
 import wx
 
+from eplaunch.interface.crossplatform import Platform
+
 
 class WorkflowDirectoriesDialog(wx.Dialog):
-
     CLOSE_SIGNAL_OK = 0
     CLOSE_SIGNAL_CANCEL = 1
+
+    SampleWorkflows = {
+        Platform.WINDOWS: [
+            'c:\EnergyPlusV8-6-0\workflows',
+            'c:\EnergyPlusV8-7-0\workflows',
+            'c:\EnergyPlusV8-8-0\workflows',
+            'c:\EnergyPlusV8-9-0\workflows'
+        ],
+        Platform.LINUX: [
+            '/usr/local/bin/EnergyPlusV8-6-0/workflows',
+            '/usr/local/bin/EnergyPlusV8-7-0/workflows',
+            '/usr/local/bin/EnergyPlusV8-8-0/workflows',
+            '/usr/local/bin/EnergyPlusV8-9-0/workflows'
+        ],
+        Platform.MAC: [
+            '/Applications/EnergyPlusV8-6-0/workflows',
+            '/Applications/EnergyPlusV8-7-0/workflows',
+            '/Applications/EnergyPlusV8-8-0/workflows',
+            '/Applications/EnergyPlusV8-9-0/workflows'
+        ],
+        Platform.UNKNOWN: [
+        ]
+    }
 
     def __init__(self, *args, **kwargs):
         super(WorkflowDirectoriesDialog, self).__init__(*args, **kwargs)
@@ -16,12 +40,9 @@ class WorkflowDirectoriesDialog(wx.Dialog):
         pnl = wx.Panel(self)
         vbox = wx.BoxSizer(wx.VERTICAL)
 
-        sampleList = ['c:\EnergyPlusV8-6-0\workflows',
-                      'c:\EnergyPlusV8-7-0\workflows',
-                      'c:\EnergyPlusV8-8-0\workflows',
-                      'c:\EnergyPlusV8-9-0\workflows',]
+        sampleList = WorkflowDirectoriesDialog.SampleWorkflows[Platform.get_current_platform()]
 
-        lb1 = wx.ListBox(pnl, 60, size= (750, 100), choices=sampleList, style=wx.LB_SINGLE | wx.LB_ALWAYS_SB)
+        lb1 = wx.ListBox(pnl, 60, size=(750, 100), choices=sampleList, style=wx.LB_SINGLE | wx.LB_ALWAYS_SB)
 
         hbox_1 = wx.BoxSizer(wx.HORIZONTAL)
         add_button = wx.Button(self, label='Add..')
