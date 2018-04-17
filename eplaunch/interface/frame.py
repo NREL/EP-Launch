@@ -1,3 +1,4 @@
+import fnmatch
 import json
 import os
 import time
@@ -5,6 +6,7 @@ from gettext import gettext as _
 
 import wx
 
+from eplaunch.interface.exceptions import EPLaunchDevException
 from eplaunch.interface import command_line_dialog
 from eplaunch.interface import viewer_dialog
 from eplaunch.interface import workflow_directories_dialog
@@ -47,13 +49,18 @@ class EpLaunchFrame(wx.Frame):
         self.current_workflow = None
         self.workflow_instances = None
 
+        # these are things that only need to be done once, at least for now
         self.build_primary_toolbar()
         self.build_out_toolbar()
         self.build_menu_bar()
-        self.reset_list_columns()
-
-        self.__set_properties()
+        self.SetTitle(_("EP-Launch 3"))
+        self.split_left_right.SetMinimumPaneSize(20)
+        self.split_top_bottom.SetMinimumPaneSize(20)
+        self.reset_raw_list_columns()
         self.__do_layout()
+
+        self.reset_control_list_columns()
+        self.reset_file_lists()
 
     def close_frame(self):
         """May do additional things during close, including saving the current window state/settings"""
@@ -411,73 +418,92 @@ class EpLaunchFrame(wx.Frame):
 
         self.SetMenuBar(self.menu_bar)
 
-    def reset_list_columns(self):
+    def reset_control_list_columns(self):
         self.list_ctrl_files.DeleteAllColumns()
         self.list_ctrl_files.AppendColumn(_("File Name"), format=wx.LIST_FORMAT_LEFT, width=-1)
         current_workflow_columns = self.current_workflow.get_interface_columns()
         for current_column in current_workflow_columns:
             self.list_ctrl_files.AppendColumn(_(current_column), format=wx.LIST_FORMAT_LEFT, width=-1)
 
-    def get_files_in_directory(self):
-        return ["5Zone.idf", "6Zone.idf", "7Zone.idf", "8Zone.idf"]
+    def reset_raw_list_columns(self):
+        self.raw_files.AppendColumn(_("File Name"), format=wx.LIST_FORMAT_LEFT, width=-1)
+        # self.raw_files.AppendColumn(_("Date Modified"), format=wx.LIST_FORMAT_LEFT, width=-1)
+        # self.raw_files.AppendColumn(_("Type"), format=wx.LIST_FORMAT_LEFT, width=-1)
+        self.raw_files.AppendColumn(_("Size"), format=wx.LIST_FORMAT_RIGHT, width=-1)
 
-    def reset_file_list(self):
-        # this will mimic for now the effect of having a JSON cache file in the folder
-        # some of this should eventually be in a function handling the "Changed directory" event
+    @staticmethod
+    def get_files_in_directory():
+        file_list = [
+            {"name": "5Zone.idf", "size": 128},
+            {"name": "6Zone.idf", "size": 256},
+            {"name": "7Zone.idf", "size": 389},
+            {"name": "8Zone.idf", "size": 495},
+            {"name": "9Zone.what", "size": 529},
+            {"name": "admin.html", "size": 639}
+        ]
+        file_list.sort(key=lambda x: x['name'])
+        return file_list
+
+    def reset_file_lists(self):
+
+        # for now this will pick up the dummy cache file here in the source tree
+        # this will eventually pick up the currently selected directory and find a cache file there
         this_dir = os.path.dirname(os.path.realpath(__file__))
-        file_blob = open(os.path.join(this_dir, 'fake_cache_file.json'), 'r').read()
-        content = json.loads(file_blob)
-        workflows = content['workflows']
-        current_workflow_name = self.current_workflow.name()
+        cache_file_path = os.path.join(this_dir, 'fake_cache_file.json')
+
+        # if there is a cache file there, read the cached file data for the current workflow
         files_in_workflow = {}
-        if current_workflow_name in workflows:
-            files_in_workflow = workflows[current_workflow_name]['files']
+        if os.path.exists(cache_file_path):
+            file_blob = open(cache_file_path, 'r').read()
+            content = json.loads(file_blob)
+            workflows = content['workflows']
+            current_workflow_name = self.current_workflow.name()
+            if current_workflow_name in workflows:
+                files_in_workflow = workflows[current_workflow_name]['files']
+
+        # then get the entire list of files in the current directory to build up the listview items
+        # if they happen to match the filename in the workflow cache, then add that info to the row structure
         files_in_dir = self.get_files_in_directory()
-        rows = []
-        for file_name in files_in_dir:
+        workflow_file_patterns = self.current_workflow.get_file_types()
+        control_list_rows = []
+        raw_list_rows = []
+        for file_struct in files_in_dir:
+            if not all([x in file_struct for x in ['name', 'size']]):
+                raise EPLaunchDevException('Developer issue: malformed response from get_files_in_directory')
+            file_name = file_struct['name']
+            file_size = file_struct['size']
+            raw_list_rows.append([file_name, file_size])
+            # we only include this row if the file matches the workflow pattern
+            matched = False
+            for file_type in workflow_file_patterns:
+                if fnmatch.fnmatch(file_name, file_type):
+                    matched = True
+                    break
+            if not matched:
+                continue
+            # listview row always includes the filename itself
             row = [file_name]
+            # if it is also in the cache then the listview row can include additional data
             if file_name in files_in_workflow:
-                cached_file_info = workflows[current_workflow_name]['files'][file_name]
+                cached_file_info = files_in_workflow[file_name]
                 for column in self.current_workflow.get_interface_columns():
                     if column in cached_file_info:
                         row.append(cached_file_info[column])
-            rows.append(row)
+            # always add the row to the main list
+            control_list_rows.append(row)
 
+        # clear all items from the listview and then add them back in
         self.list_ctrl_files.DeleteAllItems()
-        for row in rows:
+        for row in control_list_rows:
             self.list_ctrl_files.Append(row)
+        self.list_ctrl_files.SetColumnWidth(0, -1)  # autosize column width
 
-    def __set_properties(self):
-        self.SetTitle(_("EP-Launch 3"))
-        # self.list_ctrl_files.AppendColumn(_("Status"), format=wx.LIST_FORMAT_LEFT, width=-1)
-        # self.list_ctrl_files.AppendColumn(_("File Name"), format=wx.LIST_FORMAT_LEFT, width=-1)
-        # self.list_ctrl_files.AppendColumn(_("Weather File"), format=wx.LIST_FORMAT_LEFT, width=-1)
-        # self.list_ctrl_files.AppendColumn(_("Size"), format=wx.LIST_FORMAT_LEFT, width=-1)
-        # self.list_ctrl_files.AppendColumn(_("Errors"), format=wx.LIST_FORMAT_LEFT, width=-1)
-        # self.list_ctrl_files.AppendColumn(_("EUI"), format=wx.LIST_FORMAT_LEFT, width=-1)
-        # self.list_ctrl_files.AppendColumn(_("Floor Area"), format=wx.LIST_FORMAT_LEFT, width=-1)
-
-        self.reset_file_list()
-
-        self.raw_files.AppendColumn(_("File Name"), format=wx.LIST_FORMAT_LEFT, width=-1)
-        self.raw_files.AppendColumn(_("Date Modified"), format=wx.LIST_FORMAT_LEFT, width=-1)
-        self.raw_files.AppendColumn(_("Type"), format=wx.LIST_FORMAT_LEFT, width=-1)
-        self.raw_files.AppendColumn(_("Size"), format=wx.LIST_FORMAT_RIGHT, width=-1)
-
-        rows = [
-            ["5Zone.idf", "9/17/2017 9:22 AM", "EnergyPlus Input File", "153 KB"],
-            ["5Zone.html", "9/17/2017 9:22 AM", "Browser", "5478 KB"]
-        ]
-        index = 0
-        for row in rows:
-            self.raw_files.InsertItem(index, row[0])
-            self.raw_files.SetItem(index, 1, row[1])
-            self.raw_files.SetItem(index, 2, row[2])
-            self.raw_files.SetItem(index, 3, row[3])
-            index = index + 1
-
-        self.split_left_right.SetMinimumPaneSize(20)
-        self.split_top_bottom.SetMinimumPaneSize(20)
+        # clear all the items from the raw list as well and add all of them back
+        self.raw_files.DeleteAllItems()
+        for row in raw_list_rows:
+            self.raw_files.Append(row)
+        self.raw_files.SetColumnWidth(0, -1)
+        self.raw_files.SetColumnWidth(1, -1)
 
     def __do_layout(self):
         sizer_main_app_vertical = wx.BoxSizer(wx.VERTICAL)
@@ -548,13 +574,13 @@ class EpLaunchFrame(wx.Frame):
         # self.status_bar.SetStatusText("Dir-SelectionChanged")
         self.directory_name = self.dir_ctrl_1.GetPath()
         self.status_bar.SetStatusText(self.directory_name)
-        self.update_file_lists()
+        self.reset_file_lists()
         event.Skip()
 
     def handle_choice_selection_change(self, event):
         self.current_workflow = self.workflow_instances[event.Selection]
-        self.reset_list_columns()
-        self.reset_file_list()
+        self.reset_control_list_columns()
+        self.reset_file_lists()
         self.status_bar.SetStatusText('Choice selection changed to ' + event.String)
 
     def handle_tb_weather(self, event):
@@ -661,35 +687,3 @@ class EpLaunchFrame(wx.Frame):
         print(return_value)
         # May need to refresh the main UI if something changed in the settings
         file_viewer_dialog.Destroy()
-
-    def update_file_lists(self):
-        self.list_ctrl_files.DeleteAllItems()
-        index = 0
-        files = os.listdir(self.directory_name)
-        for file in files:
-            if file.endswith(self.current_extension):
-                self.list_ctrl_files.InsertItem(index, "")
-                self.list_ctrl_files.SetItem(index, 1, file)
-                self.list_ctrl_files.SetItem(index, 2, "")
-                self.list_ctrl_files.SetItem(index, 3, "")
-                self.list_ctrl_files.SetItem(index, 4, "")
-                self.list_ctrl_files.SetItem(index, 5, "")
-                self.list_ctrl_files.SetItem(index, 6, "")
-                index = index + 1
-        self.list_ctrl_files.SetColumnWidth(1, -1)  # autosize column width
-
-        self.raw_files.DeleteAllItems()
-        index = 0
-        for file in files:
-            file_with_path = os.path.join(self.directory_name, file)
-            self.raw_files.InsertItem(index, file)
-            file_modified_time = time.localtime(os.path.getmtime(file_with_path))
-            self.raw_files.SetItem(index, 1, time.asctime(file_modified_time))  # date modified
-            root, ext = os.path.splitext(file_with_path)
-            self.raw_files.SetItem(index, 2, ext)  # type
-            self.raw_files.SetItem(index, 3, '{0:12,.0f} KB'.format(os.path.getsize(file_with_path) / 1024))  # size
-            index = index + 1
-        self.raw_files.SetColumnWidth(0, -1)
-        self.raw_files.SetColumnWidth(1, -1)
-        self.raw_files.SetColumnWidth(2, -1)
-        self.raw_files.SetColumnWidth(3, -1)
