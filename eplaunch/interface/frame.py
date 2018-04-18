@@ -40,7 +40,6 @@ class EpLaunchFrame(wx.Frame):
         self.directory_name = None
         self.current_file_name = None
         self.menu_output_toolbar = None
-        self.menu_columns = None
         self.menu_command_line = None
         self.status_bar = None
         self.raw_file_list = None
@@ -97,7 +96,6 @@ class EpLaunchFrame(wx.Frame):
     def update_workflow_dependent_menu_items(self):
         current_workflow_name = self.current_workflow.name()
         self.menu_output_toolbar.SetText("%s Output Toolbar..." % current_workflow_name)
-        self.menu_columns.SetText("%s Columns..." % current_workflow_name)
         self.menu_command_line.SetText("%s Command Line..." % current_workflow_name)
 
     def update_control_list_columns(self):
@@ -581,8 +579,6 @@ class EpLaunchFrame(wx.Frame):
         options_menu.AppendSeparator()
         self.menu_output_toolbar = options_menu.Append(761, "<workspacename> Output Toolbar...")
         self.Bind(wx.EVT_MENU, self.handle_menu_output_toolbar, self.menu_output_toolbar)
-        self.menu_columns = options_menu.Append(762, "<workspacename> Columns...")
-        self.Bind(wx.EVT_MENU, self.handle_menu_columns, self.menu_columns)
         self.menu_command_line = options_menu.Append(763, "<workspacename> Command Line...")
         self.Bind(wx.EVT_MENU, self.handle_menu_command_line, self.menu_command_line)
         self.menu_bar.Append(options_menu, "&Settings")
@@ -755,27 +751,6 @@ class EpLaunchFrame(wx.Frame):
         dlg = wx.RearrangeDialog(None,
                                  "Arrange the buttons on the output toolbar",
                                  "<workspacename> Output Toolbar",
-                                 order, items)
-
-        if dlg.ShowModal() == wx.ID_OK:
-            order = dlg.GetOrder()
-
-    def handle_menu_columns(self, event):
-        items = [
-            "Status",
-            "File Name",
-            "Weather File",
-            "Size",
-            "Errors",
-            "EUI",
-            "Floor Area",
-        ]
-
-        order = [0, 1, 2, 3, 4, 5, 6]
-
-        dlg = wx.RearrangeDialog(None,
-                                 "Arrange the columns for the main grid",
-                                 "<workspacename> Columns",
                                  order, items)
 
         if dlg.ShowModal() == wx.ID_OK:
