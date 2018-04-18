@@ -3,6 +3,12 @@ import time
 from eplaunch.workflows.base import BaseEPLaunch3Workflow, EPLaunch3WorkflowResponse
 
 
+class ColumnNames(object):
+    Errors = 'Errors [-]'
+    FloorArea = 'Floor Area [m2]'
+    EUI = 'EUI [J]'
+
+
 class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
 
     def name(self):
@@ -18,14 +24,24 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
         return {"Hey, it's extra": "data"}
 
     def get_interface_columns(self):
-        return ['Errors [-]', 'Floor Area [m2]', 'EUI [J]']
+        return [ColumnNames.Errors, ColumnNames.FloorArea, ColumnNames.EUI]
 
     def main(self, file_path, args):
+        column_data = {}
         for i in range(5):
             time.sleep(1)
             if self.abort:
-                return EPLaunch3WorkflowResponse(success=False, message="Abort command accepted!")
-        return EPLaunch3WorkflowResponse(success=True, message="Ran EnergyPlus OK for file: %s!" % file_path)
+                return EPLaunch3WorkflowResponse(
+                    success=False,
+                    message="Abort command accepted!",
+                    column_data=column_data
+                )
+        column_data = {ColumnNames.Errors: 0, ColumnNames.FloorArea: 2000, ColumnNames.EUI: 5.0}
+        return EPLaunch3WorkflowResponse(
+            success=True,
+            message="Ran EnergyPlus OK for file: %s!" % file_path,
+            column_data=column_data
+        )
 
 
 class EnergyPlusWorkflowIP(BaseEPLaunch3Workflow):

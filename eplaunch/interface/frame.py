@@ -1,6 +1,7 @@
 import fnmatch
 import json
 import os
+import datetime
 from gettext import gettext as _
 
 import wx
@@ -8,7 +9,8 @@ import wx
 from eplaunch.interface import command_line_dialog
 from eplaunch.interface import viewer_dialog
 from eplaunch.interface import workflow_directories_dialog
-from eplaunch.interface.exceptions import EPLaunchDevException
+from eplaunch.interface.cache import CacheFile
+from eplaunch.interface.exceptions import EPLaunchDevException, EPLaunchFileException
 from eplaunch.interface.workflow_processing import event_result, WorkerThread
 from eplaunch.workflows import manager as workflow_manager
 
@@ -44,6 +46,7 @@ class EpLaunchFrame(wx.Frame):
         self.status_bar = None
         self.raw_file_list = None
         self.control_file_list = None
+        self.current_cache = None
 
         # this is currently just a single background thread, eventually we'll need to keep a list of them
         self.workflow_worker = None
@@ -107,29 +110,48 @@ class EpLaunchFrame(wx.Frame):
 
     def reset_raw_list_columns(self):
         self.raw_file_list.AppendColumn(_("File Name"), format=wx.LIST_FORMAT_LEFT, width=-1)
-        # self.raw_file_list.AppendColumn(_("Date Modified"), format=wx.LIST_FORMAT_LEFT, width=-1)
+        self.raw_file_list.AppendColumn(_("Date Modified"), format=wx.LIST_FORMAT_LEFT, width=-1)
         # self.raw_file_list.AppendColumn(_("Type"), format=wx.LIST_FORMAT_LEFT, width=-1)
         self.raw_file_list.AppendColumn(_("Size"), format=wx.LIST_FORMAT_RIGHT, width=-1)
 
-    @staticmethod
-    def get_files_in_directory():
-        file_list = [
-            {"name": "5Zone.idf", "size": 128},
-            {"name": "6Zone.idf", "size": 256},
-            {"name": "7Zone.idf", "size": 389},
-            {"name": "8Zone.idf", "size": 495},
-            {"name": "9Zone.what", "size": 529},
-            {"name": "admin.html", "size": 639}
-        ]
+    def get_files_in_directory(self):
+        debug = False
+        if debug:
+            file_list = [
+                {"name": "5Zone.idf", "size": 128, "modified": "1/2/3"},
+                {"name": "6Zone.idf", "size": 256, "modified": "1/2/3"},
+                {"name": "7Zone.idf", "size": 389, "modified": "1/2/3"},
+                {"name": "8Zone.idf", "size": 495, "modified": "1/2/3"},
+                {"name": "9Zone.what", "size": 529, "modified": "1/2/3"},
+                {"name": "admin.html", "size": 639, "modified": "1/2/3"}
+            ]
+        else:
+            if self.directory_name:
+                file_list = []
+                files = os.listdir(self.directory_name)
+                for this_file in files:
+                    if this_file.startswith('.'):
+                        continue
+                    file_path = os.path.join(self.directory_name, this_file)
+                    if os.path.isdir(file_path):
+                        continue
+                    file_modified_time = os.path.getmtime(file_path)
+                    modified_time_string = datetime.datetime.fromtimestamp(file_modified_time).replace(microsecond=0)
+                    file_size_string = '{0:12,.0f} KB'.format(os.path.getsize(file_path) / 1024)  # size
+                    file_list.append({"name": this_file, "size": file_size_string, "modified": modified_time_string})
+            else:
+                file_list = []
         file_list.sort(key=lambda x: x['name'])
         return file_list
 
     def update_file_lists(self):
 
-        # for now this will pick up the dummy cache file here in the source tree
-        # this will eventually pick up the currently selected directory and find a cache file there
-        this_dir = os.path.dirname(os.path.realpath(__file__))
-        cache_file_path = os.path.join(this_dir, 'fake_cache_file.json')
+        # if we don't have a directory name, it's probably during init, just ignore
+        if not self.directory_name:
+            return
+
+        # get the local cache file path for this folder
+        cache_file_path = os.path.join(self.directory_name, CacheFile.FileName)
 
         # if there is a cache file there, read the cached file data for the current workflow
         files_in_workflow = {}
@@ -152,7 +174,8 @@ class EpLaunchFrame(wx.Frame):
                 raise EPLaunchDevException('Developer issue: malformed response from get_files_in_directory')
             file_name = file_struct['name']
             file_size = file_struct['size']
-            raw_list_rows.append([file_name, file_size])
+            file_modified = file_struct['modified']
+            raw_list_rows.append([file_name, file_modified, file_size])
             # we only include this row if the file matches the workflow pattern
             matched = False
             for file_type in workflow_file_patterns:
@@ -214,7 +237,7 @@ class EpLaunchFrame(wx.Frame):
         tree = self.directory_tree_control.GetTreeCtrl()
         self.Bind(wx.EVT_TREE_ITEM_RIGHT_CLICK, self.handle_dir_right_click, tree)
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.handle_dir_selection_changed, tree)
-        # self.directory_tree_control.SelectPath("/home/edwin")
+        self.directory_tree_control.SelectPath("/tmp/test")
         directory_tree_sizer = wx.BoxSizer(wx.VERTICAL)
         directory_tree_sizer.Add(self.directory_tree_control, 1, wx.EXPAND, 0)
         directory_tree_panel.SetSizer(directory_tree_sizer)
@@ -624,6 +647,11 @@ class EpLaunchFrame(wx.Frame):
             successful = event.data.success
             if successful:
                 status_message = 'Successfully completed a workflow: ' + event.data.message
+                try:
+                    self.current_cache.add_result(self.current_workflow.name(), self.current_file_name, event.data.column_data)
+                    self.current_cache.write()
+                except EPLaunchFileException:
+                    pass
             else:
                 status_message = 'Workflow failed: ' + event.data.message
         except Exception as e:
@@ -665,6 +693,7 @@ class EpLaunchFrame(wx.Frame):
     def handle_dir_selection_changed(self, event):
         # self.status_bar.SetStatusText("Dir-SelectionChanged")
         self.directory_name = self.directory_tree_control.GetPath()
+        self.current_cache = CacheFile(self.directory_name)
         try:
             self.status_bar.SetStatusText(self.directory_name)
             self.update_file_lists()
