@@ -243,16 +243,17 @@ class EpLaunchFrame(wx.Frame):
         raw_file_list_panel.SetSizer(raw_file_list_sizer)
 
         # not sure why but it works better if you make the split and unsplit it right away
-        file_lists_splitter.SplitHorizontally(control_file_list_panel, raw_file_list_panel)
         file_lists_splitter.SetMinimumPaneSize(20)
+        file_lists_splitter.SplitHorizontally(control_file_list_panel, raw_file_list_panel)
+
         # self.file_lists_splitter.Unsplit(toRemove=self.raw_file_list_panel)
         sizer_right = wx.BoxSizer(wx.HORIZONTAL)
         sizer_right.Add(file_lists_splitter, 1, wx.EXPAND, 0)
 
         # add the entire right pane to the main left/right splitter
         file_lists_panel.SetSizer(sizer_right)
-        main_left_right_splitter.SplitVertically(directory_tree_panel, file_lists_panel)
         main_left_right_splitter.SetMinimumPaneSize(20)
+        main_left_right_splitter.SplitVertically(directory_tree_panel, file_lists_panel)
 
         # now set up the main frame's layout sizer
         main_app_vertical_sizer = wx.BoxSizer(wx.VERTICAL)
