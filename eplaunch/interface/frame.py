@@ -200,7 +200,7 @@ class EpLaunchFrame(wx.Frame):
                 self.status_bar.SetLabel('A workflow is already running, concurrence will come soon...')
         else:
             self.status_bar.SetLabel(
-                'Error: Make sure you select a directory in the tree and a file in the control list'
+                'Error: Make sure you select a directory and a file'
             )
 
     def gui_build(self):
@@ -611,17 +611,15 @@ class EpLaunchFrame(wx.Frame):
 
     def gui_build_status_bar(self):
         self.status_bar = self.CreateStatusBar(1)
-        self.status_bar.SetStatusText('Status bar - reports on simulations in progress')
+        # self.status_bar.SetStatusText('Status bar - reports on simulations in progress')
 
     def handle_list_ctrl_selection(self, event):
         self.current_file_name = event.Item.Text
 
     def handle_menu_file_run(self, event):
-        self.status_bar.SetStatusText('Clicked File->Run')
         self.run_workflow()
 
     def handle_tb_run(self, event):
-        self.status_bar.SetStatusText('Clicked Run Toolbar Item')
         self.run_workflow()
 
     def handle_workflow_done(self, event):
