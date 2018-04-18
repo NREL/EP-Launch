@@ -29,7 +29,7 @@ class EpLaunchFrame(wx.Frame):
 
         # initialize these here (and early) in the constructor to hush up the compiler messages
         self.primary_toolbar = None
-        self.dir_ctrl_1 = None
+        self.directory_tree_control = None
         self.output_toolbar = None
         self.tb_run = None
         self.menu_file_run = None
@@ -43,8 +43,8 @@ class EpLaunchFrame(wx.Frame):
         self.menu_columns = None
         self.menu_command_line = None
         self.status_bar = None
-        self.raw_files = None
-        self.list_ctrl_files = None
+        self.raw_file_list = None
+        self.control_file_list = None
 
         # this is currently just a single background thread, eventually we'll need to keep a list of them
         self.workflow_worker = None
@@ -101,17 +101,17 @@ class EpLaunchFrame(wx.Frame):
         self.menu_command_line.SetText("%s Command Line..." % current_workflow_name)
 
     def update_control_list_columns(self):
-        self.list_ctrl_files.DeleteAllColumns()
-        self.list_ctrl_files.AppendColumn(_("File Name"), format=wx.LIST_FORMAT_LEFT, width=-1)
+        self.control_file_list.DeleteAllColumns()
+        self.control_file_list.AppendColumn(_("File Name"), format=wx.LIST_FORMAT_LEFT, width=-1)
         current_workflow_columns = self.current_workflow.get_interface_columns()
         for current_column in current_workflow_columns:
-            self.list_ctrl_files.AppendColumn(_(current_column), format=wx.LIST_FORMAT_LEFT, width=-1)
+            self.control_file_list.AppendColumn(_(current_column), format=wx.LIST_FORMAT_LEFT, width=-1)
 
     def reset_raw_list_columns(self):
-        self.raw_files.AppendColumn(_("File Name"), format=wx.LIST_FORMAT_LEFT, width=-1)
-        # self.raw_files.AppendColumn(_("Date Modified"), format=wx.LIST_FORMAT_LEFT, width=-1)
-        # self.raw_files.AppendColumn(_("Type"), format=wx.LIST_FORMAT_LEFT, width=-1)
-        self.raw_files.AppendColumn(_("Size"), format=wx.LIST_FORMAT_RIGHT, width=-1)
+        self.raw_file_list.AppendColumn(_("File Name"), format=wx.LIST_FORMAT_LEFT, width=-1)
+        # self.raw_file_list.AppendColumn(_("Date Modified"), format=wx.LIST_FORMAT_LEFT, width=-1)
+        # self.raw_file_list.AppendColumn(_("Type"), format=wx.LIST_FORMAT_LEFT, width=-1)
+        self.raw_file_list.AppendColumn(_("Size"), format=wx.LIST_FORMAT_RIGHT, width=-1)
 
     @staticmethod
     def get_files_in_directory():
@@ -175,17 +175,17 @@ class EpLaunchFrame(wx.Frame):
             control_list_rows.append(row)
 
         # clear all items from the listview and then add them back in
-        self.list_ctrl_files.DeleteAllItems()
+        self.control_file_list.DeleteAllItems()
         for row in control_list_rows:
-            self.list_ctrl_files.Append(row)
-        self.list_ctrl_files.SetColumnWidth(0, -1)  # autosize column width
+            self.control_file_list.Append(row)
+        self.control_file_list.SetColumnWidth(0, -1)  # autosize column width
 
         # clear all the items from the raw list as well and add all of them back
-        self.raw_files.DeleteAllItems()
+        self.raw_file_list.DeleteAllItems()
         for row in raw_list_rows:
-            self.raw_files.Append(row)
-        self.raw_files.SetColumnWidth(0, -1)
-        self.raw_files.SetColumnWidth(1, -1)
+            self.raw_file_list.Append(row)
+        self.raw_file_list.SetColumnWidth(0, -1)
+        self.raw_file_list.SetColumnWidth(1, -1)
 
     def run_workflow(self):
         if self.directory_name and self.current_file_name:
@@ -204,76 +204,70 @@ class EpLaunchFrame(wx.Frame):
             )
 
     def gui_build(self):
+
         self.gui_build_menu_bar()
-        self.gui_build_layout()
-
-    def gui_build_status_bar(self):
-        self.status_bar = self.CreateStatusBar(1)
-        self.status_bar.SetStatusText('Status bar - reports on simulations in progress')
-
-    def gui_build_layout(self):
 
         # build the left/right main splitter
-        split_left_right = wx.SplitterWindow(self, wx.ID_ANY)
+        main_left_right_splitter = wx.SplitterWindow(self, wx.ID_ANY)
 
         # build tree view and add it to the left pane
-        left_pane = wx.Panel(split_left_right, wx.ID_ANY)
-        self.dir_ctrl_1 = wx.GenericDirCtrl(left_pane, -1, size=(200, 225), style=wx.DIRCTRL_DIR_ONLY)
-        tree = self.dir_ctrl_1.GetTreeCtrl()
+        directory_tree_panel = wx.Panel(main_left_right_splitter, wx.ID_ANY)
+        self.directory_tree_control = wx.GenericDirCtrl(directory_tree_panel, -1, size=(200, 225), style=wx.DIRCTRL_DIR_ONLY)
+        tree = self.directory_tree_control.GetTreeCtrl()
         self.Bind(wx.EVT_TREE_ITEM_RIGHT_CLICK, self.handle_dir_right_click, tree)
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.handle_dir_selection_changed, tree)
-        self.dir_ctrl_1.SelectPath("/home/edwin")
-        sizer_left = wx.BoxSizer(wx.VERTICAL)
-        sizer_left.Add(self.dir_ctrl_1, 1, wx.EXPAND, 0)
-        left_pane.SetSizer(sizer_left)
+        # self.directory_tree_control.SelectPath("/home/edwin")
+        directory_tree_sizer = wx.BoxSizer(wx.VERTICAL)
+        directory_tree_sizer.Add(self.directory_tree_control, 1, wx.EXPAND, 0)
+        directory_tree_panel.SetSizer(directory_tree_sizer)
 
         # build list views and add to the right pane
-        right_pane = wx.Panel(split_left_right, wx.ID_ANY)
-        split_top_bottom = wx.SplitterWindow(right_pane, wx.ID_ANY)
+        file_lists_panel = wx.Panel(main_left_right_splitter, wx.ID_ANY)
+        file_lists_splitter = wx.SplitterWindow(file_lists_panel, wx.ID_ANY)
 
         # build control list view (top right)
-        right_top_pane = wx.Panel(split_top_bottom, wx.ID_ANY)
-        self.list_ctrl_files = wx.ListCtrl(right_top_pane, wx.ID_ANY,
-                                           style=wx.LC_HRULES | wx.LC_REPORT | wx.LC_VRULES)
-        self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.handle_list_ctrl_selection, self.list_ctrl_files)
-        sizer_top = wx.BoxSizer(wx.VERTICAL)
-        sizer_top.Add(self.list_ctrl_files, 1, wx.EXPAND, 0)
-        right_top_pane.SetSizer(sizer_top)
+        control_file_list_panel = wx.Panel(file_lists_splitter, wx.ID_ANY)
+        self.control_file_list = wx.ListCtrl(control_file_list_panel, wx.ID_ANY,
+                                             style=wx.LC_HRULES | wx.LC_REPORT | wx.LC_VRULES)
+        self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.handle_list_ctrl_selection, self.control_file_list)
+        control_file_list_sizer = wx.BoxSizer(wx.VERTICAL)
+        control_file_list_sizer.Add(self.control_file_list, 1, wx.EXPAND, 0)
+        control_file_list_panel.SetSizer(control_file_list_sizer)
 
         # build raw list view (bottom right)
-        right_bottom_pane = wx.Panel(split_top_bottom, wx.ID_ANY)
-        self.raw_files = wx.ListCtrl(right_bottom_pane, wx.ID_ANY,
-                                     style=wx.LC_HRULES | wx.LC_REPORT | wx.LC_VRULES)
-        sizer_bottom = wx.BoxSizer(wx.VERTICAL)
-        sizer_bottom.Add(self.raw_files, 1, wx.EXPAND, 0)
-        right_bottom_pane.SetSizer(sizer_bottom)
+        raw_file_list_panel = wx.Panel(file_lists_splitter, wx.ID_ANY)
+        self.raw_file_list = wx.ListCtrl(raw_file_list_panel, wx.ID_ANY,
+                                         style=wx.LC_HRULES | wx.LC_REPORT | wx.LC_VRULES)
+        raw_file_list_sizer = wx.BoxSizer(wx.VERTICAL)
+        raw_file_list_sizer.Add(self.raw_file_list, 1, wx.EXPAND, 0)
+        raw_file_list_panel.SetSizer(raw_file_list_sizer)
 
         # not sure why but it works better if you make the split and unsplit it right away
-        split_top_bottom.SplitHorizontally(right_top_pane, right_bottom_pane)
-        split_top_bottom.SetMinimumPaneSize(20)
-        # self.split_top_bottom.Unsplit(toRemove=self.right_bottom_pane)
+        file_lists_splitter.SplitHorizontally(control_file_list_panel, raw_file_list_panel)
+        file_lists_splitter.SetMinimumPaneSize(20)
+        # self.file_lists_splitter.Unsplit(toRemove=self.raw_file_list_panel)
         sizer_right = wx.BoxSizer(wx.HORIZONTAL)
-        sizer_right.Add(split_top_bottom, 1, wx.EXPAND, 0)
+        sizer_right.Add(file_lists_splitter, 1, wx.EXPAND, 0)
 
         # add the entire right pane to the main left/right splitter
-        right_pane.SetSizer(sizer_right)
-        split_left_right.SplitVertically(left_pane, right_pane)
-        split_left_right.SetMinimumPaneSize(20)
+        file_lists_panel.SetSizer(sizer_right)
+        main_left_right_splitter.SplitVertically(directory_tree_panel, file_lists_panel)
+        main_left_right_splitter.SetMinimumPaneSize(20)
 
         # now set up the main frame's layout sizer
-        sizer_main_app_vertical = wx.BoxSizer(wx.VERTICAL)
+        main_app_vertical_sizer = wx.BoxSizer(wx.VERTICAL)
         self.gui_build_primary_toolbar()
-        sizer_main_app_vertical.Add(self.primary_toolbar, 0, wx.EXPAND, 0)
+        main_app_vertical_sizer.Add(self.primary_toolbar, 0, wx.EXPAND, 0)
         self.gui_build_output_toolbar()
-        sizer_main_app_vertical.Add(self.output_toolbar, 0, wx.EXPAND, 0)
-        sizer_main_app_vertical.Add(split_left_right, 1, wx.EXPAND, 0)
+        main_app_vertical_sizer.Add(self.output_toolbar, 0, wx.EXPAND, 0)
+        main_app_vertical_sizer.Add(main_left_right_splitter, 1, wx.EXPAND, 0)
 
         # add the status bar
         self.gui_build_status_bar()
 
         # assign the final form's sizer
-        self.SetSizer(sizer_main_app_vertical)
-        sizer_main_app_vertical.Fit(self)
+        self.SetSizer(main_app_vertical_sizer)
+        main_app_vertical_sizer.Fit(self)
 
         # call this to finalize
         self.Layout()
@@ -614,6 +608,10 @@ class EpLaunchFrame(wx.Frame):
 
         self.SetMenuBar(self.menu_bar)
 
+    def gui_build_status_bar(self):
+        self.status_bar = self.CreateStatusBar(1)
+        self.status_bar.SetStatusText('Status bar - reports on simulations in progress')
+
     def handle_list_ctrl_selection(self, event):
         self.current_file_name = event.Item.Text
 
@@ -671,7 +669,7 @@ class EpLaunchFrame(wx.Frame):
 
     def handle_dir_selection_changed(self, event):
         # self.status_bar.SetStatusText("Dir-SelectionChanged")
-        self.directory_name = self.dir_ctrl_1.GetPath()
+        self.directory_name = self.directory_tree_control.GetPath()
         try:
             self.status_bar.SetStatusText(self.directory_name)
             self.update_file_lists()
