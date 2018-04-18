@@ -20,12 +20,17 @@ class EpLaunchFrame(wx.Frame):
         ToolBarRunButtonID = 20
 
     def __init__(self, *args, **kwargs):
+
         kwargs["style"] = wx.DEFAULT_FRAME_STYLE
         wx.Frame.__init__(self, *args, **kwargs)
 
+        # Set the title!
+        self.SetTitle(_("EP-Launch 3"))
+
         # initialize these here (and early) in the constructor to hush up the compiler messages
-        self.tb = None
-        self.out_tb = None
+        self.primary_toolbar = None
+        self.dir_ctrl_1 = None
+        self.output_toolbar = None
         self.tb_run = None
         self.menu_file_run = None
         self.menu_bar = None
@@ -37,128 +42,28 @@ class EpLaunchFrame(wx.Frame):
         self.menu_output_toolbar = None
         self.menu_columns = None
         self.menu_command_line = None
+        self.status_bar = None
+        self.raw_files = None
+        self.list_ctrl_files = None
 
         # this is currently just a single background thread, eventually we'll need to keep a list of them
         self.workflow_worker = None
 
-        # this splitter stuff needs to go into a lower level function
-        self.split_left_right = wx.SplitterWindow(self, wx.ID_ANY)
-
-        self.left_pane = wx.Panel(self.split_left_right, wx.ID_ANY)
-        self.dir_ctrl_1 = wx.GenericDirCtrl(self.left_pane, -1, size=(200, 225), style=wx.DIRCTRL_DIR_ONLY)
-        tree = self.dir_ctrl_1.GetTreeCtrl()
-        # self.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.handle_dir_item_selected, tree)
-        self.Bind(wx.EVT_TREE_ITEM_RIGHT_CLICK, self.handle_dir_right_click, tree)
-        self.Bind(wx.EVT_TREE_SEL_CHANGED, self.handle_dir_selection_changed, tree)
-        self.dir_ctrl_1.SelectPath("/home/edwin")
-
-        #
-        event_result(self, self.handle_workflow_done)
-        self.right_pane = wx.Panel(self.split_left_right, wx.ID_ANY)
-
-        self.split_top_bottom = wx.SplitterWindow(self.right_pane, wx.ID_ANY)
-        self.right_top_pane = wx.Panel(self.split_top_bottom, wx.ID_ANY)
-        self.right_bottom_pane = wx.Panel(self.split_top_bottom, wx.ID_ANY)
-
-        self.raw_files = wx.ListCtrl(self.right_bottom_pane, wx.ID_ANY,
-                                     style=wx.LC_HRULES | wx.LC_REPORT | wx.LC_VRULES)
-        self.list_ctrl_files = wx.ListCtrl(self.right_top_pane, wx.ID_ANY,
-                                           style=wx.LC_HRULES | wx.LC_REPORT | wx.LC_VRULES)
-        self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.handle_list_ctrl_selection, self.list_ctrl_files)
-        self.status_bar = self.CreateStatusBar(1)
-        self.status_bar.SetStatusText('Status bar - reports on simulations in progress')
-
-        # these are things that only need to be done once, at least for now
-        self.build_primary_toolbar()
-        self.build_output_toolbar()
-        self.build_menu_bar()
-        self.SetTitle(_("EP-Launch 3"))
-        self.split_left_right.SetMinimumPaneSize(20)
-        self.split_top_bottom.SetMinimumPaneSize(20)
+        # build out the whole GUI and do other one-time inits here
+        self.gui_build()
         self.reset_raw_list_columns()
-        self.layout_frame()
+
+        # this sets up an event handler for workflow completion events
+        event_result(self, self.handle_workflow_done)
 
         # these are things that need to be done frequently
         self.update_control_list_columns()
         self.update_file_lists()
         self.update_workflow_dependent_menu_items()
 
-    def handle_list_ctrl_selection(self, event):
-        self.current_file_name = event.Item.Text
-
     def close_frame(self):
         """May do additional things during close, including saving the current window state/settings"""
         self.Close()
-
-    def build_primary_toolbar(self):
-
-        self.tb = wx.ToolBar(self, style=wx.TB_HORIZONTAL | wx.NO_BORDER | wx.TB_FLAT | wx.TB_TEXT)
-
-        t_size = (24, 24)
-        self.tb.SetToolBitmapSize(t_size)
-
-        ch_id = wx.NewId()
-
-        self.workflow_instances, workflow_choice_strings = self.update_workflow_list()
-        self.workflow_choice = wx.Choice(self.tb, ch_id, choices=workflow_choice_strings)
-        self.tb.AddControl(self.workflow_choice)
-        self.tb.Bind(wx.EVT_CHOICE, self.handle_choice_selection_change, self.workflow_choice)
-
-        if not self.workflow_instances:
-            self.current_workflow = None
-        else:
-            self.current_workflow = self.workflow_instances[0]
-            self.workflow_choice.SetSelection(0)
-
-        file_open_bmp = wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN, wx.ART_TOOLBAR, t_size)
-        tb_weather = self.tb.AddTool(
-            10, "Weather", file_open_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Weather", "Long help for 'Weather'", None
-        )
-        self.tb.Bind(wx.EVT_TOOL, self.handle_tb_weather, tb_weather)
-
-        forward_bmp = wx.ArtProvider.GetBitmap(wx.ART_GO_FORWARD, wx.ART_TOOLBAR, t_size)
-        self.tb_run = self.tb.AddTool(
-            self.Identifiers.ToolBarRunButtonID, "Run", forward_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Run",
-            "Long help for 'Run'", None
-        )
-        self.tb.Bind(wx.EVT_TOOL, self.handle_tb_run, self.tb_run)
-
-        error_bmp = wx.ArtProvider.GetBitmap(wx.ART_ERROR, wx.ART_TOOLBAR, t_size)
-        self.tb.AddTool(
-            30, "Cancel", error_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Cancel", "Long help for 'Cancel'",
-            None)
-
-        self.tb.AddSeparator()
-
-        exe_bmp = wx.ArtProvider.GetBitmap(wx.ART_EXECUTABLE_FILE, wx.ART_TOOLBAR, t_size)
-        self.tb.AddTool(
-            40, "IDF Editor", exe_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "IDF Editor", "Long help for 'IDF Editor'", None
-        )
-        self.tb.AddTool(
-            50, "Text Editor", exe_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Text Editor", "Long help for 'Text Editor'",
-            None
-        )
-
-        self.tb.AddSeparator()
-
-        folder_bmp = wx.ArtProvider.GetBitmap(wx.ART_FOLDER, wx.ART_TOOLBAR, t_size)
-        self.tb.AddTool(
-            80, "Explorer", folder_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Explorer", "Long help for 'Explorer'", None
-        )
-
-        up_bmp = wx.ArtProvider.GetBitmap(wx.ART_GO_UP, wx.ART_TOOLBAR, t_size)
-        self.tb.AddTool(
-            80, "Update", up_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Update", "Long help for 'Update'", None
-        )
-
-        remove_bmp = wx.ArtProvider.GetBitmap(wx.ART_MINUS, wx.ART_TOOLBAR, t_size)
-        tb_hide_browser = self.tb.AddTool(
-            80, "File Browser", remove_bmp, wx.NullBitmap, wx.ITEM_CHECK, "File Browser",
-            "Long help for 'File Browser'", None
-        )
-        self.tb.Bind(wx.EVT_TOOL, self.handle_tb_hide_browser, tb_hide_browser)
-
-        self.tb.Realize()
 
     @staticmethod
     def update_workflow_list():
@@ -195,53 +100,301 @@ class EpLaunchFrame(wx.Frame):
         self.menu_columns.SetText("%s Columns..." % current_workflow_name)
         self.menu_command_line.SetText("%s Command Line..." % current_workflow_name)
 
-    def build_output_toolbar(self):
+    def update_control_list_columns(self):
+        self.list_ctrl_files.DeleteAllColumns()
+        self.list_ctrl_files.AppendColumn(_("File Name"), format=wx.LIST_FORMAT_LEFT, width=-1)
+        current_workflow_columns = self.current_workflow.get_interface_columns()
+        for current_column in current_workflow_columns:
+            self.list_ctrl_files.AppendColumn(_(current_column), format=wx.LIST_FORMAT_LEFT, width=-1)
+
+    def reset_raw_list_columns(self):
+        self.raw_files.AppendColumn(_("File Name"), format=wx.LIST_FORMAT_LEFT, width=-1)
+        # self.raw_files.AppendColumn(_("Date Modified"), format=wx.LIST_FORMAT_LEFT, width=-1)
+        # self.raw_files.AppendColumn(_("Type"), format=wx.LIST_FORMAT_LEFT, width=-1)
+        self.raw_files.AppendColumn(_("Size"), format=wx.LIST_FORMAT_RIGHT, width=-1)
+
+    @staticmethod
+    def get_files_in_directory():
+        file_list = [
+            {"name": "5Zone.idf", "size": 128},
+            {"name": "6Zone.idf", "size": 256},
+            {"name": "7Zone.idf", "size": 389},
+            {"name": "8Zone.idf", "size": 495},
+            {"name": "9Zone.what", "size": 529},
+            {"name": "admin.html", "size": 639}
+        ]
+        file_list.sort(key=lambda x: x['name'])
+        return file_list
+
+    def update_file_lists(self):
+
+        # for now this will pick up the dummy cache file here in the source tree
+        # this will eventually pick up the currently selected directory and find a cache file there
+        this_dir = os.path.dirname(os.path.realpath(__file__))
+        cache_file_path = os.path.join(this_dir, 'fake_cache_file.json')
+
+        # if there is a cache file there, read the cached file data for the current workflow
+        files_in_workflow = {}
+        if os.path.exists(cache_file_path):
+            file_blob = open(cache_file_path, 'r').read()
+            content = json.loads(file_blob)
+            workflows = content['workflows']
+            current_workflow_name = self.current_workflow.name()
+            if current_workflow_name in workflows:
+                files_in_workflow = workflows[current_workflow_name]['files']
+
+        # then get the entire list of files in the current directory to build up the listview items
+        # if they happen to match the filename in the workflow cache, then add that info to the row structure
+        files_in_dir = self.get_files_in_directory()
+        workflow_file_patterns = self.current_workflow.get_file_types()
+        control_list_rows = []
+        raw_list_rows = []
+        for file_struct in files_in_dir:
+            if not all([x in file_struct for x in ['name', 'size']]):
+                raise EPLaunchDevException('Developer issue: malformed response from get_files_in_directory')
+            file_name = file_struct['name']
+            file_size = file_struct['size']
+            raw_list_rows.append([file_name, file_size])
+            # we only include this row if the file matches the workflow pattern
+            matched = False
+            for file_type in workflow_file_patterns:
+                if fnmatch.fnmatch(file_name, file_type):
+                    matched = True
+                    break
+            if not matched:
+                continue
+            # listview row always includes the filename itself
+            row = [file_name]
+            # if it is also in the cache then the listview row can include additional data
+            if file_name in files_in_workflow:
+                cached_file_info = files_in_workflow[file_name]
+                for column in self.current_workflow.get_interface_columns():
+                    if column in cached_file_info:
+                        row.append(cached_file_info[column])
+            # always add the row to the main list
+            control_list_rows.append(row)
+
+        # clear all items from the listview and then add them back in
+        self.list_ctrl_files.DeleteAllItems()
+        for row in control_list_rows:
+            self.list_ctrl_files.Append(row)
+        self.list_ctrl_files.SetColumnWidth(0, -1)  # autosize column width
+
+        # clear all the items from the raw list as well and add all of them back
+        self.raw_files.DeleteAllItems()
+        for row in raw_list_rows:
+            self.raw_files.Append(row)
+        self.raw_files.SetColumnWidth(0, -1)
+        self.raw_files.SetColumnWidth(1, -1)
+
+    def run_workflow(self):
+        if self.directory_name and self.current_file_name:
+            if not self.workflow_worker:
+                self.status_bar.SetLabel('Starting workflow')
+                full_file_path = os.path.join(self.directory_name, self.current_file_name)
+                self.workflow_worker = WorkerThread(self, self.current_workflow, full_file_path, None)
+                self.tb_run.Enable(False)
+                self.primary_toolbar.Realize()
+                # self.menu_file_run.Enable(False)
+            else:
+                self.status_bar.SetLabel('A workflow is already running, concurrence will come soon...')
+        else:
+            self.status_bar.SetLabel(
+                'Error: Make sure you select a directory in the tree and a file in the control list'
+            )
+
+    def gui_build(self):
+        self.gui_build_menu_bar()
+        self.gui_build_layout()
+
+    def gui_build_status_bar(self):
+        self.status_bar = self.CreateStatusBar(1)
+        self.status_bar.SetStatusText('Status bar - reports on simulations in progress')
+
+    def gui_build_layout(self):
+
+        # build the left/right main splitter
+        split_left_right = wx.SplitterWindow(self, wx.ID_ANY)
+
+        # build tree view and add it to the left pane
+        left_pane = wx.Panel(split_left_right, wx.ID_ANY)
+        self.dir_ctrl_1 = wx.GenericDirCtrl(left_pane, -1, size=(200, 225), style=wx.DIRCTRL_DIR_ONLY)
+        tree = self.dir_ctrl_1.GetTreeCtrl()
+        self.Bind(wx.EVT_TREE_ITEM_RIGHT_CLICK, self.handle_dir_right_click, tree)
+        self.Bind(wx.EVT_TREE_SEL_CHANGED, self.handle_dir_selection_changed, tree)
+        self.dir_ctrl_1.SelectPath("/home/edwin")
+        sizer_left = wx.BoxSizer(wx.VERTICAL)
+        sizer_left.Add(self.dir_ctrl_1, 1, wx.EXPAND, 0)
+        left_pane.SetSizer(sizer_left)
+
+        # build list views and add to the right pane
+        right_pane = wx.Panel(split_left_right, wx.ID_ANY)
+        split_top_bottom = wx.SplitterWindow(right_pane, wx.ID_ANY)
+
+        # build control list view (top right)
+        right_top_pane = wx.Panel(split_top_bottom, wx.ID_ANY)
+        self.list_ctrl_files = wx.ListCtrl(right_top_pane, wx.ID_ANY,
+                                           style=wx.LC_HRULES | wx.LC_REPORT | wx.LC_VRULES)
+        self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.handle_list_ctrl_selection, self.list_ctrl_files)
+        sizer_top = wx.BoxSizer(wx.VERTICAL)
+        sizer_top.Add(self.list_ctrl_files, 1, wx.EXPAND, 0)
+        right_top_pane.SetSizer(sizer_top)
+
+        # build raw list view (bottom right)
+        right_bottom_pane = wx.Panel(split_top_bottom, wx.ID_ANY)
+        self.raw_files = wx.ListCtrl(right_bottom_pane, wx.ID_ANY,
+                                     style=wx.LC_HRULES | wx.LC_REPORT | wx.LC_VRULES)
+        sizer_bottom = wx.BoxSizer(wx.VERTICAL)
+        sizer_bottom.Add(self.raw_files, 1, wx.EXPAND, 0)
+        right_bottom_pane.SetSizer(sizer_bottom)
+
+        # not sure why but it works better if you make the split and unsplit it right away
+        split_top_bottom.SplitHorizontally(right_top_pane, right_bottom_pane)
+        split_top_bottom.SetMinimumPaneSize(20)
+        # self.split_top_bottom.Unsplit(toRemove=self.right_bottom_pane)
+        sizer_right = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_right.Add(split_top_bottom, 1, wx.EXPAND, 0)
+
+        # add the entire right pane to the main left/right splitter
+        right_pane.SetSizer(sizer_right)
+        split_left_right.SplitVertically(left_pane, right_pane)
+        split_left_right.SetMinimumPaneSize(20)
+
+        # now set up the main frame's layout sizer
+        sizer_main_app_vertical = wx.BoxSizer(wx.VERTICAL)
+        self.gui_build_primary_toolbar()
+        sizer_main_app_vertical.Add(self.primary_toolbar, 0, wx.EXPAND, 0)
+        self.gui_build_output_toolbar()
+        sizer_main_app_vertical.Add(self.output_toolbar, 0, wx.EXPAND, 0)
+        sizer_main_app_vertical.Add(split_left_right, 1, wx.EXPAND, 0)
+
+        # add the status bar
+        self.gui_build_status_bar()
+
+        # assign the final form's sizer
+        self.SetSizer(sizer_main_app_vertical)
+        sizer_main_app_vertical.Fit(self)
+
+        # call this to finalize
+        self.Layout()
+
+    def gui_build_primary_toolbar(self):
+
+        self.primary_toolbar = wx.ToolBar(self, style=wx.TB_HORIZONTAL | wx.NO_BORDER | wx.TB_FLAT | wx.TB_TEXT)
+
         t_size = (24, 24)
-        self.out_tb = wx.ToolBar(self, style=wx.TB_HORIZONTAL | wx.NO_BORDER | wx.TB_FLAT | wx.TB_TEXT)
-        self.out_tb.SetToolBitmapSize(t_size)
+        self.primary_toolbar.SetToolBitmapSize(t_size)
+
+        ch_id = wx.NewId()
+
+        self.workflow_instances, workflow_choice_strings = self.update_workflow_list()
+        self.workflow_choice = wx.Choice(self.primary_toolbar, ch_id, choices=workflow_choice_strings)
+        self.primary_toolbar.AddControl(self.workflow_choice)
+        self.primary_toolbar.Bind(wx.EVT_CHOICE, self.handle_choice_selection_change, self.workflow_choice)
+
+        if not self.workflow_instances:
+            self.current_workflow = None
+        else:
+            self.current_workflow = self.workflow_instances[0]
+            self.workflow_choice.SetSelection(0)
+
+        file_open_bmp = wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN, wx.ART_TOOLBAR, t_size)
+        tb_weather = self.primary_toolbar.AddTool(
+            10, "Weather", file_open_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Weather", "Long help for 'Weather'", None
+        )
+        self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_weather, tb_weather)
+
+        forward_bmp = wx.ArtProvider.GetBitmap(wx.ART_GO_FORWARD, wx.ART_TOOLBAR, t_size)
+        self.tb_run = self.primary_toolbar.AddTool(
+            self.Identifiers.ToolBarRunButtonID, "Run", forward_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Run",
+            "Long help for 'Run'", None
+        )
+        self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_run, self.tb_run)
+
+        error_bmp = wx.ArtProvider.GetBitmap(wx.ART_ERROR, wx.ART_TOOLBAR, t_size)
+        self.primary_toolbar.AddTool(
+            30, "Cancel", error_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Cancel", "Long help for 'Cancel'",
+            None)
+
+        self.primary_toolbar.AddSeparator()
+
+        exe_bmp = wx.ArtProvider.GetBitmap(wx.ART_EXECUTABLE_FILE, wx.ART_TOOLBAR, t_size)
+        self.primary_toolbar.AddTool(
+            40, "IDF Editor", exe_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "IDF Editor", "Long help for 'IDF Editor'", None
+        )
+        self.primary_toolbar.AddTool(
+            50, "Text Editor", exe_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Text Editor", "Long help for 'Text Editor'",
+            None
+        )
+
+        self.primary_toolbar.AddSeparator()
+
+        folder_bmp = wx.ArtProvider.GetBitmap(wx.ART_FOLDER, wx.ART_TOOLBAR, t_size)
+        self.primary_toolbar.AddTool(
+            80, "Explorer", folder_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Explorer", "Long help for 'Explorer'", None
+        )
+
+        up_bmp = wx.ArtProvider.GetBitmap(wx.ART_GO_UP, wx.ART_TOOLBAR, t_size)
+        self.primary_toolbar.AddTool(
+            80, "Update", up_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Update", "Long help for 'Update'", None
+        )
+
+        remove_bmp = wx.ArtProvider.GetBitmap(wx.ART_MINUS, wx.ART_TOOLBAR, t_size)
+        tb_hide_browser = self.primary_toolbar.AddTool(
+            80, "File Browser", remove_bmp, wx.NullBitmap, wx.ITEM_CHECK, "File Browser",
+            "Long help for 'File Browser'", None
+        )
+        self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_hide_browser, tb_hide_browser)
+
+        self.primary_toolbar.Realize()
+
+    def gui_build_output_toolbar(self):
+        t_size = (24, 24)
+        self.output_toolbar = wx.ToolBar(self, style=wx.TB_HORIZONTAL | wx.NO_BORDER | wx.TB_FLAT | wx.TB_TEXT)
+        self.output_toolbar.SetToolBitmapSize(t_size)
 
         norm_bmp = wx.ArtProvider.GetBitmap(wx.ART_NORMAL_FILE, wx.ART_TOOLBAR, t_size)
 
-        self.out_tb.AddTool(
+        self.output_toolbar.AddTool(
             10, "Table.html", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
         )
-        self.out_tb.AddTool(
+        self.output_toolbar.AddTool(
             10, "Meters.csv", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
         )
-        self.out_tb.AddTool(
+        self.output_toolbar.AddTool(
             10, ".csv", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
         )
-        self.out_tb.AddTool(
+        self.output_toolbar.AddTool(
             10, ".err", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
         )
-        self.out_tb.AddTool(
+        self.output_toolbar.AddTool(
             10, ".rdd", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
         )
-        self.out_tb.AddTool(
+        self.output_toolbar.AddTool(
             10, ".eio", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
         )
-        self.out_tb.AddSeparator()
-        self.out_tb.AddTool(
+        self.output_toolbar.AddSeparator()
+        self.output_toolbar.AddTool(
             10, ".dxf", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
         )
-        self.out_tb.AddTool(
+        self.output_toolbar.AddTool(
             10, ".mtd", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
         )
-        self.out_tb.AddTool(
+        self.output_toolbar.AddTool(
             10, ".bnd", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
         )
-        self.out_tb.AddTool(
+        self.output_toolbar.AddTool(
             10, ".eso", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
         )
-        self.out_tb.AddTool(
+        self.output_toolbar.AddTool(
             10, ".mtr", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
         )
-        self.out_tb.AddTool(
+        self.output_toolbar.AddTool(
             10, ".shd", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
         )
-        self.out_tb.Realize()
+        self.output_toolbar.Realize()
 
-    def build_menu_bar(self):
+    def gui_build_menu_bar(self):
 
         self.menu_bar = wx.MenuBar()
 
@@ -461,140 +614,8 @@ class EpLaunchFrame(wx.Frame):
 
         self.SetMenuBar(self.menu_bar)
 
-    def update_control_list_columns(self):
-        self.list_ctrl_files.DeleteAllColumns()
-        self.list_ctrl_files.AppendColumn(_("File Name"), format=wx.LIST_FORMAT_LEFT, width=-1)
-        current_workflow_columns = self.current_workflow.get_interface_columns()
-        for current_column in current_workflow_columns:
-            self.list_ctrl_files.AppendColumn(_(current_column), format=wx.LIST_FORMAT_LEFT, width=-1)
-
-    def reset_raw_list_columns(self):
-        self.raw_files.AppendColumn(_("File Name"), format=wx.LIST_FORMAT_LEFT, width=-1)
-        # self.raw_files.AppendColumn(_("Date Modified"), format=wx.LIST_FORMAT_LEFT, width=-1)
-        # self.raw_files.AppendColumn(_("Type"), format=wx.LIST_FORMAT_LEFT, width=-1)
-        self.raw_files.AppendColumn(_("Size"), format=wx.LIST_FORMAT_RIGHT, width=-1)
-
-    @staticmethod
-    def get_files_in_directory():
-        file_list = [
-            {"name": "5Zone.idf", "size": 128},
-            {"name": "6Zone.idf", "size": 256},
-            {"name": "7Zone.idf", "size": 389},
-            {"name": "8Zone.idf", "size": 495},
-            {"name": "9Zone.what", "size": 529},
-            {"name": "admin.html", "size": 639}
-        ]
-        file_list.sort(key=lambda x: x['name'])
-        return file_list
-
-    def update_file_lists(self):
-
-        # for now this will pick up the dummy cache file here in the source tree
-        # this will eventually pick up the currently selected directory and find a cache file there
-        this_dir = os.path.dirname(os.path.realpath(__file__))
-        cache_file_path = os.path.join(this_dir, 'fake_cache_file.json')
-
-        # if there is a cache file there, read the cached file data for the current workflow
-        files_in_workflow = {}
-        if os.path.exists(cache_file_path):
-            file_blob = open(cache_file_path, 'r').read()
-            content = json.loads(file_blob)
-            workflows = content['workflows']
-            current_workflow_name = self.current_workflow.name()
-            if current_workflow_name in workflows:
-                files_in_workflow = workflows[current_workflow_name]['files']
-
-        # then get the entire list of files in the current directory to build up the listview items
-        # if they happen to match the filename in the workflow cache, then add that info to the row structure
-        files_in_dir = self.get_files_in_directory()
-        workflow_file_patterns = self.current_workflow.get_file_types()
-        control_list_rows = []
-        raw_list_rows = []
-        for file_struct in files_in_dir:
-            if not all([x in file_struct for x in ['name', 'size']]):
-                raise EPLaunchDevException('Developer issue: malformed response from get_files_in_directory')
-            file_name = file_struct['name']
-            file_size = file_struct['size']
-            raw_list_rows.append([file_name, file_size])
-            # we only include this row if the file matches the workflow pattern
-            matched = False
-            for file_type in workflow_file_patterns:
-                if fnmatch.fnmatch(file_name, file_type):
-                    matched = True
-                    break
-            if not matched:
-                continue
-            # listview row always includes the filename itself
-            row = [file_name]
-            # if it is also in the cache then the listview row can include additional data
-            if file_name in files_in_workflow:
-                cached_file_info = files_in_workflow[file_name]
-                for column in self.current_workflow.get_interface_columns():
-                    if column in cached_file_info:
-                        row.append(cached_file_info[column])
-            # always add the row to the main list
-            control_list_rows.append(row)
-
-        # clear all items from the listview and then add them back in
-        self.list_ctrl_files.DeleteAllItems()
-        for row in control_list_rows:
-            self.list_ctrl_files.Append(row)
-        self.list_ctrl_files.SetColumnWidth(0, -1)  # autosize column width
-
-        # clear all the items from the raw list as well and add all of them back
-        self.raw_files.DeleteAllItems()
-        for row in raw_list_rows:
-            self.raw_files.Append(row)
-        self.raw_files.SetColumnWidth(0, -1)
-        self.raw_files.SetColumnWidth(1, -1)
-
-    def layout_frame(self):
-        sizer_main_app_vertical = wx.BoxSizer(wx.VERTICAL)
-        sizer_right = wx.BoxSizer(wx.HORIZONTAL)
-        sizer_left = wx.BoxSizer(wx.VERTICAL)
-        sizer_top = wx.BoxSizer(wx.VERTICAL)
-        sizer_bottom = wx.BoxSizer(wx.VERTICAL)
-        sizer_left.Add(self.dir_ctrl_1, 1, wx.EXPAND, 0)
-        self.left_pane.SetSizer(sizer_left)
-
-        sizer_top.Add(self.list_ctrl_files, 1, wx.EXPAND, 0)
-        #        sizer_top.Add(self.text_ctrl_1, 1, wx.EXPAND,0)
-        self.right_top_pane.SetSizer(sizer_top)
-
-        sizer_bottom.Add(self.raw_files, 1, wx.EXPAND, 0)
-        self.right_bottom_pane.SetSizer(sizer_bottom)
-
-        # not sure why but it works better if you make the split and unsplit it right away
-        self.split_top_bottom.SplitHorizontally(self.right_top_pane, self.right_bottom_pane)
-        # self.split_top_bottom.Unsplit(toRemove=self.right_bottom_pane)
-
-        sizer_right.Add(self.split_top_bottom, 1, wx.EXPAND, 0)
-        self.right_pane.SetSizer(sizer_right)
-
-        self.split_left_right.SplitVertically(self.left_pane, self.right_pane)
-        sizer_main_app_vertical.Add(self.tb, 0, wx.EXPAND, 0)
-        sizer_main_app_vertical.Add(self.out_tb, 0, wx.EXPAND, 0)
-        sizer_main_app_vertical.Add(self.split_left_right, 1, wx.EXPAND, 0)
-        self.SetSizer(sizer_main_app_vertical)
-        sizer_main_app_vertical.Fit(self)
-
-        self.Layout()
-
-    def run_workflow(self):
-        if self.directory_name and self.current_file_name:
-            if not self.workflow_worker:
-                self.status_bar.SetLabel('Starting workflow')
-                full_file_path = os.path.join(self.directory_name, self.current_file_name)
-                self.workflow_worker = WorkerThread(self, self.current_workflow, full_file_path, None)
-                self.tb_run.Enable(False)
-                self.tb.Realize()
-                # self.menu_file_run.Enable(False)
-            else:
-                self.status_bar.SetLabel('A workflow is already running, concurrence will come soon...')
-        else:
-            self.status_bar.SetLabel(
-                'Error: Make sure you select a directory in the tree and a file in the control list'
-            )
+    def handle_list_ctrl_selection(self, event):
+        self.current_file_name = event.Item.Text
 
     def handle_menu_file_run(self, event):
         self.status_bar.SetStatusText('Clicked File->Run')
@@ -616,7 +637,7 @@ class EpLaunchFrame(wx.Frame):
             status_message = 'Workflow response was invalid'
         self.status_bar.SetStatusText(status_message)
         self.workflow_worker = None
-        self.tb.EnableTool(self.Identifiers.ToolBarRunButtonID, True)
+        self.primary_toolbar.EnableTool(self.Identifiers.ToolBarRunButtonID, True)
 
     def handle_menu_file_cancel_selected(self, event):
         self.status_bar.SetStatusText('Clicked File->CancelSelected')
