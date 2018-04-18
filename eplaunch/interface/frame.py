@@ -650,6 +650,7 @@ class EpLaunchFrame(wx.Frame):
                 try:
                     self.current_cache.add_result(self.current_workflow.name(), self.current_file_name, event.data.column_data)
                     self.current_cache.write()
+                    self.update_file_lists()
                 except EPLaunchFileException:
                     pass
             else:
