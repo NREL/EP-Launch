@@ -15,5 +15,5 @@ class SlabWorkflow(BaseEPLaunch3Workflow):
     def get_extra_data(self):
         return {"Hey, it's extra": "data"}
 
-    def main(self, file_path, args):
+    def main(self, run_directory, file_name, args):
         pass

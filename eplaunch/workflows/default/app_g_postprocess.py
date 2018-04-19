@@ -18,5 +18,5 @@ class AppGPostProcessWorkflow(BaseEPLaunch3Workflow):
     def get_interface_columns(self):
         return ['AppG Errors [-]', 'AppG Something [-]']
 
-    def main(self, file_path, args):
+    def main(self, run_directory, file_name, args):
         pass

@@ -11,7 +11,7 @@ from eplaunch.interface import viewer_dialog
 from eplaunch.interface import workflow_directories_dialog
 from eplaunch.interface.cache import CacheFile
 from eplaunch.interface.exceptions import EPLaunchDevException, EPLaunchFileException
-from eplaunch.interface.workflow_processing import event_result, WorkerThread
+from eplaunch.interface.workflow_processing import event_result, WorkflowThread
 from eplaunch.workflows import manager as workflow_manager
 
 
@@ -212,8 +212,9 @@ class EpLaunchFrame(wx.Frame):
         if self.directory_name and self.current_file_name:
             if not self.workflow_worker:
                 self.status_bar.SetLabel('Starting workflow')
-                full_file_path = os.path.join(self.directory_name, self.current_file_name)
-                self.workflow_worker = WorkerThread(self, self.current_workflow, full_file_path, None)
+                self.workflow_worker = WorkflowThread(
+                    self, self.current_workflow, self.directory_name, self.current_file_name, None
+                )
                 self.tb_run.Enable(False)
                 self.primary_toolbar.Realize()
                 # self.menu_file_run.Enable(False)
@@ -648,7 +649,9 @@ class EpLaunchFrame(wx.Frame):
             if successful:
                 status_message = 'Successfully completed a workflow: ' + event.data.message
                 try:
-                    self.current_cache.add_result(self.current_workflow.name(), self.current_file_name, event.data.column_data)
+                    self.current_cache.add_result(
+                        self.current_workflow.name(), self.current_file_name, event.data.column_data
+                    )
                     self.current_cache.write()
                     self.update_file_lists()
                 except EPLaunchFileException:

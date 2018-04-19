@@ -34,7 +34,7 @@ class BaseEPLaunch3Workflow(object):
         """
         return []
 
-    def main(self, file_path, args):
+    def main(self, run_directory, file_name, args):
         """
         The actual running operation for the workflow, should check self.abort periodically to allow exiting
         :return: Should return an EPLaunch3WorkflowResponse instance
