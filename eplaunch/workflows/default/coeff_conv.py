@@ -1,7 +1,7 @@
-from eplaunch.workflows.base import BaseWorkflow
+from eplaunch.workflows.base import BaseEPLaunch3Workflow
 
 
-class CoeffConvWorkflow(BaseWorkflow):
+class CoeffConvWorkflow(BaseEPLaunch3Workflow):
 
     def name(self):
         return "CoeffConv"
@@ -14,3 +14,6 @@ class CoeffConvWorkflow(BaseWorkflow):
 
     def get_extra_data(self):
         return {"Hey, it's extra": "data"}
+
+    def main(self, run_directory, file_name, args):
+        pass
