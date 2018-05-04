@@ -250,32 +250,32 @@ class EpLaunchFrame(wx.Frame):
 
         # build list views and add to the right pane
         file_lists_panel = wx.Panel(main_left_right_splitter, wx.ID_ANY)
-        file_lists_splitter = wx.SplitterWindow(file_lists_panel, wx.ID_ANY)
+        self.file_lists_splitter = wx.SplitterWindow(file_lists_panel, wx.ID_ANY)
 
         # build control list view (top right)
-        control_file_list_panel = wx.Panel(file_lists_splitter, wx.ID_ANY)
-        self.control_file_list = wx.ListCtrl(control_file_list_panel, wx.ID_ANY,
+        self.control_file_list_panel = wx.Panel(self.file_lists_splitter, wx.ID_ANY)
+        self.control_file_list = wx.ListCtrl(self.control_file_list_panel, wx.ID_ANY,
                                              style=wx.LC_HRULES | wx.LC_REPORT | wx.LC_VRULES)
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.handle_list_ctrl_selection, self.control_file_list)
         control_file_list_sizer = wx.BoxSizer(wx.VERTICAL)
         control_file_list_sizer.Add(self.control_file_list, 1, wx.EXPAND, 0)
-        control_file_list_panel.SetSizer(control_file_list_sizer)
+        self.control_file_list_panel.SetSizer(control_file_list_sizer)
 
         # build raw list view (bottom right)
-        raw_file_list_panel = wx.Panel(file_lists_splitter, wx.ID_ANY)
-        self.raw_file_list = wx.ListCtrl(raw_file_list_panel, wx.ID_ANY,
+        self.raw_file_list_panel = wx.Panel(self.file_lists_splitter, wx.ID_ANY)
+        self.raw_file_list = wx.ListCtrl(self.raw_file_list_panel, wx.ID_ANY,
                                          style=wx.LC_HRULES | wx.LC_REPORT | wx.LC_VRULES)
         raw_file_list_sizer = wx.BoxSizer(wx.VERTICAL)
         raw_file_list_sizer.Add(self.raw_file_list, 1, wx.EXPAND, 0)
-        raw_file_list_panel.SetSizer(raw_file_list_sizer)
+        self.raw_file_list_panel.SetSizer(raw_file_list_sizer)
 
         # not sure why but it works better if you make the split and unsplit it right away
-        file_lists_splitter.SetMinimumPaneSize(20)
-        file_lists_splitter.SplitHorizontally(control_file_list_panel, raw_file_list_panel)
+        self.file_lists_splitter.SetMinimumPaneSize(20)
+        self.file_lists_splitter.SplitHorizontally(self.control_file_list_panel, self.raw_file_list_panel)
 
         # self.file_lists_splitter.Unsplit(toRemove=self.raw_file_list_panel)
         sizer_right = wx.BoxSizer(wx.HORIZONTAL)
-        sizer_right.Add(file_lists_splitter, 1, wx.EXPAND, 0)
+        sizer_right.Add(self.file_lists_splitter, 1, wx.EXPAND, 0)
 
         # add the entire right pane to the main left/right splitter
         file_lists_panel.SetSizer(sizer_right)
@@ -722,10 +722,10 @@ class EpLaunchFrame(wx.Frame):
 
     def handle_tb_hide_browser(self, event):
         # the following remove the top pane of the right hand splitter
-        if self.split_top_bottom.IsSplit():
-            self.split_top_bottom.Unsplit(toRemove=self.right_bottom_pane)
+        if self.file_lists_splitter.IsSplit():
+            self.file_lists_splitter.Unsplit(toRemove=self.raw_file_list_panel)
         else:
-            self.split_top_bottom.SplitHorizontally(self.right_top_pane, self.right_bottom_pane)
+            self.file_lists_splitter.SplitHorizontally(self.control_file_list_panel, self.raw_file_list_panel)
 
     def handle_menu_option_workflow_directories(self, event):
         workflow_dir_dialog = workflow_directories_dialog.WorkflowDirectoriesDialog(None, title='Workflow Directories')
