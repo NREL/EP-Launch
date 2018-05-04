@@ -30,6 +30,9 @@ class EpLaunchFrame(wx.Frame):
         # Set the title!
         self.SetTitle(_("EP-Launch 3"))
 
+        # Get saved settings
+        self.config = wx.Config("EP-Launch3")
+
         # initialize these here (and early) in the constructor to hush up the compiler messages
         self.primary_toolbar = None
         self.directory_tree_control = None
@@ -66,6 +69,7 @@ class EpLaunchFrame(wx.Frame):
 
     def close_frame(self):
         """May do additional things during close, including saving the current window state/settings"""
+        self.save_config()
         self.Close()
 
     @staticmethod
@@ -439,49 +443,49 @@ class EpLaunchFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.handle_menu_edit_paste, menu_edit_paste)
         self.menu_bar.Append(edit_menu, "&Edit")
 
-        folder_menu = wx.Menu()
-        recent_folder_menu = folder_menu.Append(31, "Recent", "Recent folders where a workflow was run.")
-        folder_menu.AppendSeparator()
-        folder_menu.Append(32, "c:\\EnergyPlus8-8-0")
-        folder_menu.Append(33, "c:\\documents")
-        folder_menu.Append(34, "c:\\projectX\\working\\task1")
-        folder_menu.Append(35, "c:\\projectY\\dev\\task2")
-        folder_menu.AppendSeparator()
-        folder_menu.Append(36, "Favorites")
-        folder_menu.AppendSeparator()
-        folder_menu.Append(37, "c:\\EnergyPlus8-8-0\Examples")
-        folder_menu.Append(38, "c:\\documents\\about")
-        folder_menu.Append(39, "c:\\projectZ\\do")
-        folder_menu.AppendSeparator()
-        folder_menu.Append(310, "Add Current Folder to Favorites")
-        folder_menu.Append(311, "Remove Current Folder from Favorites")
-        self.menu_bar.Append(folder_menu, "F&older")
-        # disable the menu items that are just information
-        self.menu_bar.Enable(31, False)
-        self.menu_bar.Enable(36, False)
+        self.folder_menu = wx.Menu()
+        recent_folder_menu = self.folder_menu.Append(301, "Recent", "Recent folders where a workflow as run.")
+        self.folder_menu.Append(302, kind=wx.ITEM_SEPARATOR)
+        self.folder_menu.Append(303, kind=wx.ITEM_SEPARATOR)
+        self.folder_recent = FileNameMenus(self.folder_menu, 302, 303, self.config, "/FolderMenu/Recent")
+        self.folder_recent.retrieve_config()
 
-        weather_menu = wx.Menu()
-        weather_menu.Append(41, "Select..")
-        weather_menu.AppendSeparator()
-        weather_menu.Append(42, "Recent")
-        weather_menu.AppendSeparator()
-        weather_menu.Append(43, "Chicago.TMY")
-        weather_menu.Append(44, "Boston.TMY")
-        weather_menu.Append(45, "Philadelphia.TMY")
-        weather_menu.Append(46, "Austin.TMY")
-        weather_menu.AppendSeparator()
-        weather_menu.Append(47, "Favorites")
-        weather_menu.AppendSeparator()
-        weather_menu.Append(48, "Detroit.TMY")
-        weather_menu.Append(49, "Denver.TMY")
-        weather_menu.Append(410, "San Francisco.TMY")
-        weather_menu.AppendSeparator()
-        weather_menu.Append(411, "Add Weather to Favorites")
-        weather_menu.Append(412, "Remove Weather from Favorites")
-        self.menu_bar.Append(weather_menu, "&Weather")
+        self.folder_menu.Append(304, "Favorites")
+        self.folder_menu.Append(305, kind=wx.ITEM_SEPARATOR)
+        self.folder_menu.Append(306, kind=wx.ITEM_SEPARATOR)
+        self.folder_favorites = FileNameMenus(self.folder_menu, 305, 306, self.config, "/FolderMenu/Favorite")
+        self.folder_favorites.retrieve_config()
+
+        self.folder_menu.Append(307, "Add Current Folder to Favorites")
+        self.folder_menu.Append(308, "Remove Current Folder from Favorites")
+        self.menu_bar.Append(self.folder_menu, "F&older")
         # disable the menu items that are just information
-        self.menu_bar.Enable(42, False)
-        self.menu_bar.Enable(47, False)
+        self.menu_bar.Enable(301,False)
+        self.menu_bar.Enable(304,False)
+
+        self.weather_menu = wx.Menu()
+        menu_weather_select = self.weather_menu.Append(401, "Select..")
+        self.Bind(wx.EVT_MENU, self.handle_menu_weather_select, menu_weather_select)
+        self.weather_menu.Append(402, kind=wx.ITEM_SEPARATOR)
+        self.weather_menu.Append(403, "Recent")
+        self.weather_menu.Append(404, kind=wx.ITEM_SEPARATOR)
+        self.weather_menu.Append(405, kind=wx.ITEM_SEPARATOR)
+        self.weather_recent = FileNameMenus(self.weather_menu, 404, 405, self.config, "/WeatherMenu/Recent")
+        self.weather_recent.retrieve_config()
+
+        self.weather_menu.Append(406, "Favorites")
+        self.weather_menu.Append(407, kind=wx.ITEM_SEPARATOR)
+        self.weather_menu.Append(408, kind=wx.ITEM_SEPARATOR)
+        self.weather_menu.Append(409, "Add Weather to Favorites")
+        self.weather_menu.Append(410, "Remove Weather from Favorites")
+        self.weather_favorites = FileNameMenus(self.weather_menu, 407, 408, self.config, "/WeatherMenu/Favorite")
+        self.weather_favorites.retrieve_config()
+
+        self.menu_bar.Append(self.weather_menu, "&Weather")
+        # disable the menu items that are just information
+        self.menu_bar.Enable(403,False)
+        self.menu_bar.Enable(406,False)
+
 
         output_menu = wx.Menu()
 
@@ -796,3 +800,19 @@ class EpLaunchFrame(wx.Frame):
         print(return_value)
         # May need to refresh the main UI if something changed in the settings
         file_viewer_dialog.Destroy()
+
+    def save_config(self):
+        self.folder_favorites.save_config()
+        self.folder_recent.save_config()
+        self.weather_favorites.save_config()
+        self.weather_recent.save_config()
+
+    def handle_menu_weather_select(self, event):
+        filename = wx.FileSelector("Select a weather file", wildcard="EnergyPlus Weather File(*.epw)|*.epw",
+                                   flags= wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+        # check if in recent
+        weather_menu_list = self.weather_menu.GetMenuItems()
+        weather_menu_recent_labels =  [menu_item.GetLabel() for menu_item in weather_menu_list if menu_item.GetId() == self.WEATHER_RECENT_ID] #get recent weather
+        if filename not in weather_menu_recent_labels:
+            self.weather_menu.Append(400, filename)
+
