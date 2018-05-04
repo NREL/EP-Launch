@@ -13,6 +13,7 @@ from eplaunch.interface.cache import CacheFile
 from eplaunch.interface.exceptions import EPLaunchDevException, EPLaunchFileException
 from eplaunch.interface.workflow_processing import event_result, WorkflowThread
 from eplaunch.workflows import manager as workflow_manager
+from eplaunch.filenamemenus.base import FileNameMenus
 
 
 # wx callbacks need an event argument even though we usually don't use it, so the next line disables that check
