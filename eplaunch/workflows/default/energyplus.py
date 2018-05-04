@@ -1,5 +1,6 @@
 import os
 import subprocess
+import platform
 
 from eplaunch.workflows.base import BaseEPLaunch3Workflow, EPLaunch3WorkflowResponse
 
@@ -15,7 +16,10 @@ class EPlusRunManager(object):
     # This will eventually be a path relative to this script.
     # Since these workflows will live at /EnergyPlus/Install/workflows/energyplus.py
     # We will generate the path dynamically from __file__ and os.path.join to get to the E+ binary
-    EnergyPlusBinary = '/home/edwin/Programs/EnergyPlus-8-9-0/energyplus'
+    if platform.system() == 'Windows':
+        EnergyPlusBinary = 'c:\\EnergyPlusV8-8-0\\energyplus.exe'
+    else:
+        EnergyPlusBinary = '/home/edwin/Programs/EnergyPlus-8-9-0/energyplus'
 
     @staticmethod
     def get_end_summary(end_file_path):
@@ -55,8 +59,12 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
 
         full_file_path = os.path.join(run_directory, file_name)
 
+        file_name_no_ext, extention = os.path.splitext(file_name)
+
         # run E+ and gather (for now fake) data
-        status_code = subprocess.call([EPlusRunManager.EnergyPlusBinary, '-D', file_name], cwd=run_directory)
+        process = subprocess.run([EPlusRunManager.EnergyPlusBinary, '--output-prefix',file_name_no_ext, '--design-day', file_name], cwd=run_directory)
+        status_code = process.returncode
+
         # for i in range(5):
         #     time.sleep(1)
         #     if self.abort:
