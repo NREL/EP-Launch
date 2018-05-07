@@ -86,9 +86,10 @@ class FileNameMenus(object):
 
     def add_recent(self,path):
         list_of_items = self.get_file_list()
-        list_of_items.insert(0,path)
-        self.delete_file_list()
-        self.add_file_name_list(list_of_items)
+        if path not in list_of_items:
+            list_of_items.insert(0,path)
+            self.delete_file_list()
+            self.add_file_name_list(list_of_items)
         self.put_checkmark_on_item(path)
 
     def put_checkmark_on_item(self,path):
