@@ -11,6 +11,7 @@ class FileNameMenus(object):
         self.path_to_config = path_to_config
         self.menu_items_for_files = []
         self.file_name_to_id = {}
+        self.max_size_of_list = 8
 
     def delete_file_list(self):
         menu_list = self.menu.GetMenuItems()
@@ -22,6 +23,7 @@ class FileNameMenus(object):
                 self.menu.Remove(menu_item)
             if menu_item.GetId() == self.start_separator_id:
                 mode = True
+        self.menu_items_for_files = []
 
     def get_file_list(self):
         list_of_menu_item_labels = []
@@ -42,6 +44,7 @@ class FileNameMenus(object):
         self.delete_file_list()
         menu_list = self.menu.GetMenuItems()
         mode = False
+        list_of_file_names = list_of_file_names[:self.max_size_of_list]  #trim list to not be any longer than
         for position, menu_item in enumerate(menu_list):
             if mode:
                 for file_count, file_name in enumerate(list_of_file_names):
@@ -81,3 +84,15 @@ class FileNameMenus(object):
             if menu_item_id != current_menu_item_id:
                 self.menu.Check(menu_item_id,False)
 
+    def add_recent(self,path):
+        list_of_items = self.get_file_list()
+        list_of_items.insert(0,path)
+        self.delete_file_list()
+        self.add_file_name_list(list_of_items)
+        self.put_checkmark_on_item(path)
+
+    def put_checkmark_on_item(self,path):
+        self.get_file_list()
+        if path in self.file_name_to_id:
+            id = self.file_name_to_id[path]
+            self.menu.Check(id,True)

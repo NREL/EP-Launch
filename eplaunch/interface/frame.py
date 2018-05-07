@@ -650,9 +650,11 @@ class EpLaunchFrame(wx.Frame):
         self.current_file_name = event.Item.Text
 
     def handle_menu_file_run(self, event):
+        self.folder_recent.add_recent(self.directory_tree_control.GetPath())
         self.run_workflow()
 
     def handle_tb_run(self, event):
+        self.folder_recent.add_recent(self.directory_tree_control.GetPath())
         self.run_workflow()
 
     def handle_workflow_done(self, event):
@@ -828,11 +830,17 @@ class EpLaunchFrame(wx.Frame):
         menu_item = self.folder_menu.FindItemById(event.GetId())
         print('from frame.py - folder recent clicked menu item:', menu_item.GetLabel(), menu_item.GetId())
         self.folder_recent.uncheck_other_items(menu_item)
+        real_path = os.path.abspath(menu_item.GetLabel())
+        self.directory_tree_control.SelectPath(real_path,True)
+        self.directory_tree_control.ExpandPath(real_path)
 
     def handle_folder_favorites_menu_selection(self, event):
         menu_item = self.folder_menu.FindItemById(event.GetId())
         print('from frame.py - folder favorites clicked menu item:', menu_item.GetLabel(), menu_item.GetId())
         self.folder_favorites.uncheck_other_items(menu_item)
+        real_path = os.path.abspath(menu_item.GetLabel())
+        self.directory_tree_control.SelectPath(real_path,True)
+        self.directory_tree_control.ExpandPath(real_path)
 
     def handle_weather_recent_menu_selection(self, event):
         menu_item = self.weather_menu.FindItemById(event.GetId())
