@@ -46,7 +46,7 @@ class FileNameMenus(object):
             if mode:
                 for file_count, file_name in enumerate(list_of_file_names):
                     # add the file name and derive a ID number based on the count and the first separator ID
-                    new_menu_item = self.menu.Insert(position + file_count, self.start_separator_id * 20 + file_count,
+                    new_menu_item = self.menu.Insert(position + file_count, self.compute_file_menu_id( file_count ),
                                                      file_name, kind=wx.ITEM_CHECK)
                     #new_menu_item.Check(True)
                     self.menu_items_for_files.append(new_menu_item)
@@ -55,9 +55,13 @@ class FileNameMenus(object):
             if menu_item.GetId() == self.start_separator_id:
                 mode = True
 
+    def compute_file_menu_id(self,index):
+        return self.start_separator_id * 20 + index
+
     def handle_menu_selection(self, event):
         current_menu_item = self.menu.FindItemById(event.GetId())
         print('clicked menu item:', current_menu_item.GetLabel(), current_menu_item.GetId())
+        self.uncheck_other_items(current_menu_item)
 
     def save_config(self):
         # in Windows using RegEdit these appear in:
@@ -77,13 +81,12 @@ class FileNameMenus(object):
                 list_of_labels.append(label)
         self.add_file_name_list(list_of_labels)
 
-    def check_menu_item(self,file_name):
-        #uncheck all items
-        print(self.file_name_to_id)
+    def uncheck_other_items(self, current_menu_item):
+        current_menu_item_id = current_menu_item.GetId()
         for menu_item in self.menu_items_for_files:
-            self.menu.Check(menu_item.GetId(),False)
-        #check the selected item
-        self.menu.Check(self.file_name_to_id[file_name],True)
+            menu_item_id = menu_item.GetId()
+            if menu_item_id != current_menu_item_id:
+                self.menu.Check(menu_item_id,False)
 
 
 
