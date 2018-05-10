@@ -1,4 +1,5 @@
 import wx
+import os
 
 
 class FileNameMenus(object):
@@ -74,7 +75,8 @@ class FileNameMenus(object):
         for count in range(0,count_menu_lables):
             label = self.config.Read(self.path_to_config + "/Path-{:02d}".format(count))
             if label:
-                list_of_labels.append(label)
+                if os.path.exists(label):
+                    list_of_labels.append(label)
         self.add_file_name_list(list_of_labels)
 
     def uncheck_other_items(self, current_menu_item):
@@ -96,6 +98,7 @@ class FileNameMenus(object):
         list_of_items = self.get_file_list()
         if path not in list_of_items:
             list_of_items.append(path)
+            print(list_of_items)
             list_of_items.sort()
             self.delete_file_list()
             self.add_file_name_list(list_of_items)
