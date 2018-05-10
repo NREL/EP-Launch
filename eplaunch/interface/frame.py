@@ -29,13 +29,15 @@ class EpLaunchFrame(wx.Frame):
 
         # Set the title!
         self.SetTitle(_("EP-Launch 3"))
+        # set the window exit
+        self.Bind(wx.EVT_CLOSE, self.handle_exit_box)
 
         # Get saved settings
         self.config = wx.Config("EP-Launch3")
 
         # initialize these here (and early) in the constructor to hush up the compiler messages
         self.primary_toolbar = None
-        self.directory_tree_control = None
+        self.f = None
         self.output_toolbar = None
         self.tb_run = None
         self.menu_file_run = None
@@ -71,6 +73,10 @@ class EpLaunchFrame(wx.Frame):
         """May do additional things during close, including saving the current window state/settings"""
         self.save_config()
         self.Close()
+
+    def handle_exit_box(self,event):
+        self.save_config()
+        self.Destroy()
 
     @staticmethod
     def update_workflow_list():
@@ -460,8 +466,10 @@ class EpLaunchFrame(wx.Frame):
         for menu_item in self.folder_favorites.menu_items_for_files:
             self.Bind(wx.EVT_MENU, self.handle_folder_favorites_menu_selection, menu_item)
 
-        self.folder_menu.Append(307, "Add Current Folder to Favorites")
-        self.folder_menu.Append(308, "Remove Current Folder from Favorites")
+        add_current_folder_to_favorites = self.folder_menu.Append(307, "Add Current Folder to Favorites")
+        self.Bind(wx.EVT_MENU, self.handle_add_current_folder_to_favorites_menu_selection, add_current_folder_to_favorites)
+        remove_current_folder_from_favorites = self.folder_menu.Append(308, "Remove Current Folder from Favorites")
+        self.Bind(wx.EVT_MENU, self.handle_remove_current_folder_from_favorites_menu_selection, remove_current_folder_from_favorites)
         self.menu_bar.Append(self.folder_menu, "F&older")
         # disable the menu items that are just information
         self.menu_bar.Enable(301,False)
@@ -846,6 +854,12 @@ class EpLaunchFrame(wx.Frame):
         real_path = os.path.abspath(menu_item.GetLabel())
         self.directory_tree_control.SelectPath(real_path,True)
         self.directory_tree_control.ExpandPath(real_path)
+
+    def handle_add_current_folder_to_favorites_menu_selection(self,event):
+        self.folder_favorites.add_favorite(self.directory_tree_control.GetPath())
+
+    def handle_remove_current_folder_from_favorites_menu_selection(self,event):
+        self.folder_favorites.remove_favorite(self.directory_tree_control.GetPath())
 
     def handle_weather_recent_menu_selection(self, event):
         menu_item = self.weather_menu.FindItemById(event.GetId())
