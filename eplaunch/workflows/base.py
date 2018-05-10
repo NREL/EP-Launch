@@ -10,6 +10,7 @@ class EPLaunch3WorkflowResponse(object):
 class BaseEPLaunch3Workflow(object):
 
     abort = False
+    output_toolbar_order = None
 
     def name(self):
         raise NotImplementedError("name function needs to be implemented in derived workflow class")

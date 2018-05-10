@@ -123,6 +123,7 @@ class EpLaunchFrame(wx.Frame):
             self.output_menu.Delete(old_id)
         # all all the new menu items
         output_suffixes = self.current_workflow.get_output_suffixes()
+        output_suffixes.sort()
         number_of_items_in_main = 30
         if len(output_suffixes) < number_of_items_in_main:
             for count, suffix in enumerate(output_suffixes):
@@ -739,29 +740,28 @@ class EpLaunchFrame(wx.Frame):
         cmdline_dialog.Destroy()
 
     def handle_menu_output_toolbar(self, event):
-        items = [
-            "Table.htm.",
-            "Meters.csv",
-            ".csv",
-            ".err",
-            ".rdd",
-            ".eio",
-            ".dxf",
-            ".mtd",
-            ".bnd",
-            ".eso",
-            ".mtr"
-        ]
 
-        order = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        output_suffixes = self.current_workflow.get_output_suffixes()
+
+        if self.current_workflow.output_toolbar_order is None:
+            order = []
+            for count,suffix in enumerate(output_suffixes):
+                if count < 15:
+                    order.append(count)
+                else:
+                    order.append(-count)
+        else:
+            order = self.current_workflow.output_toolbar_order
 
         dlg = wx.RearrangeDialog(None,
                                  "Arrange the buttons on the output toolbar",
                                  "<workspacename> Output Toolbar",
-                                 order, items)
+                                 order, output_suffixes)
 
         if dlg.ShowModal() == wx.ID_OK:
             order = dlg.GetOrder()
+            print(order)
+            self.current_workflow.output_toolbar_order = order
 
     def handle_menu_viewers(self, event):
         file_viewer_dialog = viewer_dialog.ViewerDialog(None)
