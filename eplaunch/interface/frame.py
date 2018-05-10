@@ -112,6 +112,33 @@ class EpLaunchFrame(wx.Frame):
         current_workflow_name = self.current_workflow.name()
         self.menu_output_toolbar.SetText("%s Output Toolbar..." % current_workflow_name)
         self.menu_command_line.SetText("%s Command Line..." % current_workflow_name)
+        self.update_output_menu()
+        self.update_output_toolbar()
+
+    def update_output_menu(self):
+        # remove all the old menu items first
+        old_menu_items = self.output_menu.GetMenuItems()
+        for old_menu_item in old_menu_items:
+            old_id = old_menu_item.GetId()
+            self.output_menu.Delete(old_id)
+        # all all the new menu items
+        output_suffixes = self.current_workflow.get_output_suffixes()
+        number_of_items_in_main = 30
+        if len(output_suffixes) < number_of_items_in_main:
+            for count, suffix in enumerate(output_suffixes):
+                new_menu_item = self.output_menu.Append(500 + count, suffix)
+        else:
+            main_suffixes = output_suffixes[:number_of_items_in_main]
+            extra_suffixes = output_suffixes[number_of_items_in_main:]
+            for count, suffix in enumerate(main_suffixes):
+                new_menu_item = self.output_menu.Append(500 + count, suffix)
+            extra_output_menu = wx.Menu()
+            for count, suffix in enumerate(extra_suffixes):
+                new_menu_item = extra_output_menu.Append(550 + count, suffix)
+            self.output_menu.Append(549, "Extra", extra_output_menu)
+
+    def update_output_toolbar(self):
+        pass
 
     def update_control_list_columns(self):
         self.control_file_list.DeleteAllColumns()
@@ -506,92 +533,8 @@ class EpLaunchFrame(wx.Frame):
         self.menu_bar.Enable(406,False)
 
 
-        output_menu = wx.Menu()
-
-        out_table_menu = wx.Menu()
-        out_table_menu.Append(501, "Table.csv")
-        out_table_menu.Append(502, "Table.tab")
-        out_table_menu.Append(503, "Table.txt")
-        out_table_menu.Append(504, "Table.html")
-        out_table_menu.Append(505, "Table.xml")
-        output_menu.Append(599, "Table", out_table_menu)
-
-        out_variable_menu = wx.Menu()
-        out_variable_menu.Append(506, ".csv")
-        out_variable_menu.Append(507, ".tab")
-        out_variable_menu.Append(508, ".txt")
-        output_menu.Append(598, "Variables", out_variable_menu)
-
-        out_meter_menu = wx.Menu()
-        out_meter_menu.Append(509, "Meter.csv")
-        out_meter_menu.Append(510, "Meter.tab")
-        out_meter_menu.Append(511, "Meter.txt")
-        output_menu.Append(597, "Meter", out_meter_menu)
-
-        output_menu.Append(513, ".err")
-        output_menu.Append(514, ".end")
-        output_menu.Append(515, ".rdd")
-        output_menu.Append(516, ".mdd")
-        output_menu.Append(517, ".eio")
-        output_menu.Append(518, ".svg")
-        output_menu.Append(519, ".dxf")
-        output_menu.Append(520, ".mtd")
-
-        out_sizing_menu = wx.Menu()
-        out_sizing_menu.Append(521, "Zsz.csv")
-        out_sizing_menu.Append(522, "Zsz.tab")
-        out_sizing_menu.Append(523, "Zsz.txt")
-        out_sizing_menu.Append(524, "Ssz.csv")
-        out_sizing_menu.Append(525, "Ssz.tab")
-        out_sizing_menu.Append(526, "Ssz.txt")
-        output_menu.Append(596, "Sizing", out_sizing_menu)
-
-        out_delight_menu = wx.Menu()
-        out_delight_menu.Append(527, "DElight.in")
-        out_delight_menu.Append(528, "DElight.out")
-        out_delight_menu.Append(529, "DElight.eldmp")
-        out_delight_menu.Append(530, "DElight.dfdmp")
-        output_menu.Append(595, "DElight", out_delight_menu)
-
-        out_map_menu = wx.Menu()
-        out_map_menu.Append(531, "Map.csv")
-        out_map_menu.Append(532, "Map.tab")
-        out_map_menu.Append(533, "Map.txt")
-        output_menu.Append(594, "Map", out_map_menu)
-
-        output_menu.Append(534, "Screen.csv")
-        output_menu.Append(535, ".expidf")
-        output_menu.Append(536, ".epmidf")
-        output_menu.Append(537, ".epmdet")
-        output_menu.Append(538, ".shd")
-        output_menu.Append(539, ".wrl")
-        output_menu.Append(540, ".audit")
-        output_menu.Append(541, ".bnd")
-        output_menu.Append(542, ".dbg")
-        output_menu.Append(543, ".sln")
-        output_menu.Append(544, ".edd")
-        output_menu.Append(545, ".eso")
-        output_menu.Append(546, ".mtr")
-        output_menu.Append(547, "Proc.csv")
-        output_menu.Append(548, ".sci")
-        output_menu.Append(549, ".rvaudit")
-        output_menu.Append(550, ".sql")
-        output_menu.Append(551, ".log")
-
-        out_bsmt_menu = wx.Menu()
-        out_bsmt_menu.Append(552, ".bsmt")
-        out_bsmt_menu.Append(553, "_bsmt.out")
-        out_bsmt_menu.Append(554, "_bsmt.audit")
-        out_bsmt_menu.Append(555, "_bsmt.csv")
-        output_menu.Append(593, "bsmt", out_bsmt_menu)
-
-        out_slab_menu = wx.Menu()
-        out_slab_menu.Append(556, ".slab")
-        out_slab_menu.Append(557, "_slab.out")
-        out_slab_menu.Append(558, "_slab.ger")
-        output_menu.Append(592, "slab", out_slab_menu)
-
-        self.menu_bar.Append(output_menu, "&Output")
+        self.output_menu = wx.Menu()
+        self.menu_bar.Append(self.output_menu, "&Output")
 
         options_menu = wx.Menu()
         option_version_menu = wx.Menu()

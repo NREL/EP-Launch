@@ -12,6 +12,9 @@ class BasementWorkflow(BaseEPLaunch3Workflow):
     def get_file_types(self):
         return ["*.idf"]
 
+    def get_output_suffixes(self):
+        return [".txt"]
+
     def get_extra_data(self):
         return {"Hey, it's extra": "data"}
 
