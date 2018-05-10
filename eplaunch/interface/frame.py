@@ -712,6 +712,11 @@ class EpLaunchFrame(wx.Frame):
     def handle_dir_selection_changed(self, event):
         # self.status_bar.SetStatusText("Dir-SelectionChanged")
         self.directory_name = self.directory_tree_control.GetPath()
+        # manage  the checkmarks when changing directories
+        self.folder_recent.uncheck_all()
+        self.folder_recent.put_checkmark_on_item(self.directory_name)
+        self.folder_favorites.uncheck_all()
+        self.folder_favorites.put_checkmark_on_item(self.directory_name)
         self.current_cache = CacheFile(self.directory_name)
         try:
             self.status_bar.SetStatusText(self.directory_name)

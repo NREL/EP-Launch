@@ -97,3 +97,9 @@ class FileNameMenus(object):
         if path in self.file_name_to_id:
             id = self.file_name_to_id[path]
             self.menu.Check(id,True)
+
+    def uncheck_all(self):
+        for menu_item in self.menu_items_for_files:
+            menu_item_id = menu_item.GetId()
+            self.menu.Check(menu_item_id,False)
+
