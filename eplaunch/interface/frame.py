@@ -29,13 +29,15 @@ class EpLaunchFrame(wx.Frame):
 
         # Set the title!
         self.SetTitle(_("EP-Launch 3"))
+        # set the window exit
+        self.Bind(wx.EVT_CLOSE, self.handle_exit_box)
 
         # Get saved settings
         self.config = wx.Config("EP-Launch3")
 
         # initialize these here (and early) in the constructor to hush up the compiler messages
         self.primary_toolbar = None
-        self.directory_tree_control = None
+        self.f = None
         self.output_toolbar = None
         self.tb_run = None
         self.menu_file_run = None
@@ -51,6 +53,7 @@ class EpLaunchFrame(wx.Frame):
         self.raw_file_list = None
         self.control_file_list = None
         self.current_cache = None
+        self.current_weather_file = None
 
         # this is currently just a single background thread, eventually we'll need to keep a list of them
         self.workflow_worker = None
@@ -71,6 +74,10 @@ class EpLaunchFrame(wx.Frame):
         """May do additional things during close, including saving the current window state/settings"""
         self.save_config()
         self.Close()
+
+    def handle_exit_box(self,event):
+        self.save_config()
+        self.Destroy()
 
     @staticmethod
     def update_workflow_list():
@@ -449,15 +456,21 @@ class EpLaunchFrame(wx.Frame):
         self.folder_menu.Append(303, kind=wx.ITEM_SEPARATOR)
         self.folder_recent = FileNameMenus(self.folder_menu, 302, 303, self.config, "/FolderMenu/Recent")
         self.folder_recent.retrieve_config()
+        for menu_item in self.folder_recent.menu_items_for_files:
+            self.Bind(wx.EVT_MENU, self.handle_folder_recent_menu_selection, menu_item)
 
         self.folder_menu.Append(304, "Favorites")
         self.folder_menu.Append(305, kind=wx.ITEM_SEPARATOR)
         self.folder_menu.Append(306, kind=wx.ITEM_SEPARATOR)
         self.folder_favorites = FileNameMenus(self.folder_menu, 305, 306, self.config, "/FolderMenu/Favorite")
         self.folder_favorites.retrieve_config()
+        for menu_item in self.folder_favorites.menu_items_for_files:
+            self.Bind(wx.EVT_MENU, self.handle_folder_favorites_menu_selection, menu_item)
 
-        self.folder_menu.Append(307, "Add Current Folder to Favorites")
-        self.folder_menu.Append(308, "Remove Current Folder from Favorites")
+        add_current_folder_to_favorites = self.folder_menu.Append(307, "Add Current Folder to Favorites")
+        self.Bind(wx.EVT_MENU, self.handle_add_current_folder_to_favorites_menu_selection, add_current_folder_to_favorites)
+        remove_current_folder_from_favorites = self.folder_menu.Append(308, "Remove Current Folder from Favorites")
+        self.Bind(wx.EVT_MENU, self.handle_remove_current_folder_from_favorites_menu_selection, remove_current_folder_from_favorites)
         self.menu_bar.Append(self.folder_menu, "F&older")
         # disable the menu items that are just information
         self.menu_bar.Enable(301,False)
@@ -472,14 +485,20 @@ class EpLaunchFrame(wx.Frame):
         self.weather_menu.Append(405, kind=wx.ITEM_SEPARATOR)
         self.weather_recent = FileNameMenus(self.weather_menu, 404, 405, self.config, "/WeatherMenu/Recent")
         self.weather_recent.retrieve_config()
+        for menu_item in self.weather_recent.menu_items_for_files:
+            self.Bind(wx.EVT_MENU, self.handle_weather_recent_menu_selection, menu_item)
 
         self.weather_menu.Append(406, "Favorites")
         self.weather_menu.Append(407, kind=wx.ITEM_SEPARATOR)
         self.weather_menu.Append(408, kind=wx.ITEM_SEPARATOR)
-        self.weather_menu.Append(409, "Add Weather to Favorites")
-        self.weather_menu.Append(410, "Remove Weather from Favorites")
+        add_current_weather_to_favorites = self.weather_menu.Append(409, "Add Weather to Favorites")
+        self.Bind(wx.EVT_MENU, self.handle_add_current_weather_to_favorites_menu_selection, add_current_weather_to_favorites)
+        remove_current_weather_from_favorites = self.weather_menu.Append(410, "Remove Weather from Favorites")
+        self.Bind(wx.EVT_MENU, self.handle_remove_current_weather_from_favorites_menu_selection, remove_current_weather_from_favorites)
         self.weather_favorites = FileNameMenus(self.weather_menu, 407, 408, self.config, "/WeatherMenu/Favorite")
         self.weather_favorites.retrieve_config()
+        for menu_item in self.weather_favorites.menu_items_for_files:
+            self.Bind(wx.EVT_MENU, self.handle_weather_favorites_menu_selection, menu_item)
 
         self.menu_bar.Append(self.weather_menu, "&Weather")
         # disable the menu items that are just information
@@ -642,9 +661,11 @@ class EpLaunchFrame(wx.Frame):
         self.current_file_name = event.Item.Text
 
     def handle_menu_file_run(self, event):
+        self.folder_recent.add_recent(self.directory_tree_control.GetPath())
         self.run_workflow()
 
     def handle_tb_run(self, event):
+        self.folder_recent.add_recent(self.directory_tree_control.GetPath())
         self.run_workflow()
 
     def handle_workflow_done(self, event):
@@ -702,6 +723,11 @@ class EpLaunchFrame(wx.Frame):
     def handle_dir_selection_changed(self, event):
         # self.status_bar.SetStatusText("Dir-SelectionChanged")
         self.directory_name = self.directory_tree_control.GetPath()
+        # manage  the checkmarks when changing directories
+        self.folder_recent.uncheck_all()
+        self.folder_recent.put_checkmark_on_item(self.directory_name)
+        self.folder_favorites.uncheck_all()
+        self.folder_favorites.put_checkmark_on_item(self.directory_name)
         self.current_cache = CacheFile(self.directory_name)
         try:
             self.status_bar.SetStatusText(self.directory_name)
@@ -810,9 +836,52 @@ class EpLaunchFrame(wx.Frame):
     def handle_menu_weather_select(self, event):
         filename = wx.FileSelector("Select a weather file", wildcard="EnergyPlus Weather File(*.epw)|*.epw",
                                    flags= wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
-        # check if in recent
-        weather_menu_list = self.weather_menu.GetMenuItems()
-        weather_menu_recent_labels =  [menu_item.GetLabel() for menu_item in weather_menu_list if menu_item.GetId() == self.WEATHER_RECENT_ID] #get recent weather
-        if filename not in weather_menu_recent_labels:
-            self.weather_menu.Append(400, filename)
+        self.current_weather_file = filename
+        self.weather_recent.uncheck_all()
+        self.weather_recent.add_recent(filename)
 
+    def handle_folder_recent_menu_selection(self, event):
+        menu_item = self.folder_menu.FindItemById(event.GetId())
+        print('from frame.py - folder recent clicked menu item:', menu_item.GetLabel(), menu_item.GetId())
+        self.folder_recent.uncheck_other_items(menu_item)
+        real_path = os.path.abspath(menu_item.GetLabel())
+        self.directory_tree_control.SelectPath(real_path,True)
+        self.directory_tree_control.ExpandPath(real_path)
+
+    def handle_folder_favorites_menu_selection(self, event):
+        menu_item = self.folder_menu.FindItemById(event.GetId())
+        print('from frame.py - folder favorites clicked menu item:', menu_item.GetLabel(), menu_item.GetId())
+        self.folder_favorites.uncheck_other_items(menu_item)
+        real_path = os.path.abspath(menu_item.GetLabel())
+        self.directory_tree_control.SelectPath(real_path,True)
+        self.directory_tree_control.ExpandPath(real_path)
+
+    def handle_add_current_folder_to_favorites_menu_selection(self,event):
+        self.folder_favorites.add_favorite(self.directory_tree_control.GetPath())
+
+    def handle_remove_current_folder_from_favorites_menu_selection(self,event):
+        self.folder_favorites.remove_favorite(self.directory_tree_control.GetPath())
+
+    def handle_weather_recent_menu_selection(self, event):
+        menu_item = self.weather_menu.FindItemById(event.GetId())
+        print('from frame.py - weather recent clicked menu item:', menu_item.GetLabel(), menu_item.GetId())
+        self.current_weather_file = menu_item.GetLabel()
+        self.weather_recent.uncheck_all()
+        self.weather_recent.put_checkmark_on_item(self.current_weather_file)
+        self.weather_favorites.uncheck_all()
+        self.weather_favorites.put_checkmark_on_item(self.current_weather_file)
+
+    def handle_weather_favorites_menu_selection(self, event):
+        menu_item = self.weather_menu.FindItemById(event.GetId())
+        print('from frame.py - weather favorites clicked menu item:', menu_item.GetLabel(), menu_item.GetId())
+        self.current_weather_file = menu_item.GetLabel()
+        self.weather_recent.uncheck_all()
+        self.weather_recent.put_checkmark_on_item(self.current_weather_file)
+        self.weather_favorites.uncheck_all()
+        self.weather_favorites.put_checkmark_on_item(self.current_weather_file)
+
+    def handle_add_current_weather_to_favorites_menu_selection(self,event):
+        self.weather_favorites.add_favorite(self.current_weather_file)
+
+    def handle_remove_current_weather_from_favorites_menu_selection(self,event):
+        self.weather_favorites.remove_favorite(self.current_weather_file)
