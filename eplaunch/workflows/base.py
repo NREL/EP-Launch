@@ -20,6 +20,9 @@ class BaseEPLaunch3Workflow(object):
     def get_file_types(self):
         raise NotImplementedError("get_file_types needs to be implemented in derived workflow class")
 
+    def get_output_suffixes(self):
+        raise NotImplementedError("get_output_suffixes needs to be implemented in derived workflow class")
+
     def get_extra_data(self):
         """
         Allows a dictionary of extra data to be generated, defaults to empty so it is not required

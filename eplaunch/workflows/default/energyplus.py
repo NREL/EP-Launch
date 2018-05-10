@@ -49,6 +49,88 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
     def get_file_types(self):
         return ["*.idf", "*.imf"]
 
+    def get_output_suffixes(self):
+        suffixes = []
+        # the following are in the same order as the buttons in EP-Launch 2
+        suffixes.Append("Table.html")
+        suffixes.Append(".csv")
+        suffixes.Append("Meter.csv")
+
+        suffixes.Append(".err")
+        suffixes.Append(".rdd")
+        suffixes.Append(".mdd")
+
+        suffixes.Append(".eio")
+        suffixes.Append(".svg")
+        suffixes.Append(".dxf")
+
+        suffixes.Append(".mtd")
+        suffixes.Append("Zsz.csv")
+        suffixes.Append("Ssz.csv")
+
+        suffixes.Append("DElight.in")
+        suffixes.Append("DElight.out")
+        suffixes.Append("Map.csv")
+
+        suffixes.Append("DElight.eldmp")
+        suffixes.Append("DElight.dfdmp")
+        suffixes.Append("Screen.csv")
+
+        suffixes.Append(".expidf")
+        suffixes.Append(".epmidf")
+        suffixes.Append(".epmdet")
+
+        suffixes.Append(".shd")
+        suffixes.Append(".wrl")
+        suffixes.Append(".audit")
+
+        suffixes.Append(".bnd")
+        suffixes.Append(".dbg")
+        suffixes.Append(".sln")
+
+        suffixes.Append("_bsmt.out")
+        suffixes.Append(".bsmt")
+        suffixes.Append("_bsmt.audit")
+
+        suffixes.Append(".eso")
+        suffixes.Append(".mtr")
+        suffixes.Append("Proc.csv")
+
+        suffixes.Append("_slab.out")
+        suffixes.Append(".slab")
+        suffixes.Append("_slab.ger")
+
+        suffixes.Append("_bsmt.csv")
+        suffixes.Append(".edd")
+        suffixes.Append("Table.xml")
+
+        # the following were not included in EP-Launch 2
+        suffixes.Append(".end")
+        suffixes.Append(".sci")
+        suffixes.Append(".rvaudit")
+        suffixes.Append(".sql")
+        suffixes.Append(".log")
+
+        # the rest of these are alternative extensions for the same
+        suffixes.Append("Table.csv")
+        suffixes.Append("Table.tab")
+        suffixes.Append("Table.txt")
+
+        suffixes.Append(".tab")
+        suffixes.Append(".txt")
+
+        suffixes.Append("Meter.tab")
+        suffixes.Append("Meter.txt")
+
+        suffixes.Append("Zsz.tab")
+        suffixes.Append("Zsz.txt")
+        suffixes.Append("Ssz.tab")
+        suffixes.Append("Ssz.txt")
+
+        suffixes.Append("Map.tab")
+        suffixes.Append("Map.txt")
+        return suffixes
+
     def get_extra_data(self):
         return {"Hey, it's extra": "data"}
 
