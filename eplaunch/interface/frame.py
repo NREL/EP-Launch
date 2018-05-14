@@ -143,8 +143,15 @@ class EpLaunchFrame(wx.Frame):
         self.output_toolbar.ClearTools()
         # add tools based on the workflow
         norm_bmp = wx.ArtProvider.GetBitmap(wx.ART_NORMAL_FILE, wx.ART_TOOLBAR, self.output_toobar_icon_size)
+        tb_output_suffixes = []
         output_suffixes = self.current_workflow.get_output_suffixes()
-        tb_output_suffixes = output_suffixes[:15]
+        if self.current_workflow.output_toolbar_order is None:
+            tb_output_suffixes = output_suffixes[:15]
+        else:
+            for item in self.current_workflow.output_toolbar_order:
+                if item >= 0:
+                    tb_output_suffixes.append(output_suffixes[item])
+
         for count, tb_output_suffix in enumerate(tb_output_suffixes):
             out_tb_button = self.output_toolbar.AddTool(
                 10 + count, tb_output_suffix, norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'",
@@ -158,7 +165,6 @@ class EpLaunchFrame(wx.Frame):
     def handle_out_tb_button(self, event):
         tb_button = self.output_toolbar.FindById(event.GetId())
         wx.MessageBox(tb_button.Label, "toolbar button", wx.OK)
-        pass
 
     def update_control_list_columns(self):
         self.control_file_list.DeleteAllColumns()
@@ -742,13 +748,14 @@ class EpLaunchFrame(wx.Frame):
 
         dlg = wx.RearrangeDialog(None,
                                  "Arrange the buttons on the output toolbar",
-                                 "<workspacename> Output Toolbar",
+                                 "{} Output Toolbar".format(self.current_workflow.name()),
                                  order, output_suffixes)
 
         if dlg.ShowModal() == wx.ID_OK:
             order = dlg.GetOrder()
             print(order)
             self.current_workflow.output_toolbar_order = order
+            self.update_output_toolbar()
 
     def handle_menu_viewers(self, event):
         file_viewer_dialog = viewer_dialog.ViewerDialog(None)
