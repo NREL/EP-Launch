@@ -139,7 +139,19 @@ class EpLaunchFrame(wx.Frame):
             self.output_menu.Append(549, "Extra", extra_output_menu)
 
     def update_output_toolbar(self):
-        pass
+        # remove all the old menu items first
+        self.output_toolbar.ClearTools()
+        # add tools based on the workflow
+        norm_bmp = wx.ArtProvider.GetBitmap(wx.ART_NORMAL_FILE, wx.ART_TOOLBAR, self.toobar_icon_size)
+        output_suffixes = self.current_workflow.get_output_suffixes()
+        tb_output_suffixes = output_suffixes[:15]
+        for count,tb_output_suffix in enumerate(tb_output_suffixes):
+            self.output_toolbar.AddTool(
+                10 + count, tb_output_suffix, norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
+            )
+            if count % 3 == 2:
+                self.output_toolbar.AddSeparator()
+        self.output_toolbar.Realize()
 
     def update_control_list_columns(self):
         self.control_file_list.DeleteAllColumns()
@@ -406,49 +418,13 @@ class EpLaunchFrame(wx.Frame):
         self.primary_toolbar.Realize()
 
     def gui_build_output_toolbar(self):
-        t_size = (24, 24)
+        # initializes the toolbar the
+        self.toobar_icon_size = (24, 24)
         self.output_toolbar = wx.ToolBar(self, style=wx.TB_HORIZONTAL | wx.NO_BORDER | wx.TB_FLAT | wx.TB_TEXT)
-        self.output_toolbar.SetToolBitmapSize(t_size)
+        self.output_toolbar.SetToolBitmapSize(self.toobar_icon_size)
 
-        norm_bmp = wx.ArtProvider.GetBitmap(wx.ART_NORMAL_FILE, wx.ART_TOOLBAR, t_size)
+        norm_bmp = wx.ArtProvider.GetBitmap(wx.ART_NORMAL_FILE, wx.ART_TOOLBAR, self.toobar_icon_size)
 
-        self.output_toolbar.AddTool(
-            10, "Table.html", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
-        )
-        self.output_toolbar.AddTool(
-            10, "Meters.csv", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
-        )
-        self.output_toolbar.AddTool(
-            10, ".csv", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
-        )
-        self.output_toolbar.AddTool(
-            10, ".err", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
-        )
-        self.output_toolbar.AddTool(
-            10, ".rdd", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
-        )
-        self.output_toolbar.AddTool(
-            10, ".eio", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
-        )
-        self.output_toolbar.AddSeparator()
-        self.output_toolbar.AddTool(
-            10, ".dxf", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
-        )
-        self.output_toolbar.AddTool(
-            10, ".mtd", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
-        )
-        self.output_toolbar.AddTool(
-            10, ".bnd", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
-        )
-        self.output_toolbar.AddTool(
-            10, ".eso", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
-        )
-        self.output_toolbar.AddTool(
-            10, ".mtr", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
-        )
-        self.output_toolbar.AddTool(
-            10, ".shd", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
-        )
         self.output_toolbar.Realize()
 
     def gui_build_menu_bar(self):
