@@ -75,7 +75,7 @@ class EpLaunchFrame(wx.Frame):
         self.save_config()
         self.Close()
 
-    def handle_exit_box(self,event):
+    def handle_exit_box(self, event):
         self.save_config()
         self.Destroy()
 
@@ -142,16 +142,23 @@ class EpLaunchFrame(wx.Frame):
         # remove all the old menu items first
         self.output_toolbar.ClearTools()
         # add tools based on the workflow
-        norm_bmp = wx.ArtProvider.GetBitmap(wx.ART_NORMAL_FILE, wx.ART_TOOLBAR, self.toobar_icon_size)
+        norm_bmp = wx.ArtProvider.GetBitmap(wx.ART_NORMAL_FILE, wx.ART_TOOLBAR, self.output_toobar_icon_size)
         output_suffixes = self.current_workflow.get_output_suffixes()
         tb_output_suffixes = output_suffixes[:15]
-        for count,tb_output_suffix in enumerate(tb_output_suffixes):
-            self.output_toolbar.AddTool(
-                10 + count, tb_output_suffix, norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
+        for count, tb_output_suffix in enumerate(tb_output_suffixes):
+            out_tb_button = self.output_toolbar.AddTool(
+                10 + count, tb_output_suffix, norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'",
+                None
             )
+            self.output_toolbar.Bind(wx.EVT_TOOL, self.handle_out_tb_button, out_tb_button )
             if count % 3 == 2:
                 self.output_toolbar.AddSeparator()
         self.output_toolbar.Realize()
+
+    def handle_out_tb_button(self, event):
+        tb_button = self.output_toolbar.FindById(event.GetId())
+        wx.MessageBox(tb_button.Label, "toolbar button", wx.OK)
+        pass
 
     def update_control_list_columns(self):
         self.control_file_list.DeleteAllColumns()
@@ -286,7 +293,8 @@ class EpLaunchFrame(wx.Frame):
 
         # build tree view and add it to the left pane
         directory_tree_panel = wx.Panel(main_left_right_splitter, wx.ID_ANY)
-        self.directory_tree_control = wx.GenericDirCtrl(directory_tree_panel, -1, size=(200, 225), style=wx.DIRCTRL_DIR_ONLY)
+        self.directory_tree_control = wx.GenericDirCtrl(directory_tree_panel, -1, size=(200, 225),
+                                                        style=wx.DIRCTRL_DIR_ONLY)
         tree = self.directory_tree_control.GetTreeCtrl()
         self.Bind(wx.EVT_TREE_ITEM_RIGHT_CLICK, self.handle_dir_right_click, tree)
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.handle_dir_selection_changed, tree)
@@ -419,11 +427,11 @@ class EpLaunchFrame(wx.Frame):
 
     def gui_build_output_toolbar(self):
         # initializes the toolbar the
-        self.toobar_icon_size = (24, 24)
+        self.output_toobar_icon_size = (16, 15)
         self.output_toolbar = wx.ToolBar(self, style=wx.TB_HORIZONTAL | wx.NO_BORDER | wx.TB_FLAT | wx.TB_TEXT)
-        self.output_toolbar.SetToolBitmapSize(self.toobar_icon_size)
+        self.output_toolbar.SetToolBitmapSize(self.output_toobar_icon_size)
 
-        norm_bmp = wx.ArtProvider.GetBitmap(wx.ART_NORMAL_FILE, wx.ART_TOOLBAR, self.toobar_icon_size)
+        norm_bmp = wx.ArtProvider.GetBitmap(wx.ART_NORMAL_FILE, wx.ART_TOOLBAR, self.output_toobar_icon_size)
 
         self.output_toolbar.Realize()
 
@@ -472,13 +480,15 @@ class EpLaunchFrame(wx.Frame):
             self.Bind(wx.EVT_MENU, self.handle_folder_favorites_menu_selection, menu_item)
 
         add_current_folder_to_favorites = self.folder_menu.Append(307, "Add Current Folder to Favorites")
-        self.Bind(wx.EVT_MENU, self.handle_add_current_folder_to_favorites_menu_selection, add_current_folder_to_favorites)
+        self.Bind(wx.EVT_MENU, self.handle_add_current_folder_to_favorites_menu_selection,
+                  add_current_folder_to_favorites)
         remove_current_folder_from_favorites = self.folder_menu.Append(308, "Remove Current Folder from Favorites")
-        self.Bind(wx.EVT_MENU, self.handle_remove_current_folder_from_favorites_menu_selection, remove_current_folder_from_favorites)
+        self.Bind(wx.EVT_MENU, self.handle_remove_current_folder_from_favorites_menu_selection,
+                  remove_current_folder_from_favorites)
         self.menu_bar.Append(self.folder_menu, "F&older")
         # disable the menu items that are just information
-        self.menu_bar.Enable(301,False)
-        self.menu_bar.Enable(304,False)
+        self.menu_bar.Enable(301, False)
+        self.menu_bar.Enable(304, False)
 
         self.weather_menu = wx.Menu()
         menu_weather_select = self.weather_menu.Append(401, "Select..")
@@ -496,9 +506,11 @@ class EpLaunchFrame(wx.Frame):
         self.weather_menu.Append(407, kind=wx.ITEM_SEPARATOR)
         self.weather_menu.Append(408, kind=wx.ITEM_SEPARATOR)
         add_current_weather_to_favorites = self.weather_menu.Append(409, "Add Weather to Favorites")
-        self.Bind(wx.EVT_MENU, self.handle_add_current_weather_to_favorites_menu_selection, add_current_weather_to_favorites)
+        self.Bind(wx.EVT_MENU, self.handle_add_current_weather_to_favorites_menu_selection,
+                  add_current_weather_to_favorites)
         remove_current_weather_from_favorites = self.weather_menu.Append(410, "Remove Weather from Favorites")
-        self.Bind(wx.EVT_MENU, self.handle_remove_current_weather_from_favorites_menu_selection, remove_current_weather_from_favorites)
+        self.Bind(wx.EVT_MENU, self.handle_remove_current_weather_from_favorites_menu_selection,
+                  remove_current_weather_from_favorites)
         self.weather_favorites = FileNameMenus(self.weather_menu, 407, 408, self.config, "/WeatherMenu/Favorite")
         self.weather_favorites.retrieve_config()
         for menu_item in self.weather_favorites.menu_items_for_files:
@@ -506,9 +518,8 @@ class EpLaunchFrame(wx.Frame):
 
         self.menu_bar.Append(self.weather_menu, "&Weather")
         # disable the menu items that are just information
-        self.menu_bar.Enable(403,False)
-        self.menu_bar.Enable(406,False)
-
+        self.menu_bar.Enable(403, False)
+        self.menu_bar.Enable(406, False)
 
         self.output_menu = wx.Menu()
         self.menu_bar.Append(self.output_menu, "&Output")
@@ -721,7 +732,7 @@ class EpLaunchFrame(wx.Frame):
 
         if self.current_workflow.output_toolbar_order is None:
             order = []
-            for count,suffix in enumerate(output_suffixes):
+            for count, suffix in enumerate(output_suffixes):
                 if count < 15:
                     order.append(count)
                 else:
@@ -754,7 +765,7 @@ class EpLaunchFrame(wx.Frame):
 
     def handle_menu_weather_select(self, event):
         filename = wx.FileSelector("Select a weather file", wildcard="EnergyPlus Weather File(*.epw)|*.epw",
-                                   flags= wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+                                   flags=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
         self.current_weather_file = filename
         self.weather_recent.uncheck_all()
         self.weather_recent.add_recent(filename)
@@ -764,7 +775,7 @@ class EpLaunchFrame(wx.Frame):
         print('from frame.py - folder recent clicked menu item:', menu_item.GetLabel(), menu_item.GetId())
         self.folder_recent.uncheck_other_items(menu_item)
         real_path = os.path.abspath(menu_item.GetLabel())
-        self.directory_tree_control.SelectPath(real_path,True)
+        self.directory_tree_control.SelectPath(real_path, True)
         self.directory_tree_control.ExpandPath(real_path)
 
     def handle_folder_favorites_menu_selection(self, event):
@@ -772,13 +783,13 @@ class EpLaunchFrame(wx.Frame):
         print('from frame.py - folder favorites clicked menu item:', menu_item.GetLabel(), menu_item.GetId())
         self.folder_favorites.uncheck_other_items(menu_item)
         real_path = os.path.abspath(menu_item.GetLabel())
-        self.directory_tree_control.SelectPath(real_path,True)
+        self.directory_tree_control.SelectPath(real_path, True)
         self.directory_tree_control.ExpandPath(real_path)
 
-    def handle_add_current_folder_to_favorites_menu_selection(self,event):
+    def handle_add_current_folder_to_favorites_menu_selection(self, event):
         self.folder_favorites.add_favorite(self.directory_tree_control.GetPath())
 
-    def handle_remove_current_folder_from_favorites_menu_selection(self,event):
+    def handle_remove_current_folder_from_favorites_menu_selection(self, event):
         self.folder_favorites.remove_favorite(self.directory_tree_control.GetPath())
 
     def handle_weather_recent_menu_selection(self, event):
@@ -799,8 +810,8 @@ class EpLaunchFrame(wx.Frame):
         self.weather_favorites.uncheck_all()
         self.weather_favorites.put_checkmark_on_item(self.current_weather_file)
 
-    def handle_add_current_weather_to_favorites_menu_selection(self,event):
+    def handle_add_current_weather_to_favorites_menu_selection(self, event):
         self.weather_favorites.add_favorite(self.current_weather_file)
 
-    def handle_remove_current_weather_from_favorites_menu_selection(self,event):
+    def handle_remove_current_weather_from_favorites_menu_selection(self, event):
         self.weather_favorites.remove_favorite(self.current_weather_file)
