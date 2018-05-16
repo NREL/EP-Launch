@@ -37,20 +37,9 @@ class EPlusRunManager(object):
         runtime_seconds = num_seconds + num_minutes/60 + num_hours/3600
         return True, num_errors, num_warnings, runtime_seconds
 
-
-class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
-
-    def name(self):
-        return "EnergyPlus SI"
-
-    def description(self):
-        return "Run EnergyPlus with SI unit system"
-
-    def get_file_types(self):
-        return ["*.idf", "*.imf"]
-
-    def get_output_suffixes(self):
-        suffixes = []
+    @staticmethod
+    def eplus_suffixes():
+        suffixes = list()
         # the following are in the same order as the buttons in EP-Launch 2
         suffixes.append("Table.html")
         suffixes.append(".csv")
@@ -131,6 +120,21 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
         suffixes.append("Map.txt")
         return suffixes
 
+
+class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
+
+    def name(self):
+        return "EnergyPlus SI"
+
+    def description(self):
+        return "Run EnergyPlus with SI unit system"
+
+    def get_file_types(self):
+        return ["*.idf", "*.imf"]
+
+    def get_output_suffixes(self):
+        return EPlusRunManager.eplus_suffixes()
+
     def get_extra_data(self):
         return {"Hey, it's extra": "data"}
 
@@ -184,6 +188,9 @@ class EnergyPlusWorkflowIP(BaseEPLaunch3Workflow):
 
     def get_file_types(self):
         return ["*.idf", "*.imf"]
+
+    def get_output_suffixes(self):
+        return EPlusRunManager.eplus_suffixes()
 
     def get_extra_data(self):
         return {"Hey, it's extra": "data"}
