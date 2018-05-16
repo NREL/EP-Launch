@@ -144,21 +144,17 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
     def main(self, run_directory, file_name, args):
 
         full_file_path = os.path.join(run_directory, file_name)
-
-        file_name_no_ext, extention = os.path.splitext(file_name)
+        file_name_no_ext, extension = os.path.splitext(file_name)
 
         # run E+ and gather (for now fake) data
-        process = subprocess.run([EPlusRunManager.EnergyPlusBinary, '--output-prefix',file_name_no_ext, '--design-day', file_name], cwd=run_directory)
+        process = subprocess.run(
+            [
+                EPlusRunManager.EnergyPlusBinary, '--output-prefix', file_name_no_ext, '--design-day', file_name
+            ],
+            cwd=run_directory
+        )
         status_code = process.returncode
 
-        # for i in range(5):
-        #     time.sleep(1)
-        #     if self.abort:
-        #         return EPLaunch3WorkflowResponse(
-        #             success=False,
-        #             message="Abort command accepted!",
-        #             column_data={}
-        #         )
         if status_code != 0:
             return EPLaunch3WorkflowResponse(
                 success=False,
@@ -166,7 +162,8 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
                 column_data={}
             )
 
-        end_file_path = os.path.join(run_directory, 'eplusout.end')
+        end_file_name = "{0}out.end".format(file_name_no_ext)
+        end_file_path = os.path.join(run_directory, end_file_name)
         success, errors, warnings, runtime = EPlusRunManager.get_end_summary(end_file_path)
         column_data = {ColumnNames.Errors: errors, ColumnNames.Warnings: warnings, ColumnNames.Runtime: runtime}
 
@@ -201,17 +198,17 @@ class EnergyPlusWorkflowIP(BaseEPLaunch3Workflow):
     def main(self, run_directory, file_name, args):
 
         full_file_path = os.path.join(run_directory, file_name)
+        file_name_no_ext, extension = os.path.splitext(file_name)
 
         # run E+ and gather (for now fake) data
-        status_code = subprocess.call([EPlusRunManager.EnergyPlusBinary, '-D', file_name], cwd=run_directory)
-        # for i in range(5):
-        #     time.sleep(1)
-        #     if self.abort:
-        #         return EPLaunch3WorkflowResponse(
-        #             success=False,
-        #             message="Abort command accepted!",
-        #             column_data={}
-        #         )
+        process = subprocess.run(
+            [
+                EPlusRunManager.EnergyPlusBinary, '--output-prefix', file_name_no_ext, '--design-day', file_name
+            ],
+            cwd=run_directory
+        )
+        status_code = process.returncode
+
         if status_code != 0:
             return EPLaunch3WorkflowResponse(
                 success=False,
@@ -219,7 +216,8 @@ class EnergyPlusWorkflowIP(BaseEPLaunch3Workflow):
                 column_data={}
             )
 
-        end_file_path = os.path.join(run_directory, 'eplusout.end')
+        end_file_name = "{0}out.end".format(file_name_no_ext)
+        end_file_path = os.path.join(run_directory, end_file_name)
         success, errors, warnings, runtime = EPlusRunManager.get_end_summary(end_file_path)
         column_data = {ColumnNames.Errors: errors, ColumnNames.Warnings: warnings, ColumnNames.Runtime: runtime}
 
