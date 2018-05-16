@@ -4,7 +4,7 @@ python:
   - 3.6
 
 env:
-  - TOX_ENV=travis
+  - TOX_ENV=python
   - TOX_ENV=flake8
 
 install:
@@ -13,3 +13,6 @@ install:
 
 script:
   - tox -e $TOX_ENV
+
+after_success:
+  - test $TOX_ENV = "python" && coveralls
