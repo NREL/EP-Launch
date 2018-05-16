@@ -42,7 +42,7 @@ class WorkflowDirectoriesDialog(wx.Dialog):
 
         sampleList = WorkflowDirectoriesDialog.SampleWorkflows[Platform.get_current_platform()]
 
-        lb1 = wx.ListBox(pnl, 60, size=(750, 100), choices=sampleList, style=wx.LB_SINGLE | wx.LB_ALWAYS_SB)
+        wx.ListBox(pnl, 60, size=(750, 100), choices=sampleList, style=wx.LB_SINGLE | wx.LB_ALWAYS_SB)
 
         hbox_1 = wx.BoxSizer(wx.HORIZONTAL)
         add_button = wx.Button(self, label='Add..')

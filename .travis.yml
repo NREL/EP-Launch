@@ -1,0 +1,15 @@
+language: python
+
+python:
+  - 3.6
+
+env:
+  - TOX_ENV=travis
+  - TOX_ENV=flake8
+
+install:
+  - pip install --upgrade pip
+  - pip install tox coveralls
+
+script:
+  - tox -e $TOX_ENV
