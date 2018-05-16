@@ -1,6 +1,7 @@
 import json
 import os
-from eplaunch.interface.exceptions import EPLaunchFileException
+
+from eplaunch.utilities.exceptions import EPLaunchFileException
 
 
 class CacheFile(object):

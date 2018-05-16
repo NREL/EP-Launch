@@ -1,6 +1,11 @@
 [run]
+source =
+        eplaunch
+
 omit =
         /usr/*
         .tox/*
         *.pyenv*
+        *.venv*
         setup.py
+        */eplaunch/interface/*.py
