@@ -34,7 +34,7 @@ class EPlusRunManager(object):
         num_hours = int(time_string[5:7])
         num_minutes = int(time_string[10:12])
         num_seconds = float(time_string[16:21])
-        runtime_seconds = num_seconds + num_minutes/60 + num_hours/3600
+        runtime_seconds = num_seconds + num_minutes / 60 + num_hours / 3600
         return True, num_errors, num_warnings, runtime_seconds
 
     @staticmethod

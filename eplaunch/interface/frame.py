@@ -54,6 +54,18 @@ class EpLaunchFrame(wx.Frame):
         self.control_file_list = None
         self.current_cache = None
         self.current_weather_file = None
+        self.output_toolbar_icon_size = None
+        self.directory_tree_control = None
+        self.file_lists_splitter = None
+        self.control_file_list_panel = None
+        self.raw_file_list_panel = None
+        self.folder_menu = None
+        self.folder_recent = None
+        self.folder_favorites = None
+        self.weather_menu = None
+        self.weather_recent = None
+        self.weather_favorites = None
+        self.output_menu = None
 
         # this is currently just a single background thread, eventually we'll need to keep a list of them
         self.workflow_worker = None
@@ -127,22 +139,22 @@ class EpLaunchFrame(wx.Frame):
         number_of_items_in_main = 30
         if len(output_suffixes) < number_of_items_in_main:
             for count, suffix in enumerate(output_suffixes):
-                new_menu_item = self.output_menu.Append(500 + count, suffix)
+                self.output_menu.Append(500 + count, suffix)
         else:
             main_suffixes = output_suffixes[:number_of_items_in_main]
             extra_suffixes = output_suffixes[number_of_items_in_main:]
             for count, suffix in enumerate(main_suffixes):
-                new_menu_item = self.output_menu.Append(500 + count, suffix)
+                self.output_menu.Append(500 + count, suffix)
             extra_output_menu = wx.Menu()
             for count, suffix in enumerate(extra_suffixes):
-                new_menu_item = extra_output_menu.Append(550 + count, suffix)
+                extra_output_menu.Append(550 + count, suffix)
             self.output_menu.Append(549, "Extra", extra_output_menu)
 
     def update_output_toolbar(self):
         # remove all the old menu items first
         self.output_toolbar.ClearTools()
         # add tools based on the workflow
-        norm_bmp = wx.ArtProvider.GetBitmap(wx.ART_NORMAL_FILE, wx.ART_TOOLBAR, self.output_toobar_icon_size)
+        norm_bmp = wx.ArtProvider.GetBitmap(wx.ART_NORMAL_FILE, wx.ART_TOOLBAR, self.output_toolbar_icon_size)
         tb_output_suffixes = []
         output_suffixes = self.current_workflow.get_output_suffixes()
         if self.current_workflow.output_toolbar_order is None:
@@ -157,7 +169,7 @@ class EpLaunchFrame(wx.Frame):
                 10 + count, tb_output_suffix, norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'",
                 None
             )
-            self.output_toolbar.Bind(wx.EVT_TOOL, self.handle_out_tb_button, out_tb_button )
+            self.output_toolbar.Bind(wx.EVT_TOOL, self.handle_out_tb_button, out_tb_button)
             if count % 3 == 2:
                 self.output_toolbar.AddSeparator()
         self.output_toolbar.Realize()
@@ -433,12 +445,10 @@ class EpLaunchFrame(wx.Frame):
 
     def gui_build_output_toolbar(self):
         # initializes the toolbar the
-        self.output_toobar_icon_size = (16, 15)
+        self.output_toolbar_icon_size = (16, 15)
         self.output_toolbar = wx.ToolBar(self, style=wx.TB_HORIZONTAL | wx.NO_BORDER | wx.TB_FLAT | wx.TB_TEXT)
-        self.output_toolbar.SetToolBitmapSize(self.output_toobar_icon_size)
-
-        norm_bmp = wx.ArtProvider.GetBitmap(wx.ART_NORMAL_FILE, wx.ART_TOOLBAR, self.output_toobar_icon_size)
-
+        self.output_toolbar.SetToolBitmapSize(self.output_toolbar_icon_size)
+        wx.ArtProvider.GetBitmap(wx.ART_NORMAL_FILE, wx.ART_TOOLBAR, self.output_toolbar_icon_size)
         self.output_toolbar.Realize()
 
     def gui_build_menu_bar(self):
@@ -469,7 +479,7 @@ class EpLaunchFrame(wx.Frame):
         self.menu_bar.Append(edit_menu, "&Edit")
 
         self.folder_menu = wx.Menu()
-        recent_folder_menu = self.folder_menu.Append(301, "Recent", "Recent folders where a workflow as run.")
+        self.folder_menu.Append(301, "Recent", "Recent folders where a workflow as run.")
         self.folder_menu.Append(302, kind=wx.ITEM_SEPARATOR)
         self.folder_menu.Append(303, kind=wx.ITEM_SEPARATOR)
         self.folder_recent = FileNameMenus(self.folder_menu, 302, 303, self.config, "/FolderMenu/Recent")
@@ -621,7 +631,7 @@ class EpLaunchFrame(wx.Frame):
                     pass
             else:
                 status_message = 'Workflow failed: ' + event.data.message
-        except Exception as e:
+        except Exception as e:  # noqa -- there is *no* telling what all exceptions could occur inside a workflow
             status_message = 'Workflow response was invalid'
         self.status_bar.SetStatusText(status_message)
         self.workflow_worker = None
@@ -669,7 +679,7 @@ class EpLaunchFrame(wx.Frame):
         try:
             self.status_bar.SetStatusText(self.directory_name)
             self.update_file_lists()
-        except:  # status_bar and things may not exist during initialization, just ignore
+        except Exception:  # noqa -- status_bar and things may not exist during initialization, just ignore
             pass
         event.Skip()
 
