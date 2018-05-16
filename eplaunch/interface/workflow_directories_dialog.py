@@ -1,6 +1,6 @@
 import wx
 
-from eplaunch.interface.crossplatform import Platform
+from eplaunch.utilities.crossplatform import Platform
 
 
 class WorkflowDirectoriesDialog(wx.Dialog):
