@@ -8,8 +8,11 @@ class Platform:
     UNKNOWN = 4
 
     @staticmethod
-    def get_current_platform():
-        platform_name = platform.system()
+    def get_current_platform(test_name=None):
+        if test_name:
+            platform_name = test_name
+        else:  # pragma: no cover -- can't know ahead of time which system we will test on
+            platform_name = platform.system()
         if platform_name == 'Windows':
             return Platform.WINDOWS
         elif platform_name == 'Linux':

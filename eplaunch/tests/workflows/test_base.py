@@ -34,16 +34,10 @@ class TestBaseWorkflowMethods(unittest.TestCase):
             self.base_workflow.get_output_suffixes()
 
     def test_get_extra_data_optional(self):
-        try:
-            self.base_workflow.get_extra_data()
-        except NotImplementedError:
-            self.fail('get_extra_data is not optional...')
+        self.base_workflow.get_extra_data()
 
     def test_get_interface_columns_optional(self):
-        try:
-            self.base_workflow.get_interface_columns()
-        except NotImplementedError:
-            self.fail('get_extra_data is not optional...')
+        self.base_workflow.get_interface_columns()
 
     def test_main_abstract(self):
         with self.assertRaises(NotImplementedError):
