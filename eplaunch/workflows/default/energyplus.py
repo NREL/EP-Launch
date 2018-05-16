@@ -34,8 +34,91 @@ class EPlusRunManager(object):
         num_hours = int(time_string[5:7])
         num_minutes = int(time_string[10:12])
         num_seconds = float(time_string[16:21])
-        runtime_seconds = num_seconds + num_minutes/60 + num_hours/3600
+        runtime_seconds = num_seconds + num_minutes / 60 + num_hours / 3600
         return True, num_errors, num_warnings, runtime_seconds
+
+    @staticmethod
+    def eplus_suffixes():
+        suffixes = list()
+        # the following are in the same order as the buttons in EP-Launch 2
+        suffixes.append("Table.html")
+        suffixes.append(".csv")
+        suffixes.append("Meter.csv")
+
+        suffixes.append(".err")
+        suffixes.append(".rdd")
+        suffixes.append(".mdd")
+
+        suffixes.append(".eio")
+        suffixes.append(".svg")
+        suffixes.append(".dxf")
+
+        suffixes.append(".mtd")
+        suffixes.append("Zsz.csv")
+        suffixes.append("Ssz.csv")
+
+        suffixes.append("DElight.in")
+        suffixes.append("DElight.out")
+        suffixes.append("Map.csv")
+
+        suffixes.append("DElight.eldmp")
+        suffixes.append("DElight.dfdmp")
+        suffixes.append("Screen.csv")
+
+        suffixes.append(".expidf")
+        suffixes.append(".epmidf")
+        suffixes.append(".epmdet")
+
+        suffixes.append(".shd")
+        suffixes.append(".wrl")
+        suffixes.append(".audit")
+
+        suffixes.append(".bnd")
+        suffixes.append(".dbg")
+        suffixes.append(".sln")
+
+        suffixes.append("_bsmt.out")
+        suffixes.append(".bsmt")
+        suffixes.append("_bsmt.audit")
+
+        suffixes.append(".eso")
+        suffixes.append(".mtr")
+        suffixes.append("Proc.csv")
+
+        suffixes.append("_slab.out")
+        suffixes.append(".slab")
+        suffixes.append("_slab.ger")
+
+        suffixes.append("_bsmt.csv")
+        suffixes.append(".edd")
+        suffixes.append("Table.xml")
+
+        # the following were not included in EP-Launch 2
+        suffixes.append(".end")
+        suffixes.append(".sci")
+        suffixes.append(".rvaudit")
+        suffixes.append(".sql")
+        suffixes.append(".log")
+
+        # the rest of these are alternative extensions for the same
+        suffixes.append("Table.csv")
+        suffixes.append("Table.tab")
+        suffixes.append("Table.txt")
+
+        suffixes.append(".tab")
+        suffixes.append(".txt")
+
+        suffixes.append("Meter.tab")
+        suffixes.append("Meter.txt")
+
+        suffixes.append("Zsz.tab")
+        suffixes.append("Zsz.txt")
+        suffixes.append("Ssz.tab")
+        suffixes.append("Ssz.txt")
+
+        suffixes.append("Map.tab")
+        suffixes.append("Map.txt")
+        return suffixes
 
 
 class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
@@ -49,6 +132,9 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
     def get_file_types(self):
         return ["*.idf", "*.imf"]
 
+    def get_output_suffixes(self):
+        return EPlusRunManager.eplus_suffixes()
+
     def get_extra_data(self):
         return {"Hey, it's extra": "data"}
 
@@ -58,21 +144,17 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
     def main(self, run_directory, file_name, args):
 
         full_file_path = os.path.join(run_directory, file_name)
-
-        file_name_no_ext, extention = os.path.splitext(file_name)
+        file_name_no_ext, extension = os.path.splitext(file_name)
 
         # run E+ and gather (for now fake) data
-        process = subprocess.run([EPlusRunManager.EnergyPlusBinary, '--output-prefix',file_name_no_ext, '--design-day', file_name], cwd=run_directory)
+        process = subprocess.run(
+            [
+                EPlusRunManager.EnergyPlusBinary, '--output-prefix', file_name_no_ext, '--design-day', file_name
+            ],
+            cwd=run_directory
+        )
         status_code = process.returncode
 
-        # for i in range(5):
-        #     time.sleep(1)
-        #     if self.abort:
-        #         return EPLaunch3WorkflowResponse(
-        #             success=False,
-        #             message="Abort command accepted!",
-        #             column_data={}
-        #         )
         if status_code != 0:
             return EPLaunch3WorkflowResponse(
                 success=False,
@@ -80,7 +162,8 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
                 column_data={}
             )
 
-        end_file_path = os.path.join(run_directory, 'eplusout.end')
+        end_file_name = "{0}out.end".format(file_name_no_ext)
+        end_file_path = os.path.join(run_directory, end_file_name)
         success, errors, warnings, runtime = EPlusRunManager.get_end_summary(end_file_path)
         column_data = {ColumnNames.Errors: errors, ColumnNames.Warnings: warnings, ColumnNames.Runtime: runtime}
 
@@ -103,6 +186,9 @@ class EnergyPlusWorkflowIP(BaseEPLaunch3Workflow):
     def get_file_types(self):
         return ["*.idf", "*.imf"]
 
+    def get_output_suffixes(self):
+        return EPlusRunManager.eplus_suffixes()
+
     def get_extra_data(self):
         return {"Hey, it's extra": "data"}
 
@@ -112,17 +198,17 @@ class EnergyPlusWorkflowIP(BaseEPLaunch3Workflow):
     def main(self, run_directory, file_name, args):
 
         full_file_path = os.path.join(run_directory, file_name)
+        file_name_no_ext, extension = os.path.splitext(file_name)
 
         # run E+ and gather (for now fake) data
-        status_code = subprocess.call([EPlusRunManager.EnergyPlusBinary, '-D', file_name], cwd=run_directory)
-        # for i in range(5):
-        #     time.sleep(1)
-        #     if self.abort:
-        #         return EPLaunch3WorkflowResponse(
-        #             success=False,
-        #             message="Abort command accepted!",
-        #             column_data={}
-        #         )
+        process = subprocess.run(
+            [
+                EPlusRunManager.EnergyPlusBinary, '--output-prefix', file_name_no_ext, '--design-day', file_name
+            ],
+            cwd=run_directory
+        )
+        status_code = process.returncode
+
         if status_code != 0:
             return EPLaunch3WorkflowResponse(
                 success=False,
@@ -130,7 +216,8 @@ class EnergyPlusWorkflowIP(BaseEPLaunch3Workflow):
                 column_data={}
             )
 
-        end_file_path = os.path.join(run_directory, 'eplusout.end')
+        end_file_name = "{0}out.end".format(file_name_no_ext)
+        end_file_path = os.path.join(run_directory, end_file_name)
         success, errors, warnings, runtime = EPlusRunManager.get_end_summary(end_file_path)
         column_data = {ColumnNames.Errors: errors, ColumnNames.Warnings: warnings, ColumnNames.Runtime: runtime}
 

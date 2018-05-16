@@ -11,7 +11,6 @@ class ColumnNames(object):
 
 
 class CalcSoilSurfTempWorkflow(BaseEPLaunch3Workflow):
-
     def name(self):
         return "CalcSoilSurfTemp"
 
@@ -20,6 +19,9 @@ class CalcSoilSurfTempWorkflow(BaseEPLaunch3Workflow):
 
     def get_file_types(self):
         return ["*.epw"]
+
+    def get_output_suffixes(self):
+        return [".txt"]
 
     def get_extra_data(self):
         return {"Hey, it's extra": "data"}
@@ -35,12 +37,12 @@ class CalcSoilSurfTempWorkflow(BaseEPLaunch3Workflow):
         if os.path.exists(out_file_path):
             try:
                 os.remove(out_file_path)
-            except:
+            except OSError:
                 return EPLaunch3WorkflowResponse(
-                        success=False,
-                        message="Could not delete prior CalcSoilSurfTemp results file: %s!" % out_file_path,
-                        column_data={}
-                    )
+                    success=False,
+                    message="Could not delete prior CalcSoilSurfTemp results file: %s!" % out_file_path,
+                    column_data={}
+                )
 
         full_file_path = os.path.join(run_directory, file_name)
 
@@ -50,10 +52,10 @@ class CalcSoilSurfTempWorkflow(BaseEPLaunch3Workflow):
 
         if not os.path.exists(out_file_path):
             return EPLaunch3WorkflowResponse(
-                    success=False,
-                    message="CalcSoilSurfTemp failed for file: %s!" % full_file_path,
-                    column_data={}
-                )
+                success=False,
+                message="CalcSoilSurfTemp failed for file: %s!" % full_file_path,
+                column_data={}
+            )
 
         try:
             with open(out_file_path, 'r') as f:
@@ -71,9 +73,9 @@ class CalcSoilSurfTempWorkflow(BaseEPLaunch3Workflow):
                     message="Ran EnergyPlus OK for file: %s!" % file_name,
                     column_data=column_data
                 )
-        except:
+        except Exception:  # noqa -- there could be lots of issues here, file existence, file contents, float conversion
             return EPLaunch3WorkflowResponse(
-                    success=False,
-                    message="CalcSoilSurfTemp seemed to run, but post processing failed for file: %s!" % full_file_path,
-                    column_data={}
-                )
+                success=False,
+                message="CalcSoilSurfTemp seemed to run, but post processing failed for file: %s!" % full_file_path,
+                column_data={}
+            )

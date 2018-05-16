@@ -54,6 +54,18 @@ class EpLaunchFrame(wx.Frame):
         self.control_file_list = None
         self.current_cache = None
         self.current_weather_file = None
+        self.output_toolbar_icon_size = None
+        self.directory_tree_control = None
+        self.file_lists_splitter = None
+        self.control_file_list_panel = None
+        self.raw_file_list_panel = None
+        self.folder_menu = None
+        self.folder_recent = None
+        self.folder_favorites = None
+        self.weather_menu = None
+        self.weather_recent = None
+        self.weather_favorites = None
+        self.output_menu = None
 
         # this is currently just a single background thread, eventually we'll need to keep a list of them
         self.workflow_worker = None
@@ -75,7 +87,7 @@ class EpLaunchFrame(wx.Frame):
         self.save_config()
         self.Close()
 
-    def handle_exit_box(self,event):
+    def handle_exit_box(self, event):
         self.save_config()
         self.Destroy()
 
@@ -112,6 +124,59 @@ class EpLaunchFrame(wx.Frame):
         current_workflow_name = self.current_workflow.name()
         self.menu_output_toolbar.SetText("%s Output Toolbar..." % current_workflow_name)
         self.menu_command_line.SetText("%s Command Line..." % current_workflow_name)
+        self.update_output_menu()
+        self.update_output_toolbar()
+
+    def update_output_menu(self):
+        # remove all the old menu items first
+        old_menu_items = self.output_menu.GetMenuItems()
+        for old_menu_item in old_menu_items:
+            old_id = old_menu_item.GetId()
+            self.output_menu.Delete(old_id)
+        # all all the new menu items
+        output_suffixes = self.current_workflow.get_output_suffixes()
+        output_suffixes.sort()
+        number_of_items_in_main = 30
+        if len(output_suffixes) < number_of_items_in_main:
+            for count, suffix in enumerate(output_suffixes):
+                self.output_menu.Append(500 + count, suffix)
+        else:
+            main_suffixes = output_suffixes[:number_of_items_in_main]
+            extra_suffixes = output_suffixes[number_of_items_in_main:]
+            for count, suffix in enumerate(main_suffixes):
+                self.output_menu.Append(500 + count, suffix)
+            extra_output_menu = wx.Menu()
+            for count, suffix in enumerate(extra_suffixes):
+                extra_output_menu.Append(550 + count, suffix)
+            self.output_menu.Append(549, "Extra", extra_output_menu)
+
+    def update_output_toolbar(self):
+        # remove all the old menu items first
+        self.output_toolbar.ClearTools()
+        # add tools based on the workflow
+        norm_bmp = wx.ArtProvider.GetBitmap(wx.ART_NORMAL_FILE, wx.ART_TOOLBAR, self.output_toolbar_icon_size)
+        tb_output_suffixes = []
+        output_suffixes = self.current_workflow.get_output_suffixes()
+        if self.current_workflow.output_toolbar_order is None:
+            tb_output_suffixes = output_suffixes[:15]
+        else:
+            for item in self.current_workflow.output_toolbar_order:
+                if item >= 0:
+                    tb_output_suffixes.append(output_suffixes[item])
+
+        for count, tb_output_suffix in enumerate(tb_output_suffixes):
+            out_tb_button = self.output_toolbar.AddTool(
+                10 + count, tb_output_suffix, norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'",
+                None
+            )
+            self.output_toolbar.Bind(wx.EVT_TOOL, self.handle_out_tb_button, out_tb_button)
+            if count % 3 == 2:
+                self.output_toolbar.AddSeparator()
+        self.output_toolbar.Realize()
+
+    def handle_out_tb_button(self, event):
+        tb_button = self.output_toolbar.FindById(event.GetId())
+        wx.MessageBox(tb_button.Label, "toolbar button", wx.OK)
 
     def update_control_list_columns(self):
         self.control_file_list.DeleteAllColumns()
@@ -246,7 +311,8 @@ class EpLaunchFrame(wx.Frame):
 
         # build tree view and add it to the left pane
         directory_tree_panel = wx.Panel(main_left_right_splitter, wx.ID_ANY)
-        self.directory_tree_control = wx.GenericDirCtrl(directory_tree_panel, -1, size=(200, 225), style=wx.DIRCTRL_DIR_ONLY)
+        self.directory_tree_control = wx.GenericDirCtrl(directory_tree_panel, -1, size=(200, 225),
+                                                        style=wx.DIRCTRL_DIR_ONLY)
         tree = self.directory_tree_control.GetTreeCtrl()
         self.Bind(wx.EVT_TREE_ITEM_RIGHT_CLICK, self.handle_dir_right_click, tree)
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.handle_dir_selection_changed, tree)
@@ -378,49 +444,11 @@ class EpLaunchFrame(wx.Frame):
         self.primary_toolbar.Realize()
 
     def gui_build_output_toolbar(self):
-        t_size = (24, 24)
+        # initializes the toolbar the
+        self.output_toolbar_icon_size = (16, 15)
         self.output_toolbar = wx.ToolBar(self, style=wx.TB_HORIZONTAL | wx.NO_BORDER | wx.TB_FLAT | wx.TB_TEXT)
-        self.output_toolbar.SetToolBitmapSize(t_size)
-
-        norm_bmp = wx.ArtProvider.GetBitmap(wx.ART_NORMAL_FILE, wx.ART_TOOLBAR, t_size)
-
-        self.output_toolbar.AddTool(
-            10, "Table.html", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
-        )
-        self.output_toolbar.AddTool(
-            10, "Meters.csv", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
-        )
-        self.output_toolbar.AddTool(
-            10, ".csv", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
-        )
-        self.output_toolbar.AddTool(
-            10, ".err", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
-        )
-        self.output_toolbar.AddTool(
-            10, ".rdd", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
-        )
-        self.output_toolbar.AddTool(
-            10, ".eio", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
-        )
-        self.output_toolbar.AddSeparator()
-        self.output_toolbar.AddTool(
-            10, ".dxf", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
-        )
-        self.output_toolbar.AddTool(
-            10, ".mtd", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
-        )
-        self.output_toolbar.AddTool(
-            10, ".bnd", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
-        )
-        self.output_toolbar.AddTool(
-            10, ".eso", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
-        )
-        self.output_toolbar.AddTool(
-            10, ".mtr", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
-        )
-        self.output_toolbar.AddTool(
-            10, ".shd", norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'", None
-        )
+        self.output_toolbar.SetToolBitmapSize(self.output_toolbar_icon_size)
+        wx.ArtProvider.GetBitmap(wx.ART_NORMAL_FILE, wx.ART_TOOLBAR, self.output_toolbar_icon_size)
         self.output_toolbar.Realize()
 
     def gui_build_menu_bar(self):
@@ -451,7 +479,7 @@ class EpLaunchFrame(wx.Frame):
         self.menu_bar.Append(edit_menu, "&Edit")
 
         self.folder_menu = wx.Menu()
-        recent_folder_menu = self.folder_menu.Append(301, "Recent", "Recent folders where a workflow as run.")
+        self.folder_menu.Append(301, "Recent", "Recent folders where a workflow as run.")
         self.folder_menu.Append(302, kind=wx.ITEM_SEPARATOR)
         self.folder_menu.Append(303, kind=wx.ITEM_SEPARATOR)
         self.folder_recent = FileNameMenus(self.folder_menu, 302, 303, self.config, "/FolderMenu/Recent")
@@ -468,13 +496,15 @@ class EpLaunchFrame(wx.Frame):
             self.Bind(wx.EVT_MENU, self.handle_folder_favorites_menu_selection, menu_item)
 
         add_current_folder_to_favorites = self.folder_menu.Append(307, "Add Current Folder to Favorites")
-        self.Bind(wx.EVT_MENU, self.handle_add_current_folder_to_favorites_menu_selection, add_current_folder_to_favorites)
+        self.Bind(wx.EVT_MENU, self.handle_add_current_folder_to_favorites_menu_selection,
+                  add_current_folder_to_favorites)
         remove_current_folder_from_favorites = self.folder_menu.Append(308, "Remove Current Folder from Favorites")
-        self.Bind(wx.EVT_MENU, self.handle_remove_current_folder_from_favorites_menu_selection, remove_current_folder_from_favorites)
+        self.Bind(wx.EVT_MENU, self.handle_remove_current_folder_from_favorites_menu_selection,
+                  remove_current_folder_from_favorites)
         self.menu_bar.Append(self.folder_menu, "F&older")
         # disable the menu items that are just information
-        self.menu_bar.Enable(301,False)
-        self.menu_bar.Enable(304,False)
+        self.menu_bar.Enable(301, False)
+        self.menu_bar.Enable(304, False)
 
         self.weather_menu = wx.Menu()
         menu_weather_select = self.weather_menu.Append(401, "Select..")
@@ -492,9 +522,11 @@ class EpLaunchFrame(wx.Frame):
         self.weather_menu.Append(407, kind=wx.ITEM_SEPARATOR)
         self.weather_menu.Append(408, kind=wx.ITEM_SEPARATOR)
         add_current_weather_to_favorites = self.weather_menu.Append(409, "Add Weather to Favorites")
-        self.Bind(wx.EVT_MENU, self.handle_add_current_weather_to_favorites_menu_selection, add_current_weather_to_favorites)
+        self.Bind(wx.EVT_MENU, self.handle_add_current_weather_to_favorites_menu_selection,
+                  add_current_weather_to_favorites)
         remove_current_weather_from_favorites = self.weather_menu.Append(410, "Remove Weather from Favorites")
-        self.Bind(wx.EVT_MENU, self.handle_remove_current_weather_from_favorites_menu_selection, remove_current_weather_from_favorites)
+        self.Bind(wx.EVT_MENU, self.handle_remove_current_weather_from_favorites_menu_selection,
+                  remove_current_weather_from_favorites)
         self.weather_favorites = FileNameMenus(self.weather_menu, 407, 408, self.config, "/WeatherMenu/Favorite")
         self.weather_favorites.retrieve_config()
         for menu_item in self.weather_favorites.menu_items_for_files:
@@ -502,96 +534,11 @@ class EpLaunchFrame(wx.Frame):
 
         self.menu_bar.Append(self.weather_menu, "&Weather")
         # disable the menu items that are just information
-        self.menu_bar.Enable(403,False)
-        self.menu_bar.Enable(406,False)
+        self.menu_bar.Enable(403, False)
+        self.menu_bar.Enable(406, False)
 
-
-        output_menu = wx.Menu()
-
-        out_table_menu = wx.Menu()
-        out_table_menu.Append(501, "Table.csv")
-        out_table_menu.Append(502, "Table.tab")
-        out_table_menu.Append(503, "Table.txt")
-        out_table_menu.Append(504, "Table.html")
-        out_table_menu.Append(505, "Table.xml")
-        output_menu.Append(599, "Table", out_table_menu)
-
-        out_variable_menu = wx.Menu()
-        out_variable_menu.Append(506, ".csv")
-        out_variable_menu.Append(507, ".tab")
-        out_variable_menu.Append(508, ".txt")
-        output_menu.Append(598, "Variables", out_variable_menu)
-
-        out_meter_menu = wx.Menu()
-        out_meter_menu.Append(509, "Meter.csv")
-        out_meter_menu.Append(510, "Meter.tab")
-        out_meter_menu.Append(511, "Meter.txt")
-        output_menu.Append(597, "Meter", out_meter_menu)
-
-        output_menu.Append(513, ".err")
-        output_menu.Append(514, ".end")
-        output_menu.Append(515, ".rdd")
-        output_menu.Append(516, ".mdd")
-        output_menu.Append(517, ".eio")
-        output_menu.Append(518, ".svg")
-        output_menu.Append(519, ".dxf")
-        output_menu.Append(520, ".mtd")
-
-        out_sizing_menu = wx.Menu()
-        out_sizing_menu.Append(521, "Zsz.csv")
-        out_sizing_menu.Append(522, "Zsz.tab")
-        out_sizing_menu.Append(523, "Zsz.txt")
-        out_sizing_menu.Append(524, "Ssz.csv")
-        out_sizing_menu.Append(525, "Ssz.tab")
-        out_sizing_menu.Append(526, "Ssz.txt")
-        output_menu.Append(596, "Sizing", out_sizing_menu)
-
-        out_delight_menu = wx.Menu()
-        out_delight_menu.Append(527, "DElight.in")
-        out_delight_menu.Append(528, "DElight.out")
-        out_delight_menu.Append(529, "DElight.eldmp")
-        out_delight_menu.Append(530, "DElight.dfdmp")
-        output_menu.Append(595, "DElight", out_delight_menu)
-
-        out_map_menu = wx.Menu()
-        out_map_menu.Append(531, "Map.csv")
-        out_map_menu.Append(532, "Map.tab")
-        out_map_menu.Append(533, "Map.txt")
-        output_menu.Append(594, "Map", out_map_menu)
-
-        output_menu.Append(534, "Screen.csv")
-        output_menu.Append(535, ".expidf")
-        output_menu.Append(536, ".epmidf")
-        output_menu.Append(537, ".epmdet")
-        output_menu.Append(538, ".shd")
-        output_menu.Append(539, ".wrl")
-        output_menu.Append(540, ".audit")
-        output_menu.Append(541, ".bnd")
-        output_menu.Append(542, ".dbg")
-        output_menu.Append(543, ".sln")
-        output_menu.Append(544, ".edd")
-        output_menu.Append(545, ".eso")
-        output_menu.Append(546, ".mtr")
-        output_menu.Append(547, "Proc.csv")
-        output_menu.Append(548, ".sci")
-        output_menu.Append(549, ".rvaudit")
-        output_menu.Append(550, ".sql")
-        output_menu.Append(551, ".log")
-
-        out_bsmt_menu = wx.Menu()
-        out_bsmt_menu.Append(552, ".bsmt")
-        out_bsmt_menu.Append(553, "_bsmt.out")
-        out_bsmt_menu.Append(554, "_bsmt.audit")
-        out_bsmt_menu.Append(555, "_bsmt.csv")
-        output_menu.Append(593, "bsmt", out_bsmt_menu)
-
-        out_slab_menu = wx.Menu()
-        out_slab_menu.Append(556, ".slab")
-        out_slab_menu.Append(557, "_slab.out")
-        out_slab_menu.Append(558, "_slab.ger")
-        output_menu.Append(592, "slab", out_slab_menu)
-
-        self.menu_bar.Append(output_menu, "&Output")
+        self.output_menu = wx.Menu()
+        self.menu_bar.Append(self.output_menu, "&Output")
 
         options_menu = wx.Menu()
         option_version_menu = wx.Menu()
@@ -684,7 +631,7 @@ class EpLaunchFrame(wx.Frame):
                     pass
             else:
                 status_message = 'Workflow failed: ' + event.data.message
-        except Exception as e:
+        except Exception as e:  # noqa -- there is *no* telling what all exceptions could occur inside a workflow
             status_message = 'Workflow response was invalid'
         self.status_bar.SetStatusText(status_message)
         self.workflow_worker = None
@@ -732,7 +679,7 @@ class EpLaunchFrame(wx.Frame):
         try:
             self.status_bar.SetStatusText(self.directory_name)
             self.update_file_lists()
-        except:  # status_bar and things may not exist during initialization, just ignore
+        except Exception:  # noqa -- status_bar and things may not exist during initialization, just ignore
             pass
         event.Skip()
 
@@ -796,29 +743,29 @@ class EpLaunchFrame(wx.Frame):
         cmdline_dialog.Destroy()
 
     def handle_menu_output_toolbar(self, event):
-        items = [
-            "Table.htm.",
-            "Meters.csv",
-            ".csv",
-            ".err",
-            ".rdd",
-            ".eio",
-            ".dxf",
-            ".mtd",
-            ".bnd",
-            ".eso",
-            ".mtr"
-        ]
 
-        order = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        output_suffixes = self.current_workflow.get_output_suffixes()
+
+        if self.current_workflow.output_toolbar_order is None:
+            order = []
+            for count, suffix in enumerate(output_suffixes):
+                if count < 15:
+                    order.append(count)
+                else:
+                    order.append(-count)
+        else:
+            order = self.current_workflow.output_toolbar_order
 
         dlg = wx.RearrangeDialog(None,
                                  "Arrange the buttons on the output toolbar",
-                                 "<workspacename> Output Toolbar",
-                                 order, items)
+                                 "{} Output Toolbar".format(self.current_workflow.name()),
+                                 order, output_suffixes)
 
         if dlg.ShowModal() == wx.ID_OK:
             order = dlg.GetOrder()
+            print(order)
+            self.current_workflow.output_toolbar_order = order
+            self.update_output_toolbar()
 
     def handle_menu_viewers(self, event):
         file_viewer_dialog = viewer_dialog.ViewerDialog(None)
@@ -835,7 +782,7 @@ class EpLaunchFrame(wx.Frame):
 
     def handle_menu_weather_select(self, event):
         filename = wx.FileSelector("Select a weather file", wildcard="EnergyPlus Weather File(*.epw)|*.epw",
-                                   flags= wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+                                   flags=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
         self.current_weather_file = filename
         self.weather_recent.uncheck_all()
         self.weather_recent.add_recent(filename)
@@ -845,7 +792,7 @@ class EpLaunchFrame(wx.Frame):
         print('from frame.py - folder recent clicked menu item:', menu_item.GetLabel(), menu_item.GetId())
         self.folder_recent.uncheck_other_items(menu_item)
         real_path = os.path.abspath(menu_item.GetLabel())
-        self.directory_tree_control.SelectPath(real_path,True)
+        self.directory_tree_control.SelectPath(real_path, True)
         self.directory_tree_control.ExpandPath(real_path)
 
     def handle_folder_favorites_menu_selection(self, event):
@@ -853,13 +800,13 @@ class EpLaunchFrame(wx.Frame):
         print('from frame.py - folder favorites clicked menu item:', menu_item.GetLabel(), menu_item.GetId())
         self.folder_favorites.uncheck_other_items(menu_item)
         real_path = os.path.abspath(menu_item.GetLabel())
-        self.directory_tree_control.SelectPath(real_path,True)
+        self.directory_tree_control.SelectPath(real_path, True)
         self.directory_tree_control.ExpandPath(real_path)
 
-    def handle_add_current_folder_to_favorites_menu_selection(self,event):
+    def handle_add_current_folder_to_favorites_menu_selection(self, event):
         self.folder_favorites.add_favorite(self.directory_tree_control.GetPath())
 
-    def handle_remove_current_folder_from_favorites_menu_selection(self,event):
+    def handle_remove_current_folder_from_favorites_menu_selection(self, event):
         self.folder_favorites.remove_favorite(self.directory_tree_control.GetPath())
 
     def handle_weather_recent_menu_selection(self, event):
@@ -880,8 +827,8 @@ class EpLaunchFrame(wx.Frame):
         self.weather_favorites.uncheck_all()
         self.weather_favorites.put_checkmark_on_item(self.current_weather_file)
 
-    def handle_add_current_weather_to_favorites_menu_selection(self,event):
+    def handle_add_current_weather_to_favorites_menu_selection(self, event):
         self.weather_favorites.add_favorite(self.current_weather_file)
 
-    def handle_remove_current_weather_from_favorites_menu_selection(self,event):
+    def handle_remove_current_weather_from_favorites_menu_selection(self, event):
         self.weather_favorites.remove_favorite(self.current_weather_file)

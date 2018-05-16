@@ -16,7 +16,7 @@ class CommandLineDialog(wx.Dialog):
         pnl = wx.Panel(self)
         vbox = wx.BoxSizer(wx.VERTICAL)
 
-        instructions = wx.TextCtrl(pnl, size= (750, 250), style=wx.TE_MULTILINE | wx.TE_READONLY)
+        instructions = wx.TextCtrl(pnl, size=(750, 250), style=wx.TE_MULTILINE | wx.TE_READONLY)
         instructions.AppendText("For workflow <workflowname> use the following command line arguments\n")
         instructions.AppendText("\n")
         instructions.AppendText("To create pauses in the simulation\n")
@@ -29,11 +29,11 @@ class CommandLineDialog(wx.Dialog):
         instructions.AppendText("  -digit\n")
         instructions.AppendText("\n")
         instructions.AppendText("\n")
-        vbox.Add(instructions, flag=wx.EXPAND|wx.ALL, border=10)
+        vbox.Add(instructions, flag=wx.EXPAND | wx.ALL, border=10)
 
         input = wx.TextCtrl(pnl)
         input.AppendText("parametric=true    pause=false")
-        vbox.Add(input, flag=wx.EXPAND|wx.ALL, border=10)
+        vbox.Add(input, flag=wx.EXPAND | wx.ALL, border=10)
 
         hbox_1 = wx.BoxSizer(wx.HORIZONTAL)
         ok_button = wx.Button(pnl, label='Ok')
