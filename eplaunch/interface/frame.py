@@ -156,7 +156,7 @@ class EpLaunchFrame(wx.Frame):
         self.output_toolbar.ClearTools()
         # add tools based on the workflow
         norm_bmp = wx.ArtProvider.GetBitmap(wx.ART_NORMAL_FILE, wx.ART_TOOLBAR, self.output_toolbar_icon_size)
-        #disable_bmp = wx.ArtProvider.GetBitmap(wx.ART_MISSING_IMAGE, wx.ART_TOOLBAR, self.output_toolbar_icon_size)
+        # disable_bmp = wx.ArtProvider.GetBitmap(wx.ART_MISSING_IMAGE, wx.ART_TOOLBAR, self.output_toolbar_icon_size)
         tb_output_suffixes = []
         output_suffixes = self.current_workflow.get_output_suffixes()
         if self.current_workflow.output_toolbar_order is None:
@@ -838,9 +838,8 @@ class EpLaunchFrame(wx.Frame):
         self.weather_favorites.remove_favorite(self.current_weather_file)
 
     def update_output_file_status(self):
-        full_file_path = os.path.join(self.directory_name, self.current_file_name)
         file_name_no_ext, extension = os.path.splitext(self.current_file_name)
-        full_path_name_no_ext = os.path.join(self.directory_name,file_name_no_ext)
+        full_path_name_no_ext = os.path.join(self.directory_name, file_name_no_ext)
         self.disable_output_menu_items()
         self.enable_existing_menu_items(full_path_name_no_ext)
         self.disable_output_toolbar_buttons()
@@ -871,14 +870,15 @@ class EpLaunchFrame(wx.Frame):
         for tool_num in range(number_of_tools):
             cur_tool = self.output_toolbar.GetToolByPos(tool_num)
             cur_id = cur_tool.GetId()
-            self.output_toolbar.EnableTool(cur_id,False)
+            self.output_toolbar.EnableTool(cur_id, False)
         self.output_toolbar.Realize()
 
-    def enable_existing_output_toolbar_buttons(self,path_no_ext):
+    def enable_existing_output_toolbar_buttons(self, path_no_ext):
         number_of_tools = self.output_toolbar.GetToolsCount()
         for tool_num in range(number_of_tools):
             cur_tool = self.output_toolbar.GetToolByPos(tool_num)
             cur_id = cur_tool.GetId()
             if os.path.exists(path_no_ext + cur_tool.GetLabel()):
-                self.output_toolbar.EnableTool(cur_id,True)
+                self.output_toolbar.EnableTool(cur_id, True)
         self.output_toolbar.Realize()
+
