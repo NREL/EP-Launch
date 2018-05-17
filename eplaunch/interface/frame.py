@@ -881,4 +881,3 @@ class EpLaunchFrame(wx.Frame):
             if os.path.exists(path_no_ext + cur_tool.GetLabel()):
                 self.output_toolbar.EnableTool(cur_id, True)
         self.output_toolbar.Realize()
-
