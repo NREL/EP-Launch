@@ -66,6 +66,7 @@ class EpLaunchFrame(wx.Frame):
         self.weather_recent = None
         self.weather_favorites = None
         self.output_menu = None
+        self.extra_output_menu = None
 
         # this is currently just a single background thread, eventually we'll need to keep a list of them
         self.workflow_worker = None
@@ -145,16 +146,17 @@ class EpLaunchFrame(wx.Frame):
             extra_suffixes = output_suffixes[number_of_items_in_main:]
             for count, suffix in enumerate(main_suffixes):
                 self.output_menu.Append(500 + count, suffix)
-            extra_output_menu = wx.Menu()
+            self.extra_output_menu = wx.Menu()
             for count, suffix in enumerate(extra_suffixes):
-                extra_output_menu.Append(550 + count, suffix)
-            self.output_menu.Append(549, "Extra", extra_output_menu)
+                self.extra_output_menu.Append(550 + count, suffix)
+            self.output_menu.Append(549, "Extra", self.extra_output_menu)
 
     def update_output_toolbar(self):
         # remove all the old menu items first
         self.output_toolbar.ClearTools()
         # add tools based on the workflow
         norm_bmp = wx.ArtProvider.GetBitmap(wx.ART_NORMAL_FILE, wx.ART_TOOLBAR, self.output_toolbar_icon_size)
+        # disable_bmp = wx.ArtProvider.GetBitmap(wx.ART_MISSING_IMAGE, wx.ART_TOOLBAR, self.output_toolbar_icon_size)
         tb_output_suffixes = []
         output_suffixes = self.current_workflow.get_output_suffixes()
         if self.current_workflow.output_toolbar_order is None:
@@ -166,7 +168,7 @@ class EpLaunchFrame(wx.Frame):
 
         for count, tb_output_suffix in enumerate(tb_output_suffixes):
             out_tb_button = self.output_toolbar.AddTool(
-                10 + count, tb_output_suffix, norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'",
+                10 + count, tb_output_suffix, norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, tb_output_suffix, "Long help for " + tb_output_suffix,
                 None
             )
             self.output_toolbar.Bind(wx.EVT_TOOL, self.handle_out_tb_button, out_tb_button)
@@ -606,6 +608,7 @@ class EpLaunchFrame(wx.Frame):
 
     def handle_list_ctrl_selection(self, event):
         self.current_file_name = event.Item.Text
+        self.update_output_file_status()
 
     def handle_menu_file_run(self, event):
         self.folder_recent.add_recent(self.directory_tree_control.GetPath())
@@ -614,6 +617,7 @@ class EpLaunchFrame(wx.Frame):
     def handle_tb_run(self, event):
         self.folder_recent.add_recent(self.directory_tree_control.GetPath())
         self.run_workflow()
+        self.update_output_file_status()
 
     def handle_workflow_done(self, event):
         status_message = 'Invalid workflow response'
@@ -832,3 +836,48 @@ class EpLaunchFrame(wx.Frame):
 
     def handle_remove_current_weather_from_favorites_menu_selection(self, event):
         self.weather_favorites.remove_favorite(self.current_weather_file)
+
+    def update_output_file_status(self):
+        file_name_no_ext, extension = os.path.splitext(self.current_file_name)
+        full_path_name_no_ext = os.path.join(self.directory_name, file_name_no_ext)
+        self.disable_output_menu_items()
+        self.enable_existing_menu_items(full_path_name_no_ext)
+        self.disable_output_toolbar_buttons()
+        self.enable_existing_output_toolbar_buttons(full_path_name_no_ext)
+
+    def disable_output_menu_items(self):
+        output_menu_items = self.output_menu.GetMenuItems()
+        for output_menu_item in output_menu_items:
+            if output_menu_item.GetLabel() != "Extra":
+                output_menu_item.Enable(False)
+        extra_output_menu_items = self.extra_output_menu.GetMenuItems()
+        for extra_output_menu_item in extra_output_menu_items:
+            extra_output_menu_item.Enable(False)
+
+    def enable_existing_menu_items(self, path_no_ext):
+        output_menu_items = self.output_menu.GetMenuItems()
+        for output_menu_item in output_menu_items:
+            if output_menu_item.GetLabel() != "Extra":
+                if os.path.exists(path_no_ext + output_menu_item.GetLabel()):
+                    output_menu_item.Enable(True)
+        extra_output_menu_items = self.extra_output_menu.GetMenuItems()
+        for extra_output_menu_item in extra_output_menu_items:
+            if os.path.exists(path_no_ext + extra_output_menu_item.GetLabel()):
+                extra_output_menu_item.Enable(True)
+
+    def disable_output_toolbar_buttons(self):
+        number_of_tools = self.output_toolbar.GetToolsCount()
+        for tool_num in range(number_of_tools):
+            cur_tool = self.output_toolbar.GetToolByPos(tool_num)
+            cur_id = cur_tool.GetId()
+            self.output_toolbar.EnableTool(cur_id, False)
+        self.output_toolbar.Realize()
+
+    def enable_existing_output_toolbar_buttons(self, path_no_ext):
+        number_of_tools = self.output_toolbar.GetToolsCount()
+        for tool_num in range(number_of_tools):
+            cur_tool = self.output_toolbar.GetToolByPos(tool_num)
+            cur_id = cur_tool.GetId()
+            if os.path.exists(path_no_ext + cur_tool.GetLabel()):
+                self.output_toolbar.EnableTool(cur_id, True)
+        self.output_toolbar.Realize()
