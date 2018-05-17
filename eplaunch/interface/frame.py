@@ -345,8 +345,8 @@ class EpLaunchFrame(wx.Frame):
         # not sure why but it works better if you make the split and unsplit it right away
         self.file_lists_splitter.SetMinimumPaneSize(20)
         self.file_lists_splitter.SplitHorizontally(self.control_file_list_panel, self.raw_file_list_panel)
+        self.file_lists_splitter.Unsplit(toRemove=self.raw_file_list_panel)
 
-        # self.file_lists_splitter.Unsplit(toRemove=self.raw_file_list_panel)
         sizer_right = wx.BoxSizer(wx.HORIZONTAL)
         sizer_right.Add(self.file_lists_splitter, 1, wx.EXPAND, 0)
 
