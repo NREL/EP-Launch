@@ -156,6 +156,7 @@ class EpLaunchFrame(wx.Frame):
         self.output_toolbar.ClearTools()
         # add tools based on the workflow
         norm_bmp = wx.ArtProvider.GetBitmap(wx.ART_NORMAL_FILE, wx.ART_TOOLBAR, self.output_toolbar_icon_size)
+        #disable_bmp = wx.ArtProvider.GetBitmap(wx.ART_MISSING_IMAGE, wx.ART_TOOLBAR, self.output_toolbar_icon_size)
         tb_output_suffixes = []
         output_suffixes = self.current_workflow.get_output_suffixes()
         if self.current_workflow.output_toolbar_order is None:
@@ -167,7 +168,7 @@ class EpLaunchFrame(wx.Frame):
 
         for count, tb_output_suffix in enumerate(tb_output_suffixes):
             out_tb_button = self.output_toolbar.AddTool(
-                10 + count, tb_output_suffix, norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Help", "Long help for 'Help'",
+                10 + count, tb_output_suffix, norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, tb_output_suffix, "Long help for " + tb_output_suffix,
                 None
             )
             self.output_toolbar.Bind(wx.EVT_TOOL, self.handle_out_tb_button, out_tb_button)
@@ -842,6 +843,8 @@ class EpLaunchFrame(wx.Frame):
         full_path_name_no_ext = os.path.join(self.directory_name,file_name_no_ext)
         self.disable_output_menu_items()
         self.enable_existing_menu_items(full_path_name_no_ext)
+        self.disable_output_toolbar_buttons()
+        self.enable_existing_output_toolbar_buttons(full_path_name_no_ext)
 
     def disable_output_menu_items(self):
         output_menu_items = self.output_menu.GetMenuItems()
@@ -862,3 +865,20 @@ class EpLaunchFrame(wx.Frame):
         for extra_output_menu_item in extra_output_menu_items:
             if os.path.exists(path_no_ext + extra_output_menu_item.GetLabel()):
                 extra_output_menu_item.Enable(True)
+
+    def disable_output_toolbar_buttons(self):
+        number_of_tools = self.output_toolbar.GetToolsCount()
+        for tool_num in range(number_of_tools):
+            cur_tool = self.output_toolbar.GetToolByPos(tool_num)
+            cur_id = cur_tool.GetId()
+            self.output_toolbar.EnableTool(cur_id,False)
+        self.output_toolbar.Realize()
+
+    def enable_existing_output_toolbar_buttons(self,path_no_ext):
+        number_of_tools = self.output_toolbar.GetToolsCount()
+        for tool_num in range(number_of_tools):
+            cur_tool = self.output_toolbar.GetToolByPos(tool_num)
+            cur_id = cur_tool.GetId()
+            if os.path.exists(path_no_ext + cur_tool.GetLabel()):
+                self.output_toolbar.EnableTool(cur_id,True)
+        self.output_toolbar.Realize()
