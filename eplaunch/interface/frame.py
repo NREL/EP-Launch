@@ -87,7 +87,6 @@ class EpLaunchFrame(wx.Frame):
         # create external program runner
         self.external_runner = EPLaunchExternalPrograms()
 
-
     def close_frame(self):
         """May do additional things during close, including saving the current window state/settings"""
         self.save_config()
