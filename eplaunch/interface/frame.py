@@ -13,6 +13,7 @@ from eplaunch.interface import workflow_directories_dialog
 from eplaunch.interface.workflow_processing import event_result, WorkflowThread
 from eplaunch.utilities.cache import CacheFile
 from eplaunch.utilities.exceptions import EPLaunchDevException, EPLaunchFileException
+from eplaunch.utilities.version import Version
 from eplaunch.workflows import manager as workflow_manager
 
 
@@ -432,13 +433,14 @@ class EpLaunchFrame(wx.Frame):
         )
 
         up_bmp = wx.ArtProvider.GetBitmap(wx.ART_GO_UP, wx.ART_TOOLBAR, t_size)
-        self.primary_toolbar.AddTool(
-            80, "Update", up_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Update", "Long help for 'Update'", None
+        tb_update_file_version = self.primary_toolbar.AddTool(
+            90, "Update", up_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Update", "Long help for 'Update'", None
         )
+        self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_update_file_version, tb_update_file_version)
 
         remove_bmp = wx.ArtProvider.GetBitmap(wx.ART_MINUS, wx.ART_TOOLBAR, t_size)
         tb_hide_browser = self.primary_toolbar.AddTool(
-            80, "File Browser", remove_bmp, wx.NullBitmap, wx.ITEM_CHECK, "File Browser",
+            100, "File Browser", remove_bmp, wx.NullBitmap, wx.ITEM_CHECK, "File Browser",
             "Long help for 'File Browser'", None
         )
         self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_hide_browser, tb_hide_browser)
@@ -881,3 +883,9 @@ class EpLaunchFrame(wx.Frame):
             if os.path.exists(path_no_ext + cur_tool.GetLabel()):
                 self.output_toolbar.EnableTool(cur_id, True)
         self.output_toolbar.Realize()
+
+    def handle_tb_update_file_version(self, event):
+        full_path_name = os.path.join(self.directory_name, self.current_file_name)
+        v = Version()
+        is_version_found, version_string = v.check_energyplus_version(full_path_name)
+        print(is_version_found, version_string)
