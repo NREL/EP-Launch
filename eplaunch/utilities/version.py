@@ -26,8 +26,9 @@ class Version:
                             found = True
                             break
                 cur_line = f.readline()  # get the next line
-        print("The current version is {}".format(current_version))
-        return found, current_version
+        # print("The current version is {} which is {}".format(current_version,
+        #                                          self.numeric_version_from_string(current_version)))
+        return found, current_version, self.numeric_version_from_string(current_version)
 
     def line_with_no_comment(self, in_string):
         exclamation_point_pos = in_string.find("!")
@@ -37,3 +38,17 @@ class Version:
         else:  # no explanation point found
             out_string = in_string.strip()
         return out_string
+
+    def numeric_version_from_string(self, string_version):
+        # if the version string has sha1 hash at the end remove it
+        words = string_version.split("-")
+        # the rest of the version number should just be separated by periods
+        parts = words[0].split(".")
+        numeric_version = 0
+        parts = parts[:3]
+        # if only a two part version number add a zero.
+        if len(parts) == 2:
+            parts.append("0")
+        for part in parts:
+            numeric_version = numeric_version * 100 + int(part)
+        return numeric_version

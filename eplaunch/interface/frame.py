@@ -887,5 +887,5 @@ class EpLaunchFrame(wx.Frame):
     def handle_tb_update_file_version(self, event):
         full_path_name = os.path.join(self.directory_name, self.current_file_name)
         v = Version()
-        is_version_found, version_string = v.check_energyplus_version(full_path_name)
-        print(is_version_found, version_string)
+        is_version_found, version_string, version_number = v.check_energyplus_version(full_path_name)
+        print(is_version_found, version_string, version_number)
