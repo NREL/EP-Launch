@@ -21,7 +21,7 @@ class TestVersion(unittest.TestCase):
 
     def test_check_energyplus_version(self):
         v = Version()
-        is_version_found, version_string, version_number = v.check_energyplus_version("Minimal.idf")
+        is_version_found, version_string, version_number = v.check_energyplus_version("./Minimal.idf")
         self.assertTrue(is_version_found)
         self.assertEqual(version_string, "8.9")
         self.assertEqual(version_number, 80900)
