@@ -23,8 +23,17 @@ class TestVersion(unittest.TestCase):
 
     def test_check_energyplus_version(self):
         v = Version()
+
+        # the version object is on one line
         file_path = os.path.join(os.path.dirname(__file__), "Minimal.idf")
         is_version_found, version_string, version_number = v.check_energyplus_version(file_path)
         self.assertTrue(is_version_found)
         self.assertEqual(version_string, "8.9")
         self.assertEqual(version_number, 80900)
+
+        # the version object is spreads across two lines
+        file_path = os.path.join(os.path.dirname(__file__), "Minimal2.idf")
+        is_version_found, version_string, version_number = v.check_energyplus_version(file_path)
+        self.assertTrue(is_version_found)
+        self.assertEqual(version_string, "8.9.1")
+        self.assertEqual(version_number, 80901)
