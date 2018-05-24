@@ -7,5 +7,7 @@ omit =
         .tox/*
         *.pyenv*
         *.venv*
+
         setup.py
-        */eplaunch/interface/*.py
+        eplaunch/runner.py
+        eplaunch/interface/*.py
