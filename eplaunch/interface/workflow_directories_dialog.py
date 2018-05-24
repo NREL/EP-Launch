@@ -30,8 +30,12 @@ class WorkflowDirectoriesDialog(wx.Dialog):
         ]
     }
 
+    list_of_directories = []
+
     def __init__(self, *args, **kwargs):
         super(WorkflowDirectoriesDialog, self).__init__(*args, **kwargs)
+        self.list_of_directories = []
+        self.directory_listbox = None
         self.initialize_ui()
         self.SetSize((800, 250))
         self.SetTitle("Workflow Directories")
@@ -40,9 +44,12 @@ class WorkflowDirectoriesDialog(wx.Dialog):
         pnl = wx.Panel(self)
         vbox = wx.BoxSizer(wx.VERTICAL)
 
-        sampleList = WorkflowDirectoriesDialog.SampleWorkflows[Platform.get_current_platform()]
+        if len(self.list_of_directories) != 0:
+            sampleList = self.list_of_directories
+        else:
+            sampleList = WorkflowDirectoriesDialog.SampleWorkflows[Platform.get_current_platform()]
 
-        wx.ListBox(pnl, 60, size=(750, 100), choices=sampleList, style=wx.LB_SINGLE | wx.LB_ALWAYS_SB)
+        self.directory_listbox = wx.ListBox(pnl, 60, size=(750, 100), choices=sampleList, style=wx.LB_SINGLE | wx.LB_ALWAYS_SB)
 
         hbox_1 = wx.BoxSizer(wx.HORIZONTAL)
         add_button = wx.Button(self, label='Add..')
@@ -51,8 +58,9 @@ class WorkflowDirectoriesDialog(wx.Dialog):
         hbox_1.Add(remove_button, flag=wx.LEFT, border=5)
 
         hbox_2 = wx.BoxSizer(wx.HORIZONTAL)
-        ok_button = wx.Button(self, label='Ok')
-        cancel_button = wx.Button(self, label='Cancel')
+        ok_button = wx.Button(self, wx.ID_OK, label='Ok')
+        self.SetAffirmativeId(ok_button.GetId())
+        cancel_button = wx.Button(self, wx.ID_CANCEL, label='Cancel')
         hbox_2.Add(ok_button, flag=wx.RIGHT, border=5)
         hbox_2.Add(cancel_button, flag=wx.LEFT, border=5)
 
@@ -67,7 +75,8 @@ class WorkflowDirectoriesDialog(wx.Dialog):
 
     def handle_close_ok(self, e):
         # Do some saving here before closing it
-        self.EndModal(WorkflowDirectoriesDialog.CLOSE_SIGNAL_OK)
+        self.EndModal(e.EventObject.Id)
+        self.list_of_directories = self.directory_listbox.GetStrings()
 
     def handle_close_cancel(self, e):
         self.EndModal(WorkflowDirectoriesDialog.CLOSE_SIGNAL_CANCEL)

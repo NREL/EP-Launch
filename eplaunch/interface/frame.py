@@ -47,6 +47,7 @@ class EpLaunchFrame(wx.Frame):
         self.current_workflow = None
         self.workflow_instances = None
         self.workflow_choice = None
+        self.workflow_directories = None
         self.directory_name = None
         self.current_file_name = None
         self.menu_output_toolbar = None
@@ -719,8 +720,11 @@ class EpLaunchFrame(wx.Frame):
 
     def handle_menu_option_workflow_directories(self, event):
         workflow_dir_dialog = workflow_directories_dialog.WorkflowDirectoriesDialog(None, title='Workflow Directories')
+        workflow_dir_dialog.list_of_directories = self.workflow_directories
         return_value = workflow_dir_dialog.ShowModal()
-        print(return_value)
+        if return_value == wx.ID_OK:
+            self.workflow_directories = workflow_dir_dialog.list_of_directories
+            print(self.workflow_directories)
         # May need to refresh the main UI if something changed in the settings
         workflow_dir_dialog.Destroy()
 
