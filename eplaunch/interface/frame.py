@@ -566,19 +566,21 @@ class EpLaunchFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.handle_menu_workflow_order, menu_workflow_order)
         options_menu.AppendSeparator()
 
-        option_favorite_menu = wx.Menu()
-        option_favorite_menu.Append(741, "4")
-        option_favorite_menu.Append(742, "8")
-        option_favorite_menu.Append(743, "12")
-        option_favorite_menu.Append(744, "Clear")
-        options_menu.Append(74, "Favorites", option_favorite_menu)
+        # for now do not allow changing of the number of favorites
+        # option_favorite_menu = wx.Menu()
+        # option_favorite_menu.Append(741, "4")
+        # option_favorite_menu.Append(742, "8")
+        # option_favorite_menu.Append(743, "12")
+        # option_favorite_menu.Append(744, "Clear")
+        # options_menu.Append(74, "Favorites", option_favorite_menu)
 
-        option_recent_menu = wx.Menu()
-        option_recent_menu.Append(741, "4")
-        option_recent_menu.Append(742, "8")
-        option_recent_menu.Append(743, "12")
-        option_recent_menu.Append(744, "Clear")
-        options_menu.Append(74, "Recent", option_recent_menu)
+        # for now do not allow changing of the number of recent
+        # option_recent_menu = wx.Menu()
+        # option_recent_menu.Append(741, "4")
+        # option_recent_menu.Append(742, "8")
+        # option_recent_menu.Append(743, "12")
+        # option_recent_menu.Append(744, "Clear")
+        # options_menu.Append(74, "Recent", option_recent_menu)
 
         options_menu.Append(75, "Remote...")
         menu_viewers = options_menu.Append(77, "Viewers...")
