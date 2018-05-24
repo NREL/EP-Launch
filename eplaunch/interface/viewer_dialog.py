@@ -8,29 +8,31 @@ class ViewerDialog(wx.Dialog):
     def __init__(self, *args, **kwargs):
         super(ViewerDialog, self).__init__(*args, **kwargs)
         self.initialize_ui()
-        self.SetSize((400, 400))
-        self.SetTitle("Viewer")
+        self.SetSize((550, 400))
+        self.SetTitle("Viewers")
 
     def initialize_ui(self, *args, **kwds):
-        extensionList = ['Text',
-                         'csv',
-                         'html',
-                         'err',
-                         'eio',
-                         'tab',
-                         'rdd',
-                         'mdd',
-                         'svg',
-                         'dxf']
+        extensionList = ['Text (Default)',
+                         'Drawing (*.dxf)',
+                         'VRML (*.wrl)',
+                         'Spreadsheet (*.csv)',
+                         'Diagramming (*.svg)',
+                         'Web Browser (*.html)',
+                         'ESO (*.eso)',
+                         'Portable Document (*.pdf)',
+                         'XML (*.xml)',
+                         ]
 
-        list_box_1 = wx.ListBox(self, wx.ID_ANY, choices=extensionList)
-        radio_btn_1 = wx.RadioButton(self, wx.ID_ANY, "Use Text Editor")
-        radio_btn_2 = wx.RadioButton(self, wx.ID_ANY, "Use Preview")
-        radio_btn_3 = wx.RadioButton(self, wx.ID_ANY, "Use Specific Application")
-        text_ctrl_1 = wx.TextCtrl(self, wx.ID_ANY, "c:\\programs\\text editor\\textedit.exe",
-                                  style=wx.TE_MULTILINE)
+        viewer_list_label = wx.StaticText(self, wx.ID_ANY, "Type")
+        viewer_type_list_box = wx.ListBox(self, wx.ID_ANY, choices=extensionList)
+        application_path_label = wx.StaticText(self, wx.ID_ANY, "Application Path")
+        application_ctrl = wx.TextCtrl(self, wx.ID_ANY, "c:\\programs\\text editor\\textedit.exe",
+                                       style=wx.TE_MULTILINE | wx.TE_READONLY)
+        mime_label = wx.StaticText(self, wx.ID_ANY, "MIME Type")
+        mime_ctrl = wx.TextCtrl(self, wx.ID_ANY, "text/plain", style=wx.TE_READONLY)
         button_auto_find = wx.Button(self, wx.ID_ANY, "Auto Find")
         button_select = wx.Button(self, wx.ID_ANY, "Select...")
+        button_clear = wx.Button(self, wx.ID_ANY, "Clear")
         button_ok = wx.Button(self, wx.ID_OK, "")
         button_cancel = wx.Button(self, wx.ID_CANCEL, "")
 
@@ -38,16 +40,21 @@ class ViewerDialog(wx.Dialog):
         horiz_sizer_bottom = wx.BoxSizer(wx.HORIZONTAL)
         horiz_sizer_top = wx.BoxSizer(wx.HORIZONTAL)
         vert_sizer_right = wx.BoxSizer(wx.VERTICAL)
+        vert_sizer_left = wx.BoxSizer(wx.VERTICAL)
         horiz_sizer_right = wx.BoxSizer(wx.HORIZONTAL)
-        horiz_sizer_top.Add(list_box_1, 1, flag=wx.ALL | wx.EXPAND, border=10)
 
-        vert_sizer_right.Add(radio_btn_1, flag=wx.ALL, border=5)
-        vert_sizer_right.Add(radio_btn_2, flag=wx.ALL, border=5)
-        vert_sizer_right.Add(radio_btn_3, flag=wx.ALL, border=5)
-        vert_sizer_right.Add(text_ctrl_1, flag=wx.ALL | wx.EXPAND, border=5)
+        vert_sizer_left.Add(viewer_list_label, flag=wx.ALL, border=5)
+        vert_sizer_left.Add(viewer_type_list_box, 1, flag=wx.ALL | wx.EXPAND, border=5)
+        horiz_sizer_top.Add(vert_sizer_left, flag=wx.ALL | wx.EXPAND, border=5)
+
+        vert_sizer_right.Add(application_path_label, flag=wx.ALL, border=5)
+        vert_sizer_right.Add(application_ctrl, flag=wx.ALL | wx.EXPAND, border=5)
+        vert_sizer_right.Add(mime_label, flag=wx.ALL, border=5)
+        vert_sizer_right.Add(mime_ctrl, flag=wx.ALL | wx.EXPAND, border=5)
 
         horiz_sizer_right.Add(button_auto_find, flag=wx.ALL, border=5)
         horiz_sizer_right.Add(button_select, flag=wx.ALL, border=5)
+        horiz_sizer_right.Add(button_clear, flag=wx.ALL, border=5)
 
         vert_sizer_right.Add(horiz_sizer_right, 1, flag=wx.ALL | wx.EXPAND, border=5)
 
