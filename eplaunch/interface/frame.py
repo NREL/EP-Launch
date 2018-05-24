@@ -15,6 +15,7 @@ from eplaunch.utilities.cache import CacheFile
 from eplaunch.utilities.exceptions import EPLaunchDevException, EPLaunchFileException
 from eplaunch.utilities.version import Version
 from eplaunch.workflows import manager as workflow_manager
+from eplaunch.utilities.externalprograms import EPLaunchExternalPrograms
 
 
 # wx callbacks need an event argument even though we usually don't use it, so the next line disables that check
@@ -83,6 +84,9 @@ class EpLaunchFrame(wx.Frame):
         self.update_control_list_columns()
         self.update_file_lists()
         self.update_workflow_dependent_menu_items()
+
+        # create external program runner
+        self.external_runner = EPLaunchExternalPrograms()
 
     def close_frame(self):
         """May do additional things during close, including saving the current window state/settings"""
@@ -417,13 +421,17 @@ class EpLaunchFrame(wx.Frame):
         self.primary_toolbar.AddSeparator()
 
         exe_bmp = wx.ArtProvider.GetBitmap(wx.ART_EXECUTABLE_FILE, wx.ART_TOOLBAR, t_size)
-        self.primary_toolbar.AddTool(
-            40, "IDF Editor", exe_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "IDF Editor", "Long help for 'IDF Editor'", None
+        self.tb_idf_editor_id = 40
+        tb_idf_editor = self.primary_toolbar.AddTool(
+            self.tb_idf_editor_id, "IDF Editor", exe_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "IDF Editor", "Long help for 'IDF Editor'", None
         )
-        self.primary_toolbar.AddTool(
+        self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_idf_editor, tb_idf_editor)
+
+        tb_text_editor = self.primary_toolbar.AddTool(
             50, "Text Editor", exe_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Text Editor", "Long help for 'Text Editor'",
             None
         )
+        self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_text_editor, tb_text_editor)
 
         self.primary_toolbar.AddSeparator()
 
@@ -611,6 +619,7 @@ class EpLaunchFrame(wx.Frame):
     def handle_list_ctrl_selection(self, event):
         self.current_file_name = event.Item.Text
         self.update_output_file_status()
+        self.enable_disable_idf_editor_button()
 
     def handle_menu_file_run(self, event):
         self.folder_recent.add_recent(self.directory_tree_control.GetPath())
@@ -852,9 +861,10 @@ class EpLaunchFrame(wx.Frame):
         for output_menu_item in output_menu_items:
             if output_menu_item.GetLabel() != "Extra":
                 output_menu_item.Enable(False)
-        extra_output_menu_items = self.extra_output_menu.GetMenuItems()
-        for extra_output_menu_item in extra_output_menu_items:
-            extra_output_menu_item.Enable(False)
+        if self.extra_output_menu is not None:
+            extra_output_menu_items = self.extra_output_menu.GetMenuItems()
+            for extra_output_menu_item in extra_output_menu_items:
+                extra_output_menu_item.Enable(False)
 
     def enable_existing_menu_items(self, path_no_ext):
         output_menu_items = self.output_menu.GetMenuItems()
@@ -862,10 +872,11 @@ class EpLaunchFrame(wx.Frame):
             if output_menu_item.GetLabel() != "Extra":
                 if os.path.exists(path_no_ext + output_menu_item.GetLabel()):
                     output_menu_item.Enable(True)
-        extra_output_menu_items = self.extra_output_menu.GetMenuItems()
-        for extra_output_menu_item in extra_output_menu_items:
-            if os.path.exists(path_no_ext + extra_output_menu_item.GetLabel()):
-                extra_output_menu_item.Enable(True)
+        if self.extra_output_menu is not None:
+            extra_output_menu_items = self.extra_output_menu.GetMenuItems()
+            for extra_output_menu_item in extra_output_menu_items:
+                if os.path.exists(path_no_ext + extra_output_menu_item.GetLabel()):
+                    extra_output_menu_item.Enable(True)
 
     def disable_output_toolbar_buttons(self):
         number_of_tools = self.output_toolbar.GetToolsCount()
@@ -889,3 +900,16 @@ class EpLaunchFrame(wx.Frame):
         v = Version()
         is_version_found, version_string, version_number = v.check_energyplus_version(full_path_name)
         print(is_version_found, version_string, version_number)
+
+    def handle_tb_idf_editor(self, event):
+        full_path_name = os.path.join(self.directory_name, self.current_file_name)
+        self.external_runner.run_idf_editor(full_path_name)
+
+    def handle_tb_text_editor(self, event):
+        full_path_name = os.path.join(self.directory_name, self.current_file_name)
+        self.external_runner.run_text_editor(full_path_name)
+
+    def enable_disable_idf_editor_button(self):
+        file_name_no_ext, extension = os.path.splitext(self.current_file_name)
+        self.primary_toolbar.EnableTool(self.tb_idf_editor_id, extension.upper() == ".IDF")
+        self.output_toolbar.Realize()

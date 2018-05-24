@@ -28,8 +28,9 @@ class CacheFile(object):
 
     def read(self):
         try:
-            body_text = open(self.file_path, 'r').read()
-        except IOError:
+            with open(self.file_path, 'r') as f:
+                body_text = f.read()
+        except IOError:  # pragma: no cover  -- would be difficult to mock up this weird case
             raise EPLaunchFileException(self.file_path, 'Could not open or read text from file')
         try:
             return json.loads(body_text)
@@ -39,6 +40,7 @@ class CacheFile(object):
     def write(self):
         body_text = json.dumps(self.workflow_state, indent=2)
         try:
-            open(self.file_path, 'w').write(body_text)
-        except IOError:
+            with open(self.file_path, 'w') as f:
+                f.write(body_text)
+        except IOError:  # pragma: no cover  -- would be difficult to mock up this weird case
             raise EPLaunchFileException(self.file_path, 'Could not write cache file')
