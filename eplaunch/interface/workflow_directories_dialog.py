@@ -49,12 +49,31 @@ class WorkflowDirectoriesDialog(wx.Dialog):
 
         self.SetSizer(vbox)
 
-        ok_button.Bind(wx.EVT_BUTTON, self.handle_close_ok)
-        cancel_button.Bind(wx.EVT_BUTTON, self.handle_close_cancel)
+        add_button.Bind(wx.EVT_BUTTON, self.handle_add)
+        remove_button.Bind(wx.EVT_BUTTON, self.handle_remove)
         auto_find_button.Bind(wx.EVT_BUTTON, self.handle_auto_find)
 
+        ok_button.Bind(wx.EVT_BUTTON, self.handle_close_ok)
+        cancel_button.Bind(wx.EVT_BUTTON, self.handle_close_cancel)
+
+    def handle_add(self, e):
+        dlg = wx.DirDialog(self, "Select a workflow directory", "", wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
+        if dlg.ShowModal() == wx.ID_OK:
+            print(dlg.GetPath())
+            self.directory_listbox.Append(dlg.GetPath())
+        dlg.Destroy()
+
+    def handle_remove(self, e):
+        selected_item = self.directory_listbox.GetSelection()
+        self.directory_listbox.Delete(selected_item)
+
     def handle_auto_find(self, e):
-        pass
+        current_items = self.directory_listbox.GetStrings()
+        lw = LocateWorkflows()
+        found_items = lw.find()
+        for found_item in found_items:
+            if found_item not in current_items:
+                self.directory_listbox.Append(found_item)
 
     def handle_close_ok(self, e):
         # Do some saving here before closing it
