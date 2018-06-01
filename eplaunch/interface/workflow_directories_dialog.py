@@ -1,34 +1,12 @@
 import wx
 
 from eplaunch.utilities.crossplatform import Platform
+from eplaunch.utilities.locateworkflows import LocateWorkflows
 
 
 class WorkflowDirectoriesDialog(wx.Dialog):
     CLOSE_SIGNAL_OK = 0
     CLOSE_SIGNAL_CANCEL = 1
-
-    SampleWorkflows = {
-        Platform.WINDOWS: [
-            'c:\EnergyPlusV8-6-0\workflows',
-            'c:\EnergyPlusV8-7-0\workflows',
-            'c:\EnergyPlusV8-8-0\workflows',
-            'c:\EnergyPlusV8-9-0\workflows'
-        ],
-        Platform.LINUX: [
-            '/usr/local/bin/EnergyPlusV8-6-0/workflows',
-            '/usr/local/bin/EnergyPlusV8-7-0/workflows',
-            '/usr/local/bin/EnergyPlusV8-8-0/workflows',
-            '/usr/local/bin/EnergyPlusV8-9-0/workflows'
-        ],
-        Platform.MAC: [
-            '/Applications/EnergyPlusV8-6-0/workflows',
-            '/Applications/EnergyPlusV8-7-0/workflows',
-            '/Applications/EnergyPlusV8-8-0/workflows',
-            '/Applications/EnergyPlusV8-9-0/workflows'
-        ],
-        Platform.UNKNOWN: [
-        ]
-    }
 
     list_of_directories = []
 
@@ -44,18 +22,20 @@ class WorkflowDirectoriesDialog(wx.Dialog):
         pnl = wx.Panel(self)
         vbox = wx.BoxSizer(wx.VERTICAL)
 
-        if len(self.list_of_directories) != 0:
-            sampleList = self.list_of_directories
-        else:
-            sampleList = WorkflowDirectoriesDialog.SampleWorkflows[Platform.get_current_platform()]
+        lw = LocateWorkflows()
 
-        self.directory_listbox = wx.ListBox(pnl, 60, size=(750, 100), choices=sampleList, style=wx.LB_SINGLE | wx.LB_ALWAYS_SB)
+        if len(self.list_of_directories) == 0:
+            self.list_of_directories = lw.find()
 
+        self.directory_listbox = wx.ListBox(pnl, 60, size=(750, 100), choices=self.list_of_directories,
+                                            style=wx.LB_SINGLE | wx.LB_ALWAYS_SB)
         hbox_1 = wx.BoxSizer(wx.HORIZONTAL)
         add_button = wx.Button(self, label='Add..')
         remove_button = wx.Button(self, label='Remove')
+        auto_find_button = wx.Button(self, label='Auto Find..')
         hbox_1.Add(add_button, flag=wx.RIGHT, border=5)
-        hbox_1.Add(remove_button, flag=wx.LEFT, border=5)
+        hbox_1.Add(remove_button, flag=wx.CENTER, border=5)
+        hbox_1.Add(auto_find_button, flag=wx.LEFT, border=5)
 
         hbox_2 = wx.BoxSizer(wx.HORIZONTAL)
         ok_button = wx.Button(self, wx.ID_OK, label='Ok')
@@ -72,6 +52,10 @@ class WorkflowDirectoriesDialog(wx.Dialog):
 
         ok_button.Bind(wx.EVT_BUTTON, self.handle_close_ok)
         cancel_button.Bind(wx.EVT_BUTTON, self.handle_close_cancel)
+        auto_find_button.Bind(wx.EVT_BUTTON, self.handle_auto_find)
+
+    def handle_auto_find(self, e):
+        pass
 
     def handle_close_ok(self, e):
         # Do some saving here before closing it
