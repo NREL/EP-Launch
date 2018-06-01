@@ -1,6 +1,5 @@
 import wx
 
-from eplaunch.utilities.crossplatform import Platform
 from eplaunch.utilities.locateworkflows import LocateWorkflows
 
 
