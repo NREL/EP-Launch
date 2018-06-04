@@ -74,6 +74,9 @@ class EpLaunchFrame(wx.Frame):
         # this is currently just a single background thread, eventually we'll need to keep a list of them
         self.workflow_worker = None
 
+        # get the saved workflow directories
+        self.retrieve_workflow_directories_config()
+
         # build out the whole GUI and do other one-time inits here
         self.gui_build()
         self.reset_raw_list_columns()
@@ -720,7 +723,7 @@ class EpLaunchFrame(wx.Frame):
 
     def handle_menu_option_workflow_directories(self, event):
         workflow_dir_dialog = workflow_directories_dialog.WorkflowDirectoriesDialog(None, title='Workflow Directories')
-        workflow_dir_dialog.list_of_directories = self.workflow_directories
+        workflow_dir_dialog.set_listbox(self.workflow_directories)
         return_value = workflow_dir_dialog.ShowModal()
         if return_value == wx.ID_OK:
             self.workflow_directories = workflow_dir_dialog.list_of_directories
@@ -800,6 +803,7 @@ class EpLaunchFrame(wx.Frame):
         self.folder_recent.save_config()
         self.weather_favorites.save_config()
         self.weather_recent.save_config()
+        self.save_workflow_directories_config()
 
     def handle_menu_weather_select(self, event):
         filename = wx.FileSelector("Select a weather file", wildcard="EnergyPlus Weather File(*.epw)|*.epw",
@@ -919,3 +923,22 @@ class EpLaunchFrame(wx.Frame):
         file_name_no_ext, extension = os.path.splitext(self.current_file_name)
         self.primary_toolbar.EnableTool(self.tb_idf_editor_id, extension.upper() == ".IDF")
         self.output_toolbar.Realize()
+
+    def save_workflow_directories_config(self):
+        # in Windows using RegEdit these appear in:
+        #    HKEY_CURRENT_USER\Software\EP-Launch3
+        self.config.WriteInt("/WorkflowDirectories/Count", len(self.workflow_directories))
+        # save menu items to configuration file
+        for count, workflow_directory in enumerate(self.workflow_directories):
+            self.config.Write("/WorkflowDirectories/Path-{:02d}".format(count), workflow_directory)
+
+    def retrieve_workflow_directories_config(self):
+        count_directories = self.config.ReadInt("/WorkflowDirectories/Count", 0)
+        list_of_directories = []
+        for count in range(0, count_directories):
+            directory = self.config.Read("/WorkflowDirectories/Path-{:02d}".format(count))
+            if directory:
+                if os.path.exists(directory):
+                    list_of_directories.append(directory)
+        self.workflow_directories = list_of_directories
+

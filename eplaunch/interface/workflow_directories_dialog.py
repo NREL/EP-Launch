@@ -21,11 +21,6 @@ class WorkflowDirectoriesDialog(wx.Dialog):
         pnl = wx.Panel(self)
         vbox = wx.BoxSizer(wx.VERTICAL)
 
-        lw = LocateWorkflows()
-
-        if len(self.list_of_directories) == 0:
-            self.list_of_directories = lw.find()
-
         self.directory_listbox = wx.ListBox(pnl, 60, size=(750, 100), choices=self.list_of_directories,
                                             style=wx.LB_SINGLE | wx.LB_ALWAYS_SB)
         hbox_1 = wx.BoxSizer(wx.HORIZONTAL)
@@ -55,6 +50,13 @@ class WorkflowDirectoriesDialog(wx.Dialog):
 
         ok_button.Bind(wx.EVT_BUTTON, self.handle_close_ok)
         cancel_button.Bind(wx.EVT_BUTTON, self.handle_close_cancel)
+
+    def set_listbox(self, list_of_directories):
+        self.list_of_directories = list_of_directories
+        if len(self.list_of_directories) == 0:
+            lw = LocateWorkflows()
+            self.list_of_directories = lw.find()
+        self.directory_listbox.SetItems(self.list_of_directories)
 
     def handle_add(self, e):
         dlg = wx.DirDialog(self, "Select a workflow directory", "", wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
