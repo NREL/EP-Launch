@@ -941,4 +941,3 @@ class EpLaunchFrame(wx.Frame):
                 if os.path.exists(directory):
                     list_of_directories.append(directory)
         self.workflow_directories = list_of_directories
-
