@@ -54,6 +54,8 @@ class LocateWorkflows:
             for search_name in search_names:
                 full_search_path = os.path.join(search_root, search_name)
                 full_search_path_with_workflow = os.path.join(full_search_path, "workflows")
+                print("full_search_path_with_workflow")
+                print(full_search_path_with_workflow)
                 possible_directories = glob.glob(full_search_path_with_workflow)
                 found_directories.update(possible_directories)
         return list(found_directories)
