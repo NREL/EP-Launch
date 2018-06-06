@@ -15,6 +15,6 @@ class UnitTestUtilities:
     def tests_utilities_directory(self):
         utilities_path = os.path.dirname(__file__)
         eplaunch_path, tail = os.path.split(utilities_path)
-        tests_path = os.path.join(eplaunch_path,"tests")
-        tests_utilities_path = os.path.join(tests_path,"utilities")
+        tests_path = os.path.join(eplaunch_path, "tests")
+        tests_utilities_path = os.path.join(tests_path, "utilities")
         return tests_utilities_path
