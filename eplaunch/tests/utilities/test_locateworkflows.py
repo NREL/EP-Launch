@@ -20,13 +20,13 @@ class TestLocateWorkflows(unittest.TestCase):
         if not os.path.isdir(self.energyplus_directory):
             try:
                 os.mkdir(self.energyplus_directory)
-            except:
+            except OSError:
                 print("cannot make energyplus directory")
         self.workflow_directory = os.path.join(self.energyplus_directory, "workflows")
         if not os.path.isdir(self.workflow_directory):
             try:
                 os.mkdir(self.workflow_directory)
-            except:
+            except OSError:
                 print("cannot make workflow directory")
 
     def test_find(self):
@@ -42,9 +42,9 @@ class TestLocateWorkflows(unittest.TestCase):
     def tearDown(self):
         try:
             os.rmdir(self.workflow_directory)
-        except:
+        except OSError:
             print("cannot remove workflow directory")
         try:
             os.rmdir(self.energyplus_directory)
-        except:
+        except OSError:
             print("cannot remove energyplus directory")
