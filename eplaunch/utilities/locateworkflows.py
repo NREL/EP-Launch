@@ -44,18 +44,13 @@ class LocateWorkflows:
             Platform.UNKNOWN: [
             ]
         }
-        if UnitTestUtilities.in_unit_test(self):
-            current_search_roots = [UnitTestUtilities.tests_utilities_directory(self), ]
-        else:
-            current_search_roots = search_roots[Platform.get_current_platform()]
+        current_search_roots = search_roots[Platform.get_current_platform()]
         search_names = ["EnergyPlus*", "energyplus*", "EP*", "ep*", "E+*", "e+*"]
         found_directories = set()
         for search_root in current_search_roots:
             for search_name in search_names:
                 full_search_path = os.path.join(search_root, search_name)
                 full_search_path_with_workflow = os.path.join(full_search_path, "workflows")
-                print("full_search_path_with_workflow")
-                print(full_search_path_with_workflow)
                 possible_directories = glob.glob(full_search_path_with_workflow)
                 found_directories.update(possible_directories)
         return list(found_directories)
