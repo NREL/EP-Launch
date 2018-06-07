@@ -18,10 +18,16 @@ class TestLocateWorkflows(unittest.TestCase):
             current_directory = '/usr/local/bin/'
         self.energyplus_directory = os.path.join(current_directory, "EnergyPlusV5-9-0")
         if not os.path.isdir(self.energyplus_directory):
-            os.mkdir(self.energyplus_directory)
+            try:
+                os.mkdir(self.energyplus_directory)
+            except:
+                print("cannot make energyplus directory")
         self.workflow_directory = os.path.join(self.energyplus_directory, "workflows")
         if not os.path.isdir(self.workflow_directory):
-            os.mkdir(self.workflow_directory)
+            try:
+                os.mkdir(self.workflow_directory)
+            except:
+                print("cannot make workflow directory")
 
     def test_find(self):
         if Platform.get_current_platform() == Platform.WINDOWS:
@@ -34,5 +40,11 @@ class TestLocateWorkflows(unittest.TestCase):
             self.assertEqual(energyplus_folder, "EnergyPlusV5-9-0")
 
     def tearDown(self):
-        os.rmdir(self.workflow_directory)
-        os.rmdir(self.energyplus_directory)
+        try:
+            os.rmdir(self.workflow_directory)
+        except:
+            print("cannot remove workflow directory")
+        try:
+            os.rmdir(self.energyplus_directory)
+        except:
+            print("cannot remove energyplus directory")
