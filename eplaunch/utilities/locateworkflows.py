@@ -2,7 +2,6 @@ import os
 import glob
 
 from eplaunch.utilities.crossplatform import Platform
-from eplaunch.utilities.unittestutilities import UnitTestUtilities
 
 
 class LocateWorkflows:
