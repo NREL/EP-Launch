@@ -3,6 +3,11 @@ import os
 
 from eplaunch.utilities.exceptions import EPLaunchFileException
 
+try:
+    from json.decoder import JSONDecodeError
+except ImportError:
+    JSONDecodeError = ValueError
+
 
 class CacheFile(object):
     """
@@ -34,7 +39,7 @@ class CacheFile(object):
             raise EPLaunchFileException(self.file_path, 'Could not open or read text from file')
         try:
             return json.loads(body_text)
-        except json.decoder.JSONDecodeError:
+        except JSONDecodeError:
             raise EPLaunchFileException(self.file_path, 'Could not parse cache file JSON text')
 
     def write(self):
