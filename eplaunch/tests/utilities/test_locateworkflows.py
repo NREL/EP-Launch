@@ -29,7 +29,7 @@ class TestLocateWorkflows(unittest.TestCase):
             except OSError:
                 print("cannot make workflow directory")
 
-    def test_find(self):
+    def test_locate_workflow_directories(self):
         loc_wf = LocateWorkflows()
         directories = loc_wf.find()
         directories59 = [dir for dir in directories if "5-9" in dir]
