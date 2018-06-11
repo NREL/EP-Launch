@@ -1,47 +1,18 @@
 import os
 import glob
+import string
 
 from eplaunch.utilities.crossplatform import Platform
 
 
-class LocateWorkflows:
+class LocateWorkflows(object):
 
     def find(self):
         search_roots = {
-            Platform.WINDOWS: [
-                'c:\\',
-                'd:\\',
-                'e:\\',
-                'f:\\',
-                'g:\\',
-                'h:\\',
-                'i:\\',
-                'j:\\',
-                'k:\\',
-                'l:\\',
-                'm:\\',
-                'n:\\',
-                'p:\\',
-                'p:\\',
-                'q:\\',
-                'r:\\',
-                's:\\',
-                't:\\',
-                'u:\\',
-                'v:\\',
-                'w:\\',
-                'x:\\',
-                'y:\\',
-                'z:\\',
-            ],
-            Platform.LINUX: [
-                '/usr/local/bin/',
-            ],
-            Platform.MAC: [
-                '/Applications/',
-            ],
-            Platform.UNKNOWN: [
-            ]
+            Platform.WINDOWS: ["%s:\\" % c for c in string.ascii_uppercase],
+            Platform.LINUX: ['/usr/local/bin/', '/tmp/'],
+            Platform.MAC: ['/Applications/', '/tmp/'],
+            Platform.UNKNOWN: [],
         }
         current_search_roots = search_roots[Platform.get_current_platform()]
         search_names = ["EnergyPlus*", "energyplus*", "EP*", "ep*", "E+*", "e+*"]
