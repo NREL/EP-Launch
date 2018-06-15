@@ -73,6 +73,7 @@ class WorkflowDirectoriesDialog(wx.Dialog):
         current_items = self.directory_listbox.GetStrings()
         lw = LocateWorkflows()
         found_items = lw.find()
+        lw.get_energyplus_versions()
         for found_item in found_items:
             if found_item not in current_items:
                 self.directory_listbox.Append(found_item)
