@@ -7,10 +7,9 @@ from eplaunch.utilities.crossplatform import Platform
 
 
 class LocateWorkflows(object):
-
     list_of_found_directories = []
     list_of_energyplus_applications = []
-    list_of_energyplus_versions =[]
+    list_of_energyplus_versions = []
 
     def find(self):
         search_roots = {
@@ -40,8 +39,8 @@ class LocateWorkflows(object):
                 self.get_specific_version(energyplus_application)
         print(self.list_of_energyplus_applications)
 
-    def get_specific_version(self,path_to_energyplus_app):
-        completed = subprocess.run([path_to_energyplus_app,"--version"],stdout=subprocess.PIPE)
+    def get_specific_version(self, path_to_energyplus_app):
+        completed = subprocess.run([path_to_energyplus_app, "--version"], stdout=subprocess.PIPE)
         output_line = completed.stdout
         output_line_string = output_line.decode("utf-8")
         _, full_version_string = output_line_string.split(',')
