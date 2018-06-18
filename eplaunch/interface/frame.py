@@ -13,6 +13,7 @@ from eplaunch.interface import workflow_directories_dialog
 from eplaunch.interface.workflow_processing import event_result, WorkflowThread
 from eplaunch.utilities.cache import CacheFile
 from eplaunch.utilities.exceptions import EPLaunchDevException, EPLaunchFileException
+from eplaunch.utilities.version import Version
 from eplaunch.workflows import manager as workflow_manager
 from eplaunch.utilities.externalprograms import EPLaunchExternalPrograms
 
@@ -46,6 +47,7 @@ class EpLaunchFrame(wx.Frame):
         self.current_workflow = None
         self.workflow_instances = None
         self.workflow_choice = None
+        self.workflow_directories = None
         self.directory_name = None
         self.current_file_name = None
         self.menu_output_toolbar = None
@@ -71,6 +73,9 @@ class EpLaunchFrame(wx.Frame):
 
         # this is currently just a single background thread, eventually we'll need to keep a list of them
         self.workflow_worker = None
+
+        # get the saved workflow directories
+        self.retrieve_workflow_directories_config()
 
         # build out the whole GUI and do other one-time inits here
         self.gui_build()
@@ -440,13 +445,14 @@ class EpLaunchFrame(wx.Frame):
         )
 
         up_bmp = wx.ArtProvider.GetBitmap(wx.ART_GO_UP, wx.ART_TOOLBAR, t_size)
-        self.primary_toolbar.AddTool(
-            80, "Update", up_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Update", "Long help for 'Update'", None
+        tb_update_file_version = self.primary_toolbar.AddTool(
+            90, "Update", up_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Update", "Long help for 'Update'", None
         )
+        self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_update_file_version, tb_update_file_version)
 
         remove_bmp = wx.ArtProvider.GetBitmap(wx.ART_MINUS, wx.ART_TOOLBAR, t_size)
         tb_hide_browser = self.primary_toolbar.AddTool(
-            80, "File Browser", remove_bmp, wx.NullBitmap, wx.ITEM_CHECK, "File Browser",
+            100, "File Browser", remove_bmp, wx.NullBitmap, wx.ITEM_CHECK, "File Browser",
             "Long help for 'File Browser'", None
         )
         self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_hide_browser, tb_hide_browser)
@@ -564,19 +570,21 @@ class EpLaunchFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.handle_menu_workflow_order, menu_workflow_order)
         options_menu.AppendSeparator()
 
-        option_favorite_menu = wx.Menu()
-        option_favorite_menu.Append(741, "4")
-        option_favorite_menu.Append(742, "8")
-        option_favorite_menu.Append(743, "12")
-        option_favorite_menu.Append(744, "Clear")
-        options_menu.Append(74, "Favorites", option_favorite_menu)
+        # for now do not allow changing of the number of favorites
+        # option_favorite_menu = wx.Menu()
+        # option_favorite_menu.Append(741, "4")
+        # option_favorite_menu.Append(742, "8")
+        # option_favorite_menu.Append(743, "12")
+        # option_favorite_menu.Append(744, "Clear")
+        # options_menu.Append(74, "Favorites", option_favorite_menu)
 
-        option_recent_menu = wx.Menu()
-        option_recent_menu.Append(741, "4")
-        option_recent_menu.Append(742, "8")
-        option_recent_menu.Append(743, "12")
-        option_recent_menu.Append(744, "Clear")
-        options_menu.Append(74, "Recent", option_recent_menu)
+        # for now do not allow changing of the number of recent
+        # option_recent_menu = wx.Menu()
+        # option_recent_menu.Append(741, "4")
+        # option_recent_menu.Append(742, "8")
+        # option_recent_menu.Append(743, "12")
+        # option_recent_menu.Append(744, "Clear")
+        # options_menu.Append(74, "Recent", option_recent_menu)
 
         options_menu.Append(75, "Remote...")
         menu_viewers = options_menu.Append(77, "Viewers...")
@@ -715,8 +723,11 @@ class EpLaunchFrame(wx.Frame):
 
     def handle_menu_option_workflow_directories(self, event):
         workflow_dir_dialog = workflow_directories_dialog.WorkflowDirectoriesDialog(None, title='Workflow Directories')
+        workflow_dir_dialog.set_listbox(self.workflow_directories)
         return_value = workflow_dir_dialog.ShowModal()
-        print(return_value)
+        if return_value == wx.ID_OK:
+            self.workflow_directories = workflow_dir_dialog.list_of_directories
+            print(self.workflow_directories)
         # May need to refresh the main UI if something changed in the settings
         workflow_dir_dialog.Destroy()
 
@@ -792,6 +803,7 @@ class EpLaunchFrame(wx.Frame):
         self.folder_recent.save_config()
         self.weather_favorites.save_config()
         self.weather_recent.save_config()
+        self.save_workflow_directories_config()
 
     def handle_menu_weather_select(self, event):
         filename = wx.FileSelector("Select a weather file", wildcard="EnergyPlus Weather File(*.epw)|*.epw",
@@ -893,6 +905,12 @@ class EpLaunchFrame(wx.Frame):
                 self.output_toolbar.EnableTool(cur_id, True)
         self.output_toolbar.Realize()
 
+    def handle_tb_update_file_version(self, event):
+        full_path_name = os.path.join(self.directory_name, self.current_file_name)
+        v = Version()
+        is_version_found, version_string, version_number = v.check_energyplus_version(full_path_name)
+        print(is_version_found, version_string, version_number)
+
     def handle_tb_idf_editor(self, event):
         full_path_name = os.path.join(self.directory_name, self.current_file_name)
         self.external_runner.run_idf_editor(full_path_name)
@@ -905,3 +923,21 @@ class EpLaunchFrame(wx.Frame):
         file_name_no_ext, extension = os.path.splitext(self.current_file_name)
         self.primary_toolbar.EnableTool(self.tb_idf_editor_id, extension.upper() == ".IDF")
         self.output_toolbar.Realize()
+
+    def save_workflow_directories_config(self):
+        # in Windows using RegEdit these appear in:
+        #    HKEY_CURRENT_USER\Software\EP-Launch3
+        self.config.WriteInt("/WorkflowDirectories/Count", len(self.workflow_directories))
+        # save menu items to configuration file
+        for count, workflow_directory in enumerate(self.workflow_directories):
+            self.config.Write("/WorkflowDirectories/Path-{:02d}".format(count), workflow_directory)
+
+    def retrieve_workflow_directories_config(self):
+        count_directories = self.config.ReadInt("/WorkflowDirectories/Count", 0)
+        list_of_directories = []
+        for count in range(0, count_directories):
+            directory = self.config.Read("/WorkflowDirectories/Path-{:02d}".format(count))
+            if directory:
+                if os.path.exists(directory):
+                    list_of_directories.append(directory)
+        self.workflow_directories = list_of_directories
