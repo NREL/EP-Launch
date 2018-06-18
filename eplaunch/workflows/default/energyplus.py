@@ -12,7 +12,6 @@ class ColumnNames(object):
 
 
 class EPlusRunManager(object):
-
     # This will eventually be a path relative to this script.
     # Since these workflows will live at /EnergyPlus/Install/workflows/energyplus.py
     # We will generate the path dynamically from __file__ and os.path.join to get to the E+ binary
@@ -41,7 +40,7 @@ class EPlusRunManager(object):
     def eplus_suffixes():
         suffixes = list()
         # the following are in the same order as the buttons in EP-Launch 2
-        suffixes.append("Table.html")
+        suffixes.append("Table.htm")
         suffixes.append(".csv")
         suffixes.append("Meter.csv")
 
@@ -142,14 +141,14 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
         return [ColumnNames.Errors, ColumnNames.Warnings, ColumnNames.Runtime]
 
     def main(self, run_directory, file_name, args):
-
         full_file_path = os.path.join(run_directory, file_name)
         file_name_no_ext, extension = os.path.splitext(file_name)
 
         # run E+ and gather (for now fake) data
         process = subprocess.run(
             [
-                EPlusRunManager.EnergyPlusBinary, '--output-suffix C', '--output-prefix', file_name_no_ext, '--design-day', file_name
+                EPlusRunManager.EnergyPlusBinary, '--readvars', '--output-suffix', 'C', '--output-prefix',
+                file_name_no_ext, '--design-day', file_name
             ],
             cwd=run_directory
         )
@@ -162,7 +161,7 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
                 column_data={}
             )
 
-        end_file_name = "{0}out.end".format(file_name_no_ext)
+        end_file_name = "{0}.end".format(file_name_no_ext)
         end_file_path = os.path.join(run_directory, end_file_name)
         success, errors, warnings, runtime = EPlusRunManager.get_end_summary(end_file_path)
         column_data = {ColumnNames.Errors: errors, ColumnNames.Warnings: warnings, ColumnNames.Runtime: runtime}
@@ -196,7 +195,6 @@ class EnergyPlusWorkflowIP(BaseEPLaunch3Workflow):
         return [ColumnNames.Errors, ColumnNames.Warnings, ColumnNames.Runtime]
 
     def main(self, run_directory, file_name, args):
-
         full_file_path = os.path.join(run_directory, file_name)
         file_name_no_ext, extension = os.path.splitext(file_name)
 
