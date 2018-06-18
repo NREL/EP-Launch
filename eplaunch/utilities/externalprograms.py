@@ -15,7 +15,7 @@ class EPLaunchExternalPrograms:
     def run_idf_editor(self, file_path):
         # todo: find the idf editor binary automatically based on the workflow
         if platform.system() == 'Windows':
-            idf_editor_binary = 'c:\\EnergyPlusV8-8-0\\PreProcess\\IDFEditor\\IDFEditor.exe'
+            idf_editor_binary = 'c:\\EnergyPlusV8-9-0\\PreProcess\\IDFEditor\\IDFEditor.exe'
         else:
             idf_editor_binary = ''
         subprocess.Popen([idf_editor_binary, file_path])
