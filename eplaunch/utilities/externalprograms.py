@@ -4,17 +4,15 @@ import wx
 
 
 class EPLaunchExternalPrograms:
+    extension_to_binary_path = {}
 
     def __init__(self):
-        self.text_editor_binary = self.find_program_by_extension(".txt", "")
-        self.pdf_viewer_binary = self.find_program_by_extension(".pdf", self.text_editor_binary)
-        self.spreadsheet_binary = self.find_program_by_extension(".csv", self.text_editor_binary)
-        self.drawing_binary = self.find_program_by_extension(".dxf", self.text_editor_binary)
-        self.vrml_binary = self.find_program_by_extension(".wrl", self.text_editor_binary)
-        self.diagramming_binary = self.find_program_by_extension(".svg", self.text_editor_binary)
-        self.web_browser_binary = self.find_program_by_extension(".html", self.text_editor_binary)
-        self.eso_viewer_binary = self.find_program_by_extension(".eso", self.text_editor_binary)
-        self.xmlviewer_binary = self.find_program_by_extension(".xml", self.text_editor_binary)
+        other_extensions = ['pdf', 'csv', 'dxf', 'wrl', 'svg', 'html', 'eso', 'xml']
+        txt_path = self.find_program_by_extension('.txt', '')
+        self.extension_to_binary_path['txt'] = txt_path
+        for other_extension in other_extensions:
+            self.extension_to_binary_path[other_extension] = self.find_program_by_extension('.' + other_extension,
+                                                                                            txt_path)
 
     def find_program_by_extension(self, extension_string, not_found_application_path):
         # print(extension_string)
@@ -40,7 +38,6 @@ class EPLaunchExternalPrograms:
             return not_found_application_path
 
     def run_idf_editor(self, file_path):
-        # todo: find the idf editor binary automatically based on the workflow
         if platform.system() == 'Windows':
             idf_editor_binary = 'c:\\EnergyPlusV8-9-0\\PreProcess\\IDFEditor\\IDFEditor.exe'
         else:
@@ -48,9 +45,5 @@ class EPLaunchExternalPrograms:
         subprocess.Popen([idf_editor_binary, file_path])
 
     def run_text_editor(self, file_path):
-        # todo: find the user's text editor binary automatically based MIME type or .TXT extention
-        if platform.system() == 'Windows':
-            text_editor_binary = 'C:\\Windows\\notepad.exe'
-        else:
-            text_editor_binary = ''
+        text_editor_binary = self.extension_to_binary_path['txt']
         subprocess.Popen([text_editor_binary, file_path])
