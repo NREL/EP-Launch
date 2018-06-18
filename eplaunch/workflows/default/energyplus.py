@@ -149,7 +149,7 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
         # run E+ and gather (for now fake) data
         process = subprocess.run(
             [
-                EPlusRunManager.EnergyPlusBinary, '--output-suffix C','--output-prefix', file_name_no_ext, '--design-day', file_name
+                EPlusRunManager.EnergyPlusBinary, '--output-suffix C', '--output-prefix', file_name_no_ext, '--design-day', file_name
             ],
             cwd=run_directory
         )
