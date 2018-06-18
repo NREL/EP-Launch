@@ -22,7 +22,8 @@ class EPLaunchExternalPrograms:
         extList = ft.GetExtensions()
         if extList:
             ext = extList[0]
-            if len(ext) > 0 and ext[0] == ".": ext = ext[1:]
+            if len(ext) > 0 and ext[0] == ".":
+                ext = ext[1:]
         else:
             ext = ""
         filename = "SPAM" + "." + ext
