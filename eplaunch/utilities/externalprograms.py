@@ -13,7 +13,7 @@ class EPLaunchExternalPrograms:
         self.vrml_binary = self.find_program_by_extension(".wrl", self.text_editor_binary)
         self.diagramming_binary = self.find_program_by_extension(".svg", self.text_editor_binary)
         self.web_browser_binary = self.find_program_by_extension(".html", self.text_editor_binary)
-        self.web_browser_binary = self.find_program_by_extension(".eso", self.text_editor_binary)
+        self.eso_viewer_binary = self.find_program_by_extension(".eso", self.text_editor_binary)
         self.xmlviewer_binary = self.find_program_by_extension(".xml", self.text_editor_binary)
 
     def find_program_by_extension(self, extension_string, not_found_application_path):
