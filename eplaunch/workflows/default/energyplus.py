@@ -146,11 +146,24 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
         full_file_path = os.path.join(run_directory, file_name)
         file_name_no_ext, extension = os.path.splitext(file_name)
 
+        # start with the binary name, obviously
+        command_line_args = [EPlusRunManager.EnergyPlusBinary]
+
+        # add some config parameters
+        command_line_args += ['--output-prefix', file_name_no_ext]
+
+        # add in simulation control args
+        if 'weather' in args and args['weather']:
+            command_line_args += ['--weather', args['weather']]
+        else:
+            command_line_args += ['--design-day']
+
+        # and at the very end, add the file to run
+        command_line_args += [file_name]
+
         # run E+ and gather (for now fake) data
         process = subprocess.run(
-            [
-                EPlusRunManager.EnergyPlusBinary, '--output-prefix', file_name_no_ext, '--design-day', file_name
-            ],
+            command_line_args,
             cwd=run_directory
         )
         status_code = process.returncode
@@ -225,5 +238,6 @@ class EnergyPlusWorkflowIP(BaseEPLaunch3Workflow):
         return EPLaunch3WorkflowResponse(
             success=True,
             message="Ran EnergyPlus OK for file: %s!" % file_name,
+            args=args,
             column_data=column_data
         )

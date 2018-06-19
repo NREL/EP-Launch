@@ -192,6 +192,7 @@ class EpLaunchFrame(wx.Frame):
     def update_control_list_columns(self):
         self.control_file_list.DeleteAllColumns()
         self.control_file_list.AppendColumn(_("File Name"), format=wx.LIST_FORMAT_LEFT, width=-1)
+        self.control_file_list.AppendColumn(_("Weather File"), format=wx.LIST_FORMAT_LEFT, width=-1)
         current_workflow_columns = self.current_workflow.get_interface_columns()
         for current_column in current_workflow_columns:
             self.control_file_list.AppendColumn(_(current_column), format=wx.LIST_FORMAT_LEFT, width=-1)
@@ -277,6 +278,10 @@ class EpLaunchFrame(wx.Frame):
             # if it is also in the cache then the listview row can include additional data
             if file_name in files_in_workflow:
                 cached_file_info = files_in_workflow[file_name]
+                if 'weather' in cached_file_info:
+                    row.append(cached_file_info['weather'])
+                else:
+                    row.append('')
                 for column in self.current_workflow.get_interface_columns():
                     if column in cached_file_info:
                         row.append(cached_file_info[column])
@@ -301,7 +306,7 @@ class EpLaunchFrame(wx.Frame):
             if not self.workflow_worker:
                 self.status_bar.SetLabel('Starting workflow')
                 self.workflow_worker = WorkflowThread(
-                    self, self.current_workflow, self.directory_name, self.current_file_name, None
+                    self, self.current_workflow, self.directory_name, self.current_file_name, {'weather': self.current_weather_file}
                 )
                 self.tb_run.Enable(False)
                 self.primary_toolbar.Realize()
@@ -643,8 +648,11 @@ class EpLaunchFrame(wx.Frame):
             if successful:
                 status_message = 'Successfully completed a workflow: ' + event.data.message
                 try:
+                    data_from_workflow = event.data.column_data
+                    if 'weather' in event.data.args:
+                        data_from_workflow['weather'] = event.data.args['weather']
                     self.current_cache.add_result(
-                        self.current_workflow.name(), self.current_file_name, event.data.column_data
+                        self.current_workflow.name(), self.current_file_name, data_from_workflow
                     )
                     self.current_cache.write()
                     self.update_file_lists()
