@@ -1,5 +1,6 @@
 import os
 
+
 class FileNameManipulation(object):
 
     def remove_leading_period(self, extension):
@@ -10,4 +11,3 @@ class FileNameManipulation(object):
     def replace_extension_with_suffix(self, file_path, substitute_suffix):
         root, _ = os.path.splitext(file_path)
         return root + substitute_suffix
-

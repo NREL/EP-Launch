@@ -191,7 +191,7 @@ class EpLaunchFrame(wx.Frame):
     def handle_out_tb_button(self, event):
         full_path_name = os.path.join(self.directory_name, self.current_file_name)
         tb_button = self.output_toolbar.FindById(event.GetId())
-        output_file_name = self.external_runner.replace_extension_with_suffix(full_path_name,tb_button.Label)
+        output_file_name = self.external_runner.replace_extension_with_suffix(full_path_name, tb_button.Label)
         self.external_runner.run_program_by_extension(output_file_name)
 
     def update_control_list_columns(self):
