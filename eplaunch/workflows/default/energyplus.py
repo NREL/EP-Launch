@@ -12,12 +12,11 @@ class ColumnNames(object):
 
 
 class EPlusRunManager(object):
-
     # This will eventually be a path relative to this script.
     # Since these workflows will live at /EnergyPlus/Install/workflows/energyplus.py
     # We will generate the path dynamically from __file__ and os.path.join to get to the E+ binary
     if platform.system() == 'Windows':
-        EnergyPlusBinary = 'c:\\EnergyPlusV8-8-0\\energyplus.exe'
+        EnergyPlusBinary = 'c:\\EnergyPlusV8-9-0\\energyplus.exe'
     else:
         EnergyPlusBinary = '/home/edwin/Programs/EnergyPlus-8-9-0/energyplus'
 
@@ -41,7 +40,7 @@ class EPlusRunManager(object):
     def eplus_suffixes():
         suffixes = list()
         # the following are in the same order as the buttons in EP-Launch 2
-        suffixes.append("Table.html")
+        suffixes.append("Table.htm")
         suffixes.append(".csv")
         suffixes.append("Meter.csv")
 
@@ -142,15 +141,17 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
         return [ColumnNames.Errors, ColumnNames.Warnings, ColumnNames.Runtime]
 
     def main(self, run_directory, file_name, args):
-
         full_file_path = os.path.join(run_directory, file_name)
         file_name_no_ext, extension = os.path.splitext(file_name)
 
         # start with the binary name, obviously
         command_line_args = [EPlusRunManager.EnergyPlusBinary]
 
+        # need to run readvars
+        command_line_args += ['--readvars']
+
         # add some config parameters
-        command_line_args += ['--output-prefix', file_name_no_ext]
+        command_line_args += ['--output-prefix', file_name_no_ext, '--output-suffix', 'C']
 
         # add in simulation control args
         if 'weather' in args and args['weather']:
@@ -175,7 +176,7 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
                 column_data={}
             )
 
-        end_file_name = "{0}out.end".format(file_name_no_ext)
+        end_file_name = "{0}.end".format(file_name_no_ext)
         end_file_path = os.path.join(run_directory, end_file_name)
         success, errors, warnings, runtime = EPlusRunManager.get_end_summary(end_file_path)
         column_data = {ColumnNames.Errors: errors, ColumnNames.Warnings: warnings, ColumnNames.Runtime: runtime}
@@ -184,6 +185,7 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
         return EPLaunch3WorkflowResponse(
             success=True,
             message="Ran EnergyPlus OK for file: %s!" % file_name,
+            args=args,
             column_data=column_data
         )
 
@@ -209,7 +211,6 @@ class EnergyPlusWorkflowIP(BaseEPLaunch3Workflow):
         return [ColumnNames.Errors, ColumnNames.Warnings, ColumnNames.Runtime]
 
     def main(self, run_directory, file_name, args):
-
         full_file_path = os.path.join(run_directory, file_name)
         file_name_no_ext, extension = os.path.splitext(file_name)
 
