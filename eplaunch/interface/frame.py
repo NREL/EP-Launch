@@ -186,8 +186,9 @@ class EpLaunchFrame(wx.Frame):
         self.output_toolbar.Realize()
 
     def handle_out_tb_button(self, event):
+        full_path_name = os.path.join(self.directory_name, self.current_file_name)
         tb_button = self.output_toolbar.FindById(event.GetId())
-        wx.MessageBox(tb_button.Label, "toolbar button", wx.OK)
+        wx.MessageBox(tb_button.Label  + full_path_name, "toolbar button", wx.OK)
 
     def update_control_list_columns(self):
         self.control_file_list.DeleteAllColumns()

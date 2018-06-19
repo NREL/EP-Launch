@@ -58,3 +58,10 @@ class EPLaunchExternalPrograms:
         if len(extension) > 0 and extension[0] == ".":
             extension = extension[1:]
         return extension
+
+    def replace_extension_with_suffix(self, file_path, substitute_suffix):
+        root, _ = os.path.splitext(file_path)
+        if substitute_suffix[0] == '.':
+            return root + substitute_suffix
+        else:
+            return root + '.' + substitute_suffix
