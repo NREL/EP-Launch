@@ -149,15 +149,18 @@ class EpLaunchFrame(wx.Frame):
         number_of_items_in_main = 30
         if len(output_suffixes) < number_of_items_in_main:
             for count, suffix in enumerate(output_suffixes):
-                self.output_menu.Append(500 + count, suffix)
+                self.output_menu_item = self.output_menu.Append(500 + count, suffix)
+                self.Bind(wx.EVT_MENU, self.handle_output_menu_item, self.output_menu_item)
         else:
             main_suffixes = output_suffixes[:number_of_items_in_main]
             extra_suffixes = output_suffixes[number_of_items_in_main:]
             for count, suffix in enumerate(main_suffixes):
-                self.output_menu.Append(500 + count, suffix)
+                self.output_menu_item = self.output_menu.Append(500 + count, suffix)
+                self.Bind(wx.EVT_MENU, self.handle_output_menu_item, self.output_menu_item)
             self.extra_output_menu = wx.Menu()
             for count, suffix in enumerate(extra_suffixes):
-                self.extra_output_menu.Append(550 + count, suffix)
+                self.extra_output_menu_item = self.extra_output_menu.Append(550 + count, suffix)
+                self.Bind(wx.EVT_MENU, self.handle_extra_output_menu_item, self.extra_output_menu_item)
             self.output_menu.Append(549, "Extra", self.extra_output_menu)
 
     def update_output_toolbar(self):
@@ -943,3 +946,17 @@ class EpLaunchFrame(wx.Frame):
                 if os.path.exists(directory):
                     list_of_directories.append(directory)
         self.workflow_directories = list_of_directories
+
+    def handle_output_menu_item(self, event):
+        full_path_name = os.path.join(self.directory_name, self.current_file_name)
+        menu_item = self.output_menu.FindItemById(event.GetId())
+        print(menu_item.GetLabel())
+        output_file_name = self.external_runner.replace_extension_with_suffix(full_path_name, menu_item.GetLabel())
+        self.external_runner.run_program_by_extension(output_file_name)
+
+    def handle_extra_output_menu_item(self, event):
+        full_path_name = os.path.join(self.directory_name, self.current_file_name)
+        menu_item = self.extra_output_menu.FindItemById(event.GetId())
+        print(menu_item.GetLabel())
+        output_file_name = self.external_runner.replace_extension_with_suffix(full_path_name, menu_item.GetLabel())
+        self.external_runner.run_program_by_extension(output_file_name)
