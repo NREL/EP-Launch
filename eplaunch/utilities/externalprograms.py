@@ -1,6 +1,7 @@
 import subprocess
 import platform
 import wx
+import os
 
 
 class EPLaunchExternalPrograms:
@@ -21,9 +22,7 @@ class EPLaunchExternalPrograms:
         # print(ft.GetMimeType())
         extList = ft.GetExtensions()
         if extList:
-            ext = extList[0]
-            if len(ext) > 0 and ext[0] == ".":
-                ext = ext[1:]
+            ext = self.remove_leading_period(extList[0])
         else:
             ext = ""
         filename = "SPAM" + "." + ext
@@ -48,3 +47,14 @@ class EPLaunchExternalPrograms:
     def run_text_editor(self, file_path):
         text_editor_binary = self.extension_to_binary_path['txt']
         subprocess.Popen([text_editor_binary, file_path])
+
+    def run_program_by_extension(self,file_path):
+        _, ext = os.path.splitext(file_path)
+        ext_no_period = self.remove_leading_period(ext)
+        viewer_binary = self.extension_to_binary_path[ext_no_period]
+        subprocess.Popen([viewer_binary, file_path])
+
+    def remove_leading_period(self,extension):
+        if len(extension) > 0 and extension[0] == ".":
+            extension = extension[1:]
+        return extension
