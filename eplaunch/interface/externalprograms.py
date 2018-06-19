@@ -25,12 +25,15 @@ class EPLaunchExternalPrograms:
             ext = self.remove_leading_period(extList[0])
         else:
             ext = ""
-        filename = "SPAM" + "." + ext
+        filename = "SPAM" + "." + ext # create a dummy file name
         mime = ft.GetMimeType() or ""
         params = wx.FileType.MessageParameters(filename, mime)
         cmd = ft.GetOpenCommand(params)
         if cmd:
-            application_path = cmd.split('"')[1]
+            if platform.system() == 'Windows':
+                application_path = cmd.split('"')[1]
+            else: # for linux just remove the file name used as a dummy
+                application_path = cmd.replace(filename,'')
             # print(application_path)
             return application_path
         else:

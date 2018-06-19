@@ -1,5 +1,5 @@
 import unittest
-from eplaunch.utilities.externalprograms import EPLaunchExternalPrograms
+from eplaunch.interface.externalprograms import EPLaunchExternalPrograms
 
 
 class TestCrossPlatform(unittest.TestCase):
