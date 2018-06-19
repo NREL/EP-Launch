@@ -3,11 +3,14 @@ import platform
 import wx
 import os
 
+from eplaunch.utilities.filenamemanipulation import FileNameManipulation
+
 
 class EPLaunchExternalPrograms:
     extension_to_binary_path = {}
 
     def __init__(self):
+        self.fnm = FileNameManipulation()
         other_extensions = ['pdf', 'csv', 'dxf', 'wrl', 'svg', 'htm', 'eso', 'xml']
         txt_path = self.find_program_by_extension('.txt', '')
         self.extension_to_binary_path['txt'] = txt_path
@@ -22,7 +25,7 @@ class EPLaunchExternalPrograms:
         # print(ft.GetMimeType())
         extList = ft.GetExtensions()
         if extList:
-            ext = self.remove_leading_period(extList[0])
+            ext = self.fnm.remove_leading_period(extList[0])
         else:
             ext = ""
         filename = "SPAM" + "." + ext # create a dummy file name
@@ -53,18 +56,9 @@ class EPLaunchExternalPrograms:
 
     def run_program_by_extension(self, file_path):
         _, ext = os.path.splitext(file_path)
-        ext_no_period = self.remove_leading_period(ext)
+        ext_no_period = self.fnm.remove_leading_period(ext)
         if ext_no_period in self.extension_to_binary_path:
             viewer_binary = self.extension_to_binary_path[ext_no_period]
             subprocess.Popen([viewer_binary, file_path])
         else:
             self.run_text_editor(file_path)
-
-    def remove_leading_period(self, extension):
-        if len(extension) > 0 and extension[0] == ".":
-            extension = extension[1:]
-        return extension
-
-    def replace_extension_with_suffix(self, file_path, substitute_suffix):
-        root, _ = os.path.splitext(file_path)
-        return root + substitute_suffix
