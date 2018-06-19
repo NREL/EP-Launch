@@ -185,7 +185,6 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
         return EPLaunch3WorkflowResponse(
             success=True,
             message="Ran EnergyPlus OK for file: %s!" % file_name,
-            args=args,
             column_data=column_data
         )
 
@@ -239,6 +238,5 @@ class EnergyPlusWorkflowIP(BaseEPLaunch3Workflow):
         return EPLaunch3WorkflowResponse(
             success=True,
             message="Ran EnergyPlus OK for file: %s!" % file_name,
-            args=args,
             column_data=column_data
         )

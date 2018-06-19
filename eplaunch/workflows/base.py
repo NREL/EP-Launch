@@ -1,9 +1,8 @@
 class EPLaunch3WorkflowResponse(object):
 
-    def __init__(self, success, message, args, column_data, **extra_data):
+    def __init__(self, success, message, column_data, **extra_data):
         self.success = success
         self.message = message
-        self.args = args
         self.column_data = column_data
         self.extra_data = extra_data
 

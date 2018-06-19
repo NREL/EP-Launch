@@ -25,11 +25,45 @@ class CacheFile(object):
             self.workflow_state = {self.RootKey: {}}
         self.dirty = False
 
+    def add_config(self, workflow_name, file_name, config_data):
+        """
+        This function is used to store run configuration data to the cache file
+        While the add_result function will completely wipe away the prior results, this function should just update
+
+        :param workflow_name:
+        :param file_name:
+        :param config_data:
+        :return:
+        """
+
+        # if there is already a config for this workflow/file, update it
+        # if something is missing from the structure, initialize it on each stage
+        self.dirty = True
+        root = self.workflow_state[self.RootKey]
+        if workflow_name in root:
+            this_workflow = root[workflow_name]
+            if 'files' in this_workflow:
+                these_files = this_workflow['files']
+                if file_name in these_files:
+                    this_file = these_files[file_name]
+                    if 'config' in this_file:
+                        this_config = this_file['config']
+                        merged_config_data = {**this_config, **config_data}  # cool merge for two dicts, avail in 3.5+
+                        this_file['config'] = merged_config_data
+                    else:
+                        this_file['config'] = config_data
+                else:
+                    these_files[file_name] = {'config': config_data}
+            else:
+                this_workflow['files'] = {file_name: {'config': config_data}}
+        else:
+            root[workflow_name] = {'files': {file_name: {'config': config_data}}}
+
     def add_result(self, workflow_name, file_name, column_data):
         self.dirty = True
         if workflow_name not in self.workflow_state[self.RootKey]:
             self.workflow_state[self.RootKey][workflow_name] = {'files': {}}
-        self.workflow_state[self.RootKey][workflow_name]['files'][file_name] = column_data
+        self.workflow_state[self.RootKey][workflow_name]['files'][file_name] = {'result': column_data}
 
     def read(self):
         try:
