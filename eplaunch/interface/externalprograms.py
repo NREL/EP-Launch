@@ -19,10 +19,10 @@ class EPLaunchExternalPrograms:
                                                                                             txt_path)
 
     def find_program_by_extension(self, extension_string, not_found_application_path):
-        # print(extension_string)
         # from wxPython Demo for MimeTypesManager
         ft = wx.TheMimeTypesManager.GetFileTypeFromExtension(extension_string)
-        # print(ft.GetMimeType())
+        if not ft:
+            return not_found_application_path
         extList = ft.GetExtensions()
         if extList:
             ext = self.fnm.remove_leading_period(extList[0])
@@ -37,10 +37,8 @@ class EPLaunchExternalPrograms:
                 application_path = cmd.split('"')[1]
             else:  # for linux just remove the file name used as a dummy
                 application_path = cmd.replace(filename, '')
-            # print(application_path)
             return application_path
         else:
-            # print("No application found")
             return not_found_application_path
 
     def run_idf_editor(self, file_path):

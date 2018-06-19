@@ -16,6 +16,7 @@ from eplaunch.utilities.exceptions import EPLaunchDevException, EPLaunchFileExce
 from eplaunch.utilities.version import Version
 from eplaunch.workflows import manager as workflow_manager
 from eplaunch.interface.externalprograms import EPLaunchExternalPrograms
+from eplaunch.utilities.filenamemanipulation import FileNameManipulation
 
 
 # wx callbacks need an event argument even though we usually don't use it, so the next line disables that check
@@ -91,6 +92,8 @@ class EpLaunchFrame(wx.Frame):
 
         # create external program runner
         self.external_runner = EPLaunchExternalPrograms()
+        # create file name manipulation object
+        self.file_name_manipulator = FileNameManipulation()
 
     def close_frame(self):
         """May do additional things during close, including saving the current window state/settings"""
@@ -191,7 +194,7 @@ class EpLaunchFrame(wx.Frame):
     def handle_out_tb_button(self, event):
         full_path_name = os.path.join(self.directory_name, self.current_file_name)
         tb_button = self.output_toolbar.FindById(event.GetId())
-        output_file_name = self.external_runner.replace_extension_with_suffix(full_path_name, tb_button.Label)
+        output_file_name = self.file_name_manipulator.replace_extension_with_suffix(full_path_name, tb_button.Label)
         self.external_runner.run_program_by_extension(output_file_name)
 
     def update_control_list_columns(self):
@@ -950,13 +953,11 @@ class EpLaunchFrame(wx.Frame):
     def handle_output_menu_item(self, event):
         full_path_name = os.path.join(self.directory_name, self.current_file_name)
         menu_item = self.output_menu.FindItemById(event.GetId())
-        print(menu_item.GetLabel())
-        output_file_name = self.external_runner.replace_extension_with_suffix(full_path_name, menu_item.GetLabel())
+        output_file_name = self.file_name_manipulator.replace_extension_with_suffix(full_path_name, menu_item.GetLabel())
         self.external_runner.run_program_by_extension(output_file_name)
 
     def handle_extra_output_menu_item(self, event):
         full_path_name = os.path.join(self.directory_name, self.current_file_name)
         menu_item = self.extra_output_menu.FindItemById(event.GetId())
-        print(menu_item.GetLabel())
-        output_file_name = self.external_runner.replace_extension_with_suffix(full_path_name, menu_item.GetLabel())
+        output_file_name = self.file_name_manipulator.replace_extension_with_suffix(full_path_name, menu_item.GetLabel())
         self.external_runner.run_program_by_extension(output_file_name)
