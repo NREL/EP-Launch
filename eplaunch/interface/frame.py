@@ -638,6 +638,9 @@ class EpLaunchFrame(wx.Frame):
 
     def handle_tb_run(self, event):
         self.folder_recent.add_recent(self.directory_tree_control.GetPath())
+        self.current_cache.add_config(
+            self.current_workflow.name(), self.current_file_name, {'weather': self.current_weather_file}
+        )
         self.run_workflow()
         self.update_output_file_status()
 
