@@ -1,6 +1,7 @@
 import os
 import subprocess
 import platform
+import time
 
 from eplaunch.workflows.base import BaseEPLaunch3Workflow, EPLaunch3WorkflowResponse
 
@@ -123,7 +124,7 @@ class EPlusRunManager(object):
 class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
 
     def name(self):
-        return "EnergyPlus SI"
+        return "EnergyPlus 8.9 SI"
 
     def description(self):
         return "Run EnergyPlus with SI unit system"
@@ -144,14 +145,30 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
         full_file_path = os.path.join(run_directory, file_name)
         file_name_no_ext, extension = os.path.splitext(file_name)
 
+        # start with the binary name, obviously
+        command_line_args = [EPlusRunManager.EnergyPlusBinary]
+
+        # need to run readvars
+        command_line_args += ['--readvars']
+
+        # add some config parameters
+        command_line_args += ['--output-prefix', file_name_no_ext, '--output-suffix', 'C']
+
+        # add in simulation control args
+        if 'weather' in args and args['weather']:
+            command_line_args += ['--weather', args['weather']]
+        else:
+            command_line_args += ['--design-day']
+
+        # and at the very end, add the file to run
+        command_line_args += [file_name]
+
         # run E+ and gather (for now fake) data
         process = subprocess.run(
-            [
-                EPlusRunManager.EnergyPlusBinary, '--readvars', '--output-suffix', 'C', '--output-prefix',
-                file_name_no_ext, '--design-day', file_name
-            ],
+            command_line_args,
             cwd=run_directory
         )
+        time.sleep(5)
         status_code = process.returncode
 
         if status_code != 0:
@@ -177,7 +194,7 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
 class EnergyPlusWorkflowIP(BaseEPLaunch3Workflow):
 
     def name(self):
-        return "EnergyPlus IP"
+        return "EnergyPlus 8.9 IP"
 
     def description(self):
         return "Run EnergyPlus with IP unit system"

@@ -10,18 +10,20 @@ from eplaunch.filenamemenus.base import FileNameMenus
 from eplaunch.interface import command_line_dialog
 from eplaunch.interface import viewer_dialog
 from eplaunch.interface import workflow_directories_dialog
+from eplaunch.interface.externalprograms import EPLaunchExternalPrograms
 from eplaunch.interface.workflow_processing import event_result, WorkflowThread
 from eplaunch.utilities.cache import CacheFile
 from eplaunch.utilities.exceptions import EPLaunchDevException, EPLaunchFileException
+from eplaunch.utilities.filenamemanipulation import FileNameManipulation
 from eplaunch.utilities.version import Version
 from eplaunch.workflows import manager as workflow_manager
-from eplaunch.interface.externalprograms import EPLaunchExternalPrograms
-from eplaunch.utilities.filenamemanipulation import FileNameManipulation
 
 
 # wx callbacks need an event argument even though we usually don't use it, so the next line disables that check
 # noinspection PyUnusedLocal
 class EpLaunchFrame(wx.Frame):
+    WeatherFileKey = 'weather'
+
     class Identifiers:
         ToolBarRunButtonID = 20
 
@@ -71,6 +73,9 @@ class EpLaunchFrame(wx.Frame):
         self.weather_favorites = None
         self.output_menu = None
         self.extra_output_menu = None
+        self.tb_idf_editor_id = None
+        self.output_menu_item = None
+        self.extra_output_menu_item = None
 
         # this is currently just a single background thread, eventually we'll need to keep a list of them
         self.workflow_worker = None
@@ -183,7 +188,8 @@ class EpLaunchFrame(wx.Frame):
 
         for count, tb_output_suffix in enumerate(tb_output_suffixes):
             out_tb_button = self.output_toolbar.AddTool(
-                10 + count, tb_output_suffix, norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, tb_output_suffix, "Long help for " + tb_output_suffix,
+                10 + count, tb_output_suffix, norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, tb_output_suffix,
+                "Long help for " + tb_output_suffix,
                 None
             )
             self.output_toolbar.Bind(wx.EVT_TOOL, self.handle_out_tb_button, out_tb_button)
@@ -200,6 +206,7 @@ class EpLaunchFrame(wx.Frame):
     def update_control_list_columns(self):
         self.control_file_list.DeleteAllColumns()
         self.control_file_list.AppendColumn(_("File Name"), format=wx.LIST_FORMAT_LEFT, width=-1)
+        self.control_file_list.AppendColumn(_("Weather File"), format=wx.LIST_FORMAT_LEFT, width=-1)
         current_workflow_columns = self.current_workflow.get_interface_columns()
         for current_column in current_workflow_columns:
             self.control_file_list.AppendColumn(_(current_column), format=wx.LIST_FORMAT_LEFT, width=-1)
@@ -254,10 +261,10 @@ class EpLaunchFrame(wx.Frame):
         if os.path.exists(cache_file_path):
             file_blob = open(cache_file_path, 'r').read()
             content = json.loads(file_blob)
-            workflows = content['workflows']
+            workflows = content[CacheFile.RootKey]
             current_workflow_name = self.current_workflow.name()
             if current_workflow_name in workflows:
-                files_in_workflow = workflows[current_workflow_name]['files']
+                files_in_workflow = workflows[current_workflow_name][CacheFile.FilesKey]
 
         # then get the entire list of files in the current directory to build up the listview items
         # if they happen to match the filename in the workflow cache, then add that info to the row structure
@@ -285,9 +292,17 @@ class EpLaunchFrame(wx.Frame):
             # if it is also in the cache then the listview row can include additional data
             if file_name in files_in_workflow:
                 cached_file_info = files_in_workflow[file_name]
+                if CacheFile.ParametersKey in cached_file_info:
+                    if self.WeatherFileKey in cached_file_info[CacheFile.ParametersKey]:
+                        full_weather_path = cached_file_info[CacheFile.ParametersKey][self.WeatherFileKey]
+                        row.append(os.path.basename(full_weather_path))
+                    else:
+                        row.append('<no_weather_files>')
+                else:
+                    row.append('<no_weather_file>')
                 for column in self.current_workflow.get_interface_columns():
-                    if column in cached_file_info:
-                        row.append(cached_file_info[column])
+                    if column in cached_file_info[CacheFile.ResultsKey]:
+                        row.append(cached_file_info[CacheFile.ResultsKey][column])
             # always add the row to the main list
             control_list_rows.append(row)
 
@@ -309,7 +324,8 @@ class EpLaunchFrame(wx.Frame):
             if not self.workflow_worker:
                 self.status_bar.SetLabel('Starting workflow')
                 self.workflow_worker = WorkflowThread(
-                    self, self.current_workflow, self.directory_name, self.current_file_name, None
+                    self, self.current_workflow, self.directory_name, self.current_file_name,
+                    {'weather': self.current_weather_file}
                 )
                 self.tb_run.Enable(False)
                 self.primary_toolbar.Realize()
@@ -435,7 +451,8 @@ class EpLaunchFrame(wx.Frame):
         exe_bmp = wx.ArtProvider.GetBitmap(wx.ART_EXECUTABLE_FILE, wx.ART_TOOLBAR, t_size)
         self.tb_idf_editor_id = 40
         tb_idf_editor = self.primary_toolbar.AddTool(
-            self.tb_idf_editor_id, "IDF Editor", exe_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "IDF Editor", "Long help for 'IDF Editor'", None
+            self.tb_idf_editor_id, "IDF Editor", exe_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "IDF Editor",
+            "Long help for 'IDF Editor'", None
         )
         self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_idf_editor, tb_idf_editor)
 
@@ -641,6 +658,12 @@ class EpLaunchFrame(wx.Frame):
 
     def handle_tb_run(self, event):
         self.folder_recent.add_recent(self.directory_tree_control.GetPath())
+        if not self.current_weather_file:
+            self.current_weather_file = ''
+        self.current_cache.add_config(
+            self.current_workflow.name(), self.current_file_name, {'weather': self.current_weather_file}
+        )
+        self.current_cache.write()
         self.run_workflow()
         self.update_output_file_status()
 
@@ -651,8 +674,9 @@ class EpLaunchFrame(wx.Frame):
             if successful:
                 status_message = 'Successfully completed a workflow: ' + event.data.message
                 try:
+                    data_from_workflow = event.data.column_data
                     self.current_cache.add_result(
-                        self.current_workflow.name(), self.current_file_name, event.data.column_data
+                        self.current_workflow.name(), self.current_file_name, data_from_workflow
                     )
                     self.current_cache.write()
                     self.update_file_lists()
@@ -661,6 +685,7 @@ class EpLaunchFrame(wx.Frame):
             else:
                 status_message = 'Workflow failed: ' + event.data.message
         except Exception as e:  # noqa -- there is *no* telling what all exceptions could occur inside a workflow
+            print(e)
             status_message = 'Workflow response was invalid'
         self.status_bar.SetStatusText(status_message)
         self.workflow_worker = None
@@ -699,7 +724,7 @@ class EpLaunchFrame(wx.Frame):
     def handle_dir_selection_changed(self, event):
         # self.status_bar.SetStatusText("Dir-SelectionChanged")
         self.directory_name = self.directory_tree_control.GetPath()
-        # manage  the checkmarks when changing directories
+        # manage the check marks when changing directories
         self.folder_recent.uncheck_all()
         self.folder_recent.put_checkmark_on_item(self.directory_name)
         self.folder_favorites.uncheck_all()
@@ -708,7 +733,8 @@ class EpLaunchFrame(wx.Frame):
         try:
             self.status_bar.SetStatusText(self.directory_name)
             self.update_file_lists()
-        except Exception:  # noqa -- status_bar and things may not exist during initialization, just ignore
+        except Exception as e:  # noqa -- status_bar and things may not exist during initialization, just ignore
+            print(e)
             pass
         event.Skip()
 
@@ -953,11 +979,13 @@ class EpLaunchFrame(wx.Frame):
     def handle_output_menu_item(self, event):
         full_path_name = os.path.join(self.directory_name, self.current_file_name)
         menu_item = self.output_menu.FindItemById(event.GetId())
-        output_file_name = self.file_name_manipulator.replace_extension_with_suffix(full_path_name, menu_item.GetLabel())
+        output_file_name = self.file_name_manipulator.replace_extension_with_suffix(full_path_name,
+                                                                                    menu_item.GetLabel())
         self.external_runner.run_program_by_extension(output_file_name)
 
     def handle_extra_output_menu_item(self, event):
         full_path_name = os.path.join(self.directory_name, self.current_file_name)
         menu_item = self.extra_output_menu.FindItemById(event.GetId())
-        output_file_name = self.file_name_manipulator.replace_extension_with_suffix(full_path_name, menu_item.GetLabel())
+        output_file_name = self.file_name_manipulator.replace_extension_with_suffix(full_path_name,
+                                                                                    menu_item.GetLabel())
         self.external_runner.run_program_by_extension(output_file_name)
