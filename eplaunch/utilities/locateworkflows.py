@@ -7,9 +7,11 @@ from eplaunch.utilities.crossplatform import Platform
 
 
 class LocateWorkflows(object):
-    list_of_found_directories = []
-    list_of_energyplus_applications = []
-    list_of_energyplus_versions = []
+
+    def __init__(self):
+        self.list_of_found_directories = []
+        self.list_of_energyplus_applications = []
+        self.list_of_energyplus_versions = []
 
     def find(self):
         search_roots = {
@@ -31,13 +33,21 @@ class LocateWorkflows(object):
         return self.list_of_found_directories
 
     def get_energyplus_versions(self):
+        ep_names = {
+            Platform.WINDOWS: 'energyplus.exe',
+            Platform.LINUX: 'energyplus',
+            Platform.MAC: 'energyplus',
+            Platform.UNKNOWN: ''
+        }
         for workspace_directory in self.list_of_found_directories:
             energyplus_directory, folder_name = os.path.split(workspace_directory)
-            energyplus_application = os.path.join(energyplus_directory, "energyplus.exe")
+            energyplus_application = os.path.join(energyplus_directory, ep_names[Platform.get_current_platform()])
             if os.path.exists(energyplus_application):
                 self.list_of_energyplus_applications.append(energyplus_application)
                 found, version_string, build_string = self.get_specific_version_from_exe(energyplus_application)
-                if not found:
+                if found:
+                    self.list_of_energyplus_versions.append({'version': version_string, 'sha': build_string})
+                else:
                     found, version_string, build_string = self.get_specific_version_from_idd(energyplus_directory)
         print(self.list_of_energyplus_applications)
 
@@ -48,7 +58,7 @@ class LocateWorkflows(object):
             completed = subprocess.run([path_to_energyplus_app, "--version"], stdout=subprocess.PIPE, timeout=1)
             output_line = completed.stdout
             output_line_string = output_line.decode("utf-8")
-        except subprocess.TimeoutExpired:
+        except subprocess.TimeoutExpired:  # pragma: no cover  -- yeah that would be tough to test...
             print("timeout occurred")
         print(output_line_string)
         if ',' in output_line_string:

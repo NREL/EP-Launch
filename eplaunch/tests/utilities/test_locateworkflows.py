@@ -1,5 +1,6 @@
 import unittest
 import os
+import shutil
 
 from eplaunch.utilities.locateworkflows import LocateWorkflows
 from eplaunch.utilities.crossplatform import Platform
@@ -37,17 +38,34 @@ class TestLocateWorkflows(unittest.TestCase):
         loc_wf = LocateWorkflows()
         directories = loc_wf.find()
         directories59 = [dir for dir in directories if "5-9" in dir]
-        tests_utilties_energyplus_directory, workflow_folder = os.path.split(directories59[0])
+        tests_utilities_energyplus_directory, workflow_folder = os.path.split(directories59[0])
         self.assertEqual(workflow_folder, "workflows")
-        tests_utilities_directory, energyplus_folder = os.path.split(tests_utilties_energyplus_directory)
+        tests_utilities_directory, energyplus_folder = os.path.split(tests_utilities_energyplus_directory)
         self.assertEqual(energyplus_folder, "EnergyPlusV5-9-0")
+
+    @unittest.skipUnless(Platform.get_current_platform() == Platform.LINUX, "Only run this test on Linux")
+    def test_getting_energyplus_versions(self):
+
+        loc_wf = LocateWorkflows()
+        workflow_directories = loc_wf.find()
+
+        # as a part of this test, we are mocking the energyplus binary itself with a simple script that returns version
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        mock_energyplus_path = os.path.join(dir_path, 'energyplus')
+        test_energyplus_folder = os.path.join(os.path.dirname(workflow_directories[0]))
+        shutil.copy(mock_energyplus_path, test_energyplus_folder)
+
+        loc_wf.get_energyplus_versions()
+        self.assertEqual(1, len(loc_wf.list_of_energyplus_versions))
+        self.assertEqual('5.9.0', loc_wf.list_of_energyplus_versions[0]['version'])
+        self.assertEqual('deadbeef00', loc_wf.list_of_energyplus_versions[0]['sha'])
 
     def tearDown(self):
         try:
-            os.rmdir(self.workflow_directory)
+            shutil.rmtree(self.workflow_directory)
         except OSError:  # pragma: no cover
             print("cannot remove workflow directory")
         try:
-            os.rmdir(self.energyplus_directory)
+            shutil.rmtree(self.energyplus_directory)
         except OSError:  # pragma: no cover
             print("cannot remove energyplus directory")
