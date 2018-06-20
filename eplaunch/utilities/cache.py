@@ -25,10 +25,17 @@ class CacheFile(object):
             self.workflow_state = {self.RootKey: {}}
         self.dirty = False
 
-    def add_config(self, workflow_name, file_name, config_data):
+    def _add_file_attribute(self, workflow_name, file_name, attribute, data, replace):
         """
-        This function is used to store run configuration data to the cache file
-        While the add_result function will completely wipe away the prior results, this function should just update
+        This function generically updates some attribute of a file within a given workflow context
+        The hierarchy is:
+         workflows
+          - workflow_name
+           - files
+            - file_name
+             - attribute
+              - data
+        The replace parameter states whether the content in attribute will be updated, or replaced, with data
 
         :param workflow_name:
         :param file_name:
@@ -46,24 +53,27 @@ class CacheFile(object):
                 these_files = this_workflow['files']
                 if file_name in these_files:
                     this_file = these_files[file_name]
-                    if 'config' in this_file:
-                        this_config = this_file['config']
-                        merged_config_data = {**this_config, **config_data}  # cool merge for two dicts, avail in 3.5+
-                        this_file['config'] = merged_config_data
+                    if replace:
+                        this_file[attribute] = data
                     else:
-                        this_file['config'] = config_data
+                        if attribute in this_file:
+                            this_config = this_file[attribute]
+                            merged_config_data = {**this_config, **data}  # merge dicts, avail in Python 3.5+
+                            this_file[attribute] = merged_config_data
+                        else:
+                            this_file[attribute] = data
                 else:
-                    these_files[file_name] = {'config': config_data}
+                    these_files[file_name] = {attribute: data}
             else:
-                this_workflow['files'] = {file_name: {'config': config_data}}
+                this_workflow['files'] = {file_name: {attribute: data}}
         else:
-            root[workflow_name] = {'files': {file_name: {'config': config_data}}}
+            root[workflow_name] = {'files': {file_name: {attribute: data}}}
+
+    def add_config(self, workflow_name, file_name, config_data):
+        self._add_file_attribute(workflow_name, file_name, 'config', config_data, False)
 
     def add_result(self, workflow_name, file_name, column_data):
-        self.dirty = True
-        if workflow_name not in self.workflow_state[self.RootKey]:
-            self.workflow_state[self.RootKey][workflow_name] = {'files': {}}
-        self.workflow_state[self.RootKey][workflow_name]['files'][file_name] = {'result': column_data}
+        self._add_file_attribute(workflow_name, file_name, 'result', column_data, True)
 
     def read(self):
         try:
@@ -77,9 +87,12 @@ class CacheFile(object):
             raise EPLaunchFileException(self.file_path, 'Could not parse cache file JSON text')
 
     def write(self):
+        if not self.dirty:
+            return
         body_text = json.dumps(self.workflow_state, indent=2)
         try:
             with open(self.file_path, 'w') as f:
                 f.write(body_text)
+                self.dirty = False
         except IOError:  # pragma: no cover  -- would be difficult to mock up this weird case
             raise EPLaunchFileException(self.file_path, 'Could not write cache file')

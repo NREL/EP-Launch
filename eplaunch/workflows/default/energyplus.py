@@ -1,6 +1,7 @@
 import os
 import subprocess
 import platform
+import time
 
 from eplaunch.workflows.base import BaseEPLaunch3Workflow, EPLaunch3WorkflowResponse
 
@@ -123,7 +124,7 @@ class EPlusRunManager(object):
 class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
 
     def name(self):
-        return "EnergyPlus SI"
+        return "EnergyPlus 8.9 SI"
 
     def description(self):
         return "Run EnergyPlus with SI unit system"
@@ -167,6 +168,7 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
             command_line_args,
             cwd=run_directory
         )
+        time.sleep(5)
         status_code = process.returncode
 
         if status_code != 0:
@@ -192,7 +194,7 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
 class EnergyPlusWorkflowIP(BaseEPLaunch3Workflow):
 
     def name(self):
-        return "EnergyPlus IP"
+        return "EnergyPlus 8.9 IP"
 
     def description(self):
         return "Run EnergyPlus with IP unit system"

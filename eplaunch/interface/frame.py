@@ -286,13 +286,14 @@ class EpLaunchFrame(wx.Frame):
             # if it is also in the cache then the listview row can include additional data
             if file_name in files_in_workflow:
                 cached_file_info = files_in_workflow[file_name]
-                if 'weather' in cached_file_info:
-                    row.append(cached_file_info['weather'])
+                if 'config' in cached_file_info and 'weather' in cached_file_info['config']:
+                    full_weather_path = cached_file_info['config']['weather']
+                    row.append(os.path.basename(full_weather_path))
                 else:
                     row.append('')
                 for column in self.current_workflow.get_interface_columns():
-                    if column in cached_file_info:
-                        row.append(cached_file_info[column])
+                    if column in cached_file_info['result']:
+                        row.append(cached_file_info['result'][column])
             # always add the row to the main list
             control_list_rows.append(row)
 
@@ -646,9 +647,12 @@ class EpLaunchFrame(wx.Frame):
 
     def handle_tb_run(self, event):
         self.folder_recent.add_recent(self.directory_tree_control.GetPath())
+        if not self.current_weather_file:
+            self.current_weather_file = ''
         self.current_cache.add_config(
             self.current_workflow.name(), self.current_file_name, {'weather': self.current_weather_file}
         )
+        self.current_cache.write()
         self.run_workflow()
         self.update_output_file_status()
 
@@ -660,8 +664,6 @@ class EpLaunchFrame(wx.Frame):
                 status_message = 'Successfully completed a workflow: ' + event.data.message
                 try:
                     data_from_workflow = event.data.column_data
-                    if 'weather' in event.data.args:
-                        data_from_workflow['weather'] = event.data.args['weather']
                     self.current_cache.add_result(
                         self.current_workflow.name(), self.current_file_name, data_from_workflow
                     )
