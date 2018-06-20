@@ -5,7 +5,7 @@ from eplaunch.utilities.exceptions import EPLaunchFileException
 
 try:
     from json.decoder import JSONDecodeError
-except ImportError:
+except ImportError:  # pragma: no cover
     JSONDecodeError = ValueError
 
 
