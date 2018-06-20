@@ -16,6 +16,9 @@ class CacheFile(object):
     """
     FileName = '.eplaunch3'
     RootKey = 'workflows'
+    FilesKey = 'files'
+    ParametersKey = 'config'
+    ResultsKey = 'result'
 
     def __init__(self, working_directory):
         self.file_path = os.path.join(working_directory, self.FileName)
@@ -50,8 +53,8 @@ class CacheFile(object):
         root = self.workflow_state[self.RootKey]
         if workflow_name in root:
             this_workflow = root[workflow_name]
-            if 'files' in this_workflow:
-                these_files = this_workflow['files']
+            if self.FilesKey in this_workflow:
+                these_files = this_workflow[self.FilesKey]
                 if file_name in these_files:
                     this_file = these_files[file_name]
                     if replace:
@@ -66,15 +69,15 @@ class CacheFile(object):
                 else:
                     these_files[file_name] = {attribute: data}
             else:
-                this_workflow['files'] = {file_name: {attribute: data}}
+                this_workflow[self.FilesKey] = {file_name: {attribute: data}}
         else:
-            root[workflow_name] = {'files': {file_name: {attribute: data}}}
+            root[workflow_name] = {self.FilesKey: {file_name: {attribute: data}}}
 
     def add_config(self, workflow_name, file_name, config_data):
-        self._add_file_attribute(workflow_name, file_name, 'config', config_data, False)
+        self._add_file_attribute(workflow_name, file_name, self.ParametersKey, config_data, False)
 
     def add_result(self, workflow_name, file_name, column_data):
-        self._add_file_attribute(workflow_name, file_name, 'result', column_data, True)
+        self._add_file_attribute(workflow_name, file_name, self.ResultsKey, column_data, True)
 
     def read(self):
         try:
