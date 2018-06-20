@@ -6,7 +6,7 @@ from gettext import gettext as _
 
 import wx
 
-from eplaunch.filenamemenus.base import FileNameMenus
+from eplaunch.interface.filenamemenus.base import FileNameMenus
 from eplaunch.interface import command_line_dialog
 from eplaunch.interface import viewer_dialog
 from eplaunch.interface import workflow_directories_dialog
