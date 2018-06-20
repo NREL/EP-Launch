@@ -11,3 +11,4 @@ omit =
         setup.py
         eplaunch/runner.py
         eplaunch/interface/*.py
+        eplaunch/workflows/*
