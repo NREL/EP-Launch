@@ -1,5 +1,6 @@
-import os
 import glob
+import os
+import re
 import string
 import subprocess
 
@@ -42,64 +43,48 @@ class LocateWorkflows(object):
         for workspace_directory in self.list_of_found_directories:
             energyplus_directory, folder_name = os.path.split(workspace_directory)
             energyplus_application = os.path.join(energyplus_directory, ep_names[Platform.get_current_platform()])
+            energyplus_idd = os.path.join(energyplus_directory, 'Energy+.idd')
             if os.path.exists(energyplus_application):
                 self.list_of_energyplus_applications.append(energyplus_application)
                 found, version_string, build_string = self.get_specific_version_from_exe(energyplus_application)
                 if found:
                     self.list_of_energyplus_versions.append({'version': version_string, 'sha': build_string})
-                else:
-                    found, version_string, build_string = self.get_specific_version_from_idd(energyplus_directory)
+            elif os.path.exists(energyplus_idd):
+                found, version_string, build_string = self.get_specific_version_from_idd(energyplus_directory)
+                if found:
+                    self.list_of_energyplus_versions.append({'version': version_string, 'sha': build_string})
         print(self.list_of_energyplus_applications)
 
     def get_specific_version_from_exe(self, path_to_energyplus_app):
-        print("Getting version from exe: ", path_to_energyplus_app)
-        output_line_string = ""
+        # print("Getting version from exe: ", path_to_energyplus_app)
         try:
             completed = subprocess.run([path_to_energyplus_app, "--version"], stdout=subprocess.PIPE, timeout=1)
             output_line = completed.stdout
             output_line_string = output_line.decode("utf-8")
+            search_regex = r"(?P<version>\d.\d.\d)\W+(?P<sha>[0-9a-f]{10})"
+            regex = re.compile(search_regex)
+            match = regex.search(output_line_string)
+            if match:
+                matches = match.groupdict()
+                return True, matches['version'], matches['sha']
+            else:
+                return False, '', ''  # pragma: no cover
         except subprocess.TimeoutExpired:  # pragma: no cover  -- yeah that would be tough to test...
             print("timeout occurred")
-        print(output_line_string)
-        if ',' in output_line_string:
-            _, full_version_string = output_line_string.split(',')
-            full_version_string = full_version_string.strip()
-            three_number_version, sha_string = full_version_string.split('-')
-            _, three_number_version = three_number_version.split(' ')
-            print("==================")
-            print(three_number_version)
-            print(sha_string)
-            print("------------------")
-            return True, three_number_version, sha_string
-        else:
-            return False, "", ""
+            return False, '', ''
 
     def get_specific_version_from_idd(self, path_to_energyplus_directory):
-        print("Getting version from idd in directory: ", path_to_energyplus_directory)
+        # print("Getting version from idd in directory: ", path_to_energyplus_directory)
         idd_loc = os.path.join(path_to_energyplus_directory, "Energy+.idd")
-        three_number_version = ""
-        sha_string = ""
-        if os.path.exists(idd_loc):
-            iddline = ""
-            buildline = ""
-            with open(idd_loc, "r") as file:
-                iddline = file.readline()
-                buildline = file.readline()
-            iddline = iddline.strip()
-            buildline = buildline.strip()
-            if " " in iddline:
-                idd_version_keyword, three_number_version = iddline.split(" ")
-                if idd_version_keyword != "!IDD_Version":
-                    three_number_version = ""
-            if " " in buildline:
-                idd_build_keyword, sha_string = buildline.split(" ")
-                if idd_build_keyword != "!IDD_BUILD":
-                    sha_string = ""
-        print("==================")
-        print(three_number_version)
-        print(sha_string)
-        print("------------------")
-        if three_number_version != "":
-            return True, three_number_version, sha_string
-        else:
-            return False, three_number_version, sha_string
+        with open(idd_loc, "r") as file:
+            idd_line = file.readline().strip()
+            build_line = file.readline().strip()
+            two_lines = idd_line + build_line
+            search_regex = r"(?P<version>\d.\d.\d)!IDD_BUILD (?P<sha>[0-9a-f]{10})"
+            regex = re.compile(search_regex)
+            match = regex.search(two_lines)
+            if match:
+                matches = match.groupdict()
+                return True, matches['version'], matches['sha']
+            else:
+                return False, '', ''  # pragma: no cover

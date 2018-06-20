@@ -44,14 +44,14 @@ class TestLocateWorkflows(unittest.TestCase):
         self.assertEqual(energyplus_folder, "EnergyPlusV5-9-0")
 
     @unittest.skipUnless(Platform.get_current_platform() == Platform.LINUX, "Only run this test on Linux")
-    def test_getting_energyplus_versions(self):
+    def test_getting_energyplus_versions_from_binary(self):
 
         loc_wf = LocateWorkflows()
         workflow_directories = loc_wf.find()
 
         # as a part of this test, we are mocking the energyplus binary itself with a simple script that returns version
         dir_path = os.path.dirname(os.path.realpath(__file__))
-        mock_energyplus_path = os.path.join(dir_path, 'energyplus')
+        mock_energyplus_path = os.path.join(dir_path, 'mock', 'energyplus')
         test_energyplus_folder = os.path.join(os.path.dirname(workflow_directories[0]))
         shutil.copy(mock_energyplus_path, test_energyplus_folder)
 
@@ -59,6 +59,23 @@ class TestLocateWorkflows(unittest.TestCase):
         self.assertEqual(1, len(loc_wf.list_of_energyplus_versions))
         self.assertEqual('5.9.0', loc_wf.list_of_energyplus_versions[0]['version'])
         self.assertEqual('deadbeef00', loc_wf.list_of_energyplus_versions[0]['sha'])
+
+    # @unittest.skipUnless(Platform.get_current_platform() == Platform.LINUX, "Only run this test on Linux")
+    def test_getting_energyplus_versions_from_idd(self):
+
+        loc_wf = LocateWorkflows()
+        workflow_directories = loc_wf.find()
+
+        # as a part of this test, we are mocking the energyplus IDD with a small dummy version
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        mock_idd_path = os.path.join(dir_path, 'mock', 'Energy+.idd')
+        test_energyplus_folder = os.path.join(os.path.dirname(workflow_directories[0]))
+        shutil.copy(mock_idd_path, test_energyplus_folder)
+
+        loc_wf.get_energyplus_versions()
+        self.assertEqual(1, len(loc_wf.list_of_energyplus_versions))
+        self.assertEqual('5.9.0', loc_wf.list_of_energyplus_versions[0]['version'])
+        self.assertEqual('deadbeef01', loc_wf.list_of_energyplus_versions[0]['sha'])
 
     def tearDown(self):
         try:
