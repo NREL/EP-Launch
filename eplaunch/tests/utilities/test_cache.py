@@ -35,6 +35,7 @@ class TestCacheFile(unittest.TestCase):
             CacheFile(working_directory=self.temp_dir)
 
     def test_adding_result_to_cache_file(self):
+        self.createWorkflowFileInDir()
         c = CacheFile(working_directory=self.temp_dir)
         self.assertFalse(c.dirty)
         c.add_result('workflowA', 'fileA', {'columnA': 'dataA'})

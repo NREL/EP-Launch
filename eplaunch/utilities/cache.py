@@ -21,9 +21,10 @@ class CacheFile(object):
         self.file_path = os.path.join(working_directory, self.FileName)
         if os.path.exists(self.file_path):
             self.workflow_state = self.read()
+            self.dirty = False
         else:
             self.workflow_state = {self.RootKey: {}}
-        self.dirty = False
+            self.dirty = True
 
     def _add_file_attribute(self, workflow_name, file_name, attribute, data, replace):
         """
