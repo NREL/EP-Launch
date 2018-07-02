@@ -992,7 +992,7 @@ class EpLaunchFrame(wx.Frame):
             if directory:
                 if os.path.exists(directory):
                     list_of_directories.append(directory)
-        self.workflow_directories=list_of_directories
+        self.workflow_directories = list_of_directories
 
     def handle_output_menu_item(self, event):
         full_path_name = os.path.join(self.directory_name, self.current_file_name)
@@ -1009,7 +1009,7 @@ class EpLaunchFrame(wx.Frame):
         self.external_runner.run_program_by_extension(output_file_name)
 
     def save_currect_directory_config(self):
-        self.config.Write("/ActiveWindow/CurrentDirectory",self.directory_name)
+        self.config.Write("/ActiveWindow/CurrentDirectory", self.directory_name)
 
     def retrieve_current_directory_config(self):
         possible_directory_name = self.config.Read("/ActiveWindow/CurrentDirectory")
@@ -1020,4 +1020,4 @@ class EpLaunchFrame(wx.Frame):
             self.directory_tree_control.ExpandPath(real_path)
 
     def save_selected_workflow_config(self):
-        self.config.Write("/ActiveWindow/SelectedWorkflow",self.current_workflow.name())
+        self.config.Write("/ActiveWindow/SelectedWorkflow", self.current_workflow.name())
