@@ -43,7 +43,7 @@ class TestLocateWorkflows(unittest.TestCase):
         tests_utilities_directory, energyplus_folder = os.path.split(tests_utilities_energyplus_directory)
         self.assertEqual(energyplus_folder, "EnergyPlusV5-9-0")
 
-    @unittest.skipUnless(Platform.get_current_platform() == Platform.LINUX, "Only run this test on Linux")
+    @unittest.skipUnless(Platform.get_current_platform() == Platform.LINUX, "Only run test_getting_energyplus_versions_from_binary on Linux")
     def test_getting_energyplus_versions_from_binary(self):
 
         loc_wf = LocateWorkflows()
@@ -60,11 +60,11 @@ class TestLocateWorkflows(unittest.TestCase):
         self.assertEqual('5.9.0', loc_wf.list_of_energyplus_versions[0]['version'])
         self.assertEqual('deadbeef00', loc_wf.list_of_energyplus_versions[0]['sha'])
 
-    # @unittest.skipUnless(Platform.get_current_platform() == Platform.LINUX, "Only run this test on Linux")
     def test_getting_energyplus_versions_from_idd(self):
 
         loc_wf = LocateWorkflows()
         workflow_directories = loc_wf.find()
+        workflow_directories.sort()
 
         # as a part of this test, we are mocking the energyplus IDD with a small dummy version
         dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -73,7 +73,6 @@ class TestLocateWorkflows(unittest.TestCase):
         shutil.copy(mock_idd_path, test_energyplus_folder)
 
         loc_wf.get_energyplus_versions()
-        self.assertEqual(1, len(loc_wf.list_of_energyplus_versions))
         self.assertEqual('5.9.0', loc_wf.list_of_energyplus_versions[0]['version'])
         self.assertEqual('deadbeef01', loc_wf.list_of_energyplus_versions[0]['sha'])
 
