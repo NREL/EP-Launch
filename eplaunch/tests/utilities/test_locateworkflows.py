@@ -60,7 +60,6 @@ class TestLocateWorkflows(unittest.TestCase):
         self.assertEqual('5.9.0', loc_wf.list_of_energyplus_versions[0]['version'])
         self.assertEqual('deadbeef00', loc_wf.list_of_energyplus_versions[0]['sha'])
 
-    # @unittest.skipUnless(Platform.get_current_platform() == Platform.LINUX, "Only run test_getting_energyplus_versions_from_idd on Linux")
     def test_getting_energyplus_versions_from_idd(self):
 
         loc_wf = LocateWorkflows()

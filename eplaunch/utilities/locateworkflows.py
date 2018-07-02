@@ -53,7 +53,6 @@ class LocateWorkflows(object):
                 found, version_string, build_string = self.get_specific_version_from_idd(energyplus_directory)
                 if found:
                     self.list_of_energyplus_versions.append({'version': version_string, 'sha': build_string})
-        print(self.list_of_energyplus_applications)
 
     def get_specific_version_from_exe(self, path_to_energyplus_app):
         # print("Getting version from exe: ", path_to_energyplus_app)
