@@ -476,11 +476,11 @@ class EpLaunchFrame(wx.Frame):
         self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_update_file_version, tb_update_file_version)
 
         remove_bmp = wx.ArtProvider.GetBitmap(wx.ART_MINUS, wx.ART_TOOLBAR, t_size)
-        tb_hide_browser = self.primary_toolbar.AddTool(
-            100, "File Browser", remove_bmp, wx.NullBitmap, wx.ITEM_CHECK, "File Browser",
-            "Long help for 'File Browser'", None
+        tb_hide_all_files_pane = self.primary_toolbar.AddTool(
+            100, "All Files", remove_bmp, wx.NullBitmap, wx.ITEM_CHECK, "All Files",
+            "Long help for 'Show All Files Pane'", None
         )
-        self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_hide_browser, tb_hide_browser)
+        self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_hide_all_files_pane, tb_hide_all_files_pane)
 
         self.primary_toolbar.Realize()
 
@@ -748,7 +748,7 @@ class EpLaunchFrame(wx.Frame):
     def handle_tb_weather(self, event):
         self.status_bar.SetStatusText('Clicked Weather toolbar item')
 
-    def handle_tb_hide_browser(self, event):
+    def handle_tb_hide_all_files_pane(self, event):
         # the following remove the top pane of the right hand splitter
         if self.file_lists_splitter.IsSplit():
             self.file_lists_splitter.Unsplit(toRemove=self.raw_file_list_panel)
