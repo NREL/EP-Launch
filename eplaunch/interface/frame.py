@@ -95,6 +95,9 @@ class EpLaunchFrame(wx.Frame):
         self.update_file_lists()
         self.update_workflow_dependent_menu_items()
 
+        # get the saved active directory
+        self.retrieve_current_directory_config()
+
         # create external program runner
         self.external_runner = EPLaunchExternalPrograms()
         # create file name manipulation object
@@ -425,8 +428,21 @@ class EpLaunchFrame(wx.Frame):
         if not self.workflow_instances:
             self.current_workflow = None
         else:
-            self.current_workflow = self.workflow_instances[0]
-            self.workflow_choice.SetSelection(0)
+            previous_workflow = self.config.Read('/ActiveWindow/SelectedWorkflow')
+            if previous_workflow:
+                found = False
+                for index, workflow_choice_string in enumerate(workflow_choice_strings):
+                    if previous_workflow in workflow_choice_string:
+                        self.current_workflow = self.workflow_instances[index]
+                        self.workflow_choice.SetSelection(index)
+                        found = True
+                        break
+                if not found:
+                    self.current_workflow = self.workflow_instances[0]
+                    self.workflow_choice.SetSelection(0)
+            else:
+                self.current_workflow = self.workflow_instances[0]
+                self.workflow_choice.SetSelection(0)
 
         file_open_bmp = wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN, wx.ART_TOOLBAR, t_size)
         tb_weather = self.primary_toolbar.AddTool(
@@ -838,6 +854,8 @@ class EpLaunchFrame(wx.Frame):
         self.weather_favorites.save_config()
         self.weather_recent.save_config()
         self.save_workflow_directories_config()
+        self.save_currect_directory_config()
+        self.save_selected_workflow_config()
 
     def handle_menu_weather_select(self, event):
         filename = wx.FileSelector("Select a weather file", wildcard="EnergyPlus Weather File(*.epw)|*.epw",
@@ -974,7 +992,7 @@ class EpLaunchFrame(wx.Frame):
             if directory:
                 if os.path.exists(directory):
                     list_of_directories.append(directory)
-        self.workflow_directories = list_of_directories
+        self.workflow_directories=list_of_directories
 
     def handle_output_menu_item(self, event):
         full_path_name = os.path.join(self.directory_name, self.current_file_name)
@@ -989,3 +1007,17 @@ class EpLaunchFrame(wx.Frame):
         output_file_name = self.file_name_manipulator.replace_extension_with_suffix(full_path_name,
                                                                                     menu_item.GetLabel())
         self.external_runner.run_program_by_extension(output_file_name)
+
+    def save_currect_directory_config(self):
+        self.config.Write("/ActiveWindow/CurrentDirectory",self.directory_name)
+
+    def retrieve_current_directory_config(self):
+        possible_directory_name = self.config.Read("/ActiveWindow/CurrentDirectory")
+        if possible_directory_name:
+            self.directory_name = possible_directory_name
+            real_path = os.path.abspath(self.directory_name)
+            self.directory_tree_control.SelectPath(real_path, True)
+            self.directory_tree_control.ExpandPath(real_path)
+
+    def save_selected_workflow_config(self):
+        self.config.Write("/ActiveWindow/SelectedWorkflow",self.current_workflow.name())
