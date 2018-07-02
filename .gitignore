@@ -104,3 +104,7 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+/eplaunch/tests/Energy+.ini
+/eplaunch/tests/eplusout.audit
+/eplaunch/tests/eplusout.err
+/eplaunch/tests/eplusout.iperr
