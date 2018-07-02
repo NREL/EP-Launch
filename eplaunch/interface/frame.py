@@ -408,6 +408,13 @@ class EpLaunchFrame(wx.Frame):
         self.SetSizer(main_app_vertical_sizer)
         main_app_vertical_sizer.Fit(self)
 
+        # get the window size and position
+        previous_height = self.config.ReadInt("/ActiveWindow/height")
+        previous_width = self.config.ReadInt("/ActiveWindow/width")
+        previous_x = self.config.ReadInt("/ActiveWindow/x")
+        previous_y = self.config.ReadInt("/ActiveWindow/y")
+        self.SetSize(previous_x, previous_y, previous_width, previous_height)
+
         # call this to finalize
         self.Layout()
 
@@ -856,6 +863,7 @@ class EpLaunchFrame(wx.Frame):
         self.save_workflow_directories_config()
         self.save_currect_directory_config()
         self.save_selected_workflow_config()
+        self.save_window_size()
 
     def handle_menu_weather_select(self, event):
         filename = wx.FileSelector("Select a weather file", wildcard="EnergyPlus Weather File(*.epw)|*.epw",
@@ -1021,3 +1029,11 @@ class EpLaunchFrame(wx.Frame):
 
     def save_selected_workflow_config(self):
         self.config.Write("/ActiveWindow/SelectedWorkflow", self.current_workflow.name())
+
+    def save_window_size(self):
+        current_size = self.GetSize()
+        self.config.WriteInt("/ActiveWindow/height", current_size.height)
+        self.config.WriteInt("/ActiveWindow/width", current_size.width)
+        current_position = self.GetPosition()
+        self.config.WriteInt("/ActiveWindow/x", current_position.x)
+        self.config.WriteInt("/ActiveWindow/y", current_position.y)
