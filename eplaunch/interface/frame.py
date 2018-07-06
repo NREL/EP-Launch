@@ -325,7 +325,7 @@ class EpLaunchFrame(wx.Frame):
     def run_workflow(self):
         if self.directory_name and self.current_file_name:
             if not self.workflow_worker:
-                self.status_bar.SetLabel('Starting workflow')
+                self.status_bar.SetLabel('Starting workflow', i=0)
                 self.workflow_worker = WorkflowThread(
                     self, self.current_workflow, self.directory_name, self.current_file_name,
                     {'weather': self.current_weather_file}
@@ -334,10 +334,10 @@ class EpLaunchFrame(wx.Frame):
                 self.primary_toolbar.Realize()
                 # self.menu_file_run.Enable(False)
             else:
-                self.status_bar.SetLabel('A workflow is already running, concurrence will come soon...')
+                self.status_bar.SetLabel('A workflow is already running, concurrence will come soon...', i=0)
         else:
             self.status_bar.SetLabel(
-                'Error: Make sure you select a directory and a file'
+                'Error: Make sure you select a directory and a file', i=0
             )
 
     def gui_build(self):
@@ -667,7 +667,7 @@ class EpLaunchFrame(wx.Frame):
         self.SetMenuBar(self.menu_bar)
 
     def gui_build_status_bar(self):
-        self.status_bar = self.CreateStatusBar(1)
+        self.status_bar = self.CreateStatusBar(3)
         # self.status_bar.SetStatusText('Status bar - reports on simulations in progress')
 
     def handle_list_ctrl_selection(self, event):
@@ -710,38 +710,38 @@ class EpLaunchFrame(wx.Frame):
         except Exception as e:  # noqa -- there is *no* telling what all exceptions could occur inside a workflow
             print(e)
             status_message = 'Workflow response was invalid'
-        self.status_bar.SetStatusText(status_message)
+        self.status_bar.SetStatusText(status_message, i=0)
         self.workflow_worker = None
         self.primary_toolbar.EnableTool(self.Identifiers.ToolBarRunButtonID, True)
 
     def handle_menu_file_cancel_selected(self, event):
-        self.status_bar.SetStatusText('Clicked File->CancelSelected')
+        self.status_bar.SetStatusText('Clicked File->CancelSelected', i=0)
 
     def handle_menu_file_cancel_all(self, event):
-        self.status_bar.SetStatusText('Clicked File->CancelAll')
+        self.status_bar.SetStatusText('Clicked File->CancelAll', i=0)
 
     def handle_menu_file_quit(self, event):
         self.close_frame()
-        self.status_bar.SetStatusText('Quitting Program')
+        self.status_bar.SetStatusText('Quitting Program', i=0)
 
     def handle_menu_edit_undo(self, event):
-        self.status_bar.SetStatusText('Clicked Edit->Undo')
+        self.status_bar.SetStatusText('Clicked Edit->Undo', i=0)
 
     def handle_menu_edit_cut(self, event):
-        self.status_bar.SetStatusText('Clicked Edit->Cut')
+        self.status_bar.SetStatusText('Clicked Edit->Cut', i=0)
 
     def handle_menu_edit_copy(self, event):
-        self.status_bar.SetStatusText('Clicked Edit->Copy')
+        self.status_bar.SetStatusText('Clicked Edit->Copy', i=0)
 
     def handle_menu_edit_paste(self, event):
-        self.status_bar.SetStatusText('Clicked Edit->Paste')
+        self.status_bar.SetStatusText('Clicked Edit->Paste', i=0)
 
     def handle_dir_item_selected(self, event):
-        self.status_bar.SetStatusText("Dir-ItemSelected")
+        self.status_bar.SetStatusText("Dir-ItemSelected", i=0)
         # event.Skip()
 
     def handle_dir_right_click(self, event):
-        self.status_bar.SetStatusText("Dir-RightClick")
+        self.status_bar.SetStatusText("Dir-RightClick", i=0)
         # event.Skip()
 
     def handle_dir_selection_changed(self, event):
@@ -754,7 +754,7 @@ class EpLaunchFrame(wx.Frame):
         self.folder_favorites.put_checkmark_on_item(self.directory_name)
         self.current_cache = CacheFile(self.directory_name)
         try:
-            self.status_bar.SetStatusText(self.directory_name)
+            self.status_bar.SetStatusText(self.directory_name, i=0)
             self.update_file_lists()
         except Exception as e:  # noqa -- status_bar and things may not exist during initialization, just ignore
             print(e)
@@ -766,10 +766,10 @@ class EpLaunchFrame(wx.Frame):
         self.update_control_list_columns()
         self.update_file_lists()
         self.update_workflow_dependent_menu_items()
-        self.status_bar.SetStatusText('Choice selection changed to ' + event.String)
+        self.status_bar.SetStatusText('Choice selection changed to ' + event.String, i=0)
 
     def handle_tb_weather(self, event):
-        self.status_bar.SetStatusText('Clicked Weather toolbar item')
+        self.status_bar.SetStatusText('Clicked Weather toolbar item', i=0)
 
     def handle_tb_hide_all_files_pane(self, event):
         # the following remove the top pane of the right hand splitter
