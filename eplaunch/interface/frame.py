@@ -17,6 +17,8 @@ from eplaunch.utilities.exceptions import EPLaunchDevException, EPLaunchFileExce
 from eplaunch.utilities.filenamemanipulation import FileNameManipulation
 from eplaunch.utilities.version import Version
 from eplaunch.workflows import manager as workflow_manager
+from eplaunch.utilities.locateworkflows import LocateWorkflows
+
 
 
 # wx callbacks need an event argument even though we usually don't use it, so the next line disables that check
@@ -82,6 +84,11 @@ class EpLaunchFrame(wx.Frame):
 
         # get the saved workflow directories
         self.retrieve_workflow_directories_config()
+
+        # find workflow directories
+        self.locate_workflows = LocateWorkflows()
+        self.list_of_directories = self.locate_workflows.find()
+        self.list_of_versions = self.locate_workflows.get_energyplus_versions()
 
         # build out the whole GUI and do other one-time inits here
         self.gui_build()
@@ -605,12 +612,12 @@ class EpLaunchFrame(wx.Frame):
         self.menu_bar.Append(self.output_menu, "&Output")
 
         options_menu = wx.Menu()
-        option_version_menu = wx.Menu()
-        option_version_menu.Append(711, "EnergyPlus 8.6.0")
-        option_version_menu.Append(712, "EnergyPlus 8.7.0")
-        option_version_menu.Append(713, "EnergyPlus 8.8.0")
-        option_version_menu.Append(714, "EnergyPlus 8.9.0")
-        options_menu.Append(71, "Version", option_version_menu)
+        self.option_version_menu = wx.Menu()
+        for index, version_info in enumerate( self.list_of_versions):
+            version_string = version_info['version']
+            specific_version_menu = self.option_version_menu.Append(710 + index, 'EnergyPlus ' + version_string, kind=wx.ITEM_RADIO)
+            self.Bind(wx.EVT_MENU, self.handle_specific_version_menu, specific_version_menu)
+        options_menu.Append(71, "Version", self.option_version_menu)
         options_menu.AppendSeparator()
         menu_option_workflow_directories = options_menu.Append(72, "Workflow Directories...")
         self.Bind(wx.EVT_MENU, self.handle_menu_option_workflow_directories, menu_option_workflow_directories)
@@ -1052,3 +1059,7 @@ class EpLaunchFrame(wx.Frame):
         current_position = self.GetPosition()
         self.config.WriteInt("/ActiveWindow/x", current_position.x)
         self.config.WriteInt("/ActiveWindow/y", current_position.y)
+
+    def handle_specific_version_menu(self, event):
+        menu_item = self.option_version_menu.FindItemById(event.GetId())
+        print('from frame.py - specific version menu item:', menu_item.GetLabel(), menu_item.GetId())
