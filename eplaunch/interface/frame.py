@@ -95,6 +95,9 @@ class EpLaunchFrame(wx.Frame):
         self.update_file_lists()
         self.update_workflow_dependent_menu_items()
 
+        # get the saved active directory
+        self.retrieve_current_directory_config()
+
         # create external program runner
         self.external_runner = EPLaunchExternalPrograms()
         # create file name manipulation object
@@ -405,6 +408,13 @@ class EpLaunchFrame(wx.Frame):
         self.SetSizer(main_app_vertical_sizer)
         main_app_vertical_sizer.Fit(self)
 
+        # get the window size and position
+        previous_height = self.config.ReadInt("/ActiveWindow/height")
+        previous_width = self.config.ReadInt("/ActiveWindow/width")
+        previous_x = self.config.ReadInt("/ActiveWindow/x")
+        previous_y = self.config.ReadInt("/ActiveWindow/y")
+        self.SetSize(previous_x, previous_y, previous_width, previous_height)
+
         # call this to finalize
         self.Layout()
 
@@ -425,8 +435,21 @@ class EpLaunchFrame(wx.Frame):
         if not self.workflow_instances:
             self.current_workflow = None
         else:
-            self.current_workflow = self.workflow_instances[0]
-            self.workflow_choice.SetSelection(0)
+            previous_workflow = self.config.Read('/ActiveWindow/SelectedWorkflow')
+            if previous_workflow:
+                found = False
+                for index, workflow_choice_string in enumerate(workflow_choice_strings):
+                    if previous_workflow in workflow_choice_string:
+                        self.current_workflow = self.workflow_instances[index]
+                        self.workflow_choice.SetSelection(index)
+                        found = True
+                        break
+                if not found:
+                    self.current_workflow = self.workflow_instances[0]
+                    self.workflow_choice.SetSelection(0)
+            else:
+                self.current_workflow = self.workflow_instances[0]
+                self.workflow_choice.SetSelection(0)
 
         file_open_bmp = wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN, wx.ART_TOOLBAR, t_size)
         tb_weather = self.primary_toolbar.AddTool(
@@ -838,6 +861,9 @@ class EpLaunchFrame(wx.Frame):
         self.weather_favorites.save_config()
         self.weather_recent.save_config()
         self.save_workflow_directories_config()
+        self.save_currect_directory_config()
+        self.save_selected_workflow_config()
+        self.save_window_size()
 
     def handle_menu_weather_select(self, event):
         filename = wx.FileSelector("Select a weather file", wildcard="EnergyPlus Weather File(*.epw)|*.epw",
@@ -989,3 +1015,28 @@ class EpLaunchFrame(wx.Frame):
         output_file_name = self.file_name_manipulator.replace_extension_with_suffix(full_path_name,
                                                                                     menu_item.GetLabel())
         self.external_runner.run_program_by_extension(output_file_name)
+
+    def save_currect_directory_config(self):
+        if self.directory_name:
+            self.config.Write("/ActiveWindow/CurrentDirectory", self.directory_name)
+        if self.current_file_name:
+            self.config.Write("/ActiveWindow/CurrentFileName", self.current_file_name)
+
+    def retrieve_current_directory_config(self):
+        possible_directory_name = self.config.Read("/ActiveWindow/CurrentDirectory")
+        if possible_directory_name:
+            self.directory_name = possible_directory_name
+            real_path = os.path.abspath(self.directory_name)
+            self.directory_tree_control.SelectPath(real_path, True)
+            self.directory_tree_control.ExpandPath(real_path)
+
+    def save_selected_workflow_config(self):
+        self.config.Write("/ActiveWindow/SelectedWorkflow", self.current_workflow.name())
+
+    def save_window_size(self):
+        current_size = self.GetSize()
+        self.config.WriteInt("/ActiveWindow/height", current_size.height)
+        self.config.WriteInt("/ActiveWindow/width", current_size.width)
+        current_position = self.GetPosition()
+        self.config.WriteInt("/ActiveWindow/x", current_position.x)
+        self.config.WriteInt("/ActiveWindow/y", current_position.y)
