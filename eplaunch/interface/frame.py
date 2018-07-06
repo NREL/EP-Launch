@@ -20,7 +20,6 @@ from eplaunch.workflows import manager as workflow_manager
 from eplaunch.utilities.locateworkflows import LocateWorkflows
 
 
-
 # wx callbacks need an event argument even though we usually don't use it, so the next line disables that check
 # noinspection PyUnusedLocal
 class EpLaunchFrame(wx.Frame):
@@ -614,7 +613,7 @@ class EpLaunchFrame(wx.Frame):
 
         options_menu = wx.Menu()
         self.option_version_menu = wx.Menu()
-        for index, version_info in enumerate( self.list_of_versions):
+        for index, version_info in enumerate(self.list_of_versions):
             version_string = version_info['version']
             specific_version_menu = self.option_version_menu.Append(710 + index, version_string, kind=wx.ITEM_RADIO)
             self.Bind(wx.EVT_MENU, self.handle_specific_version_menu, specific_version_menu)
@@ -1089,6 +1088,3 @@ class EpLaunchFrame(wx.Frame):
         self.get_current_selected_version()
         if self.current_selected_version:
             self.config.Write("/ActiveWindow/CurrentVersion", self.current_selected_version)
-
-
-
