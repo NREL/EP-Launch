@@ -769,7 +769,14 @@ class EpLaunchFrame(wx.Frame):
         self.status_bar.SetStatusText('Choice selection changed to ' + event.String, i=0)
 
     def handle_tb_weather(self, event):
-        self.status_bar.SetStatusText('Clicked Weather toolbar item', i=0)
+        filename = wx.FileSelector("Select a weather file", wildcard="EnergyPlus Weather File(*.epw)|*.epw",
+                                   flags=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+        self.current_weather_file = filename
+        self.weather_recent.uncheck_all()
+        self.weather_recent.add_recent(filename)
+        self.weather_favorites.uncheck_all()
+        self.weather_favorites.put_checkmark_on_item(filename)
+        self.status_bar.SetStatusText('Weather: ' + self.current_weather_file, i=1)
 
     def handle_tb_hide_all_files_pane(self, event):
         # the following remove the top pane of the right hand splitter
@@ -871,6 +878,9 @@ class EpLaunchFrame(wx.Frame):
         self.current_weather_file = filename
         self.weather_recent.uncheck_all()
         self.weather_recent.add_recent(filename)
+        self.weather_favorites.uncheck_all()
+        self.weather_favorites.put_checkmark_on_item(filename)
+        self.status_bar.SetStatusText('Weather: ' + self.current_weather_file, i=1)
 
     def handle_folder_recent_menu_selection(self, event):
         menu_item = self.folder_menu.FindItemById(event.GetId())
@@ -902,6 +912,7 @@ class EpLaunchFrame(wx.Frame):
         self.weather_recent.put_checkmark_on_item(self.current_weather_file)
         self.weather_favorites.uncheck_all()
         self.weather_favorites.put_checkmark_on_item(self.current_weather_file)
+        self.status_bar.SetStatusText('Weather: ' + self.current_weather_file, i=1)
 
     def handle_weather_favorites_menu_selection(self, event):
         menu_item = self.weather_menu.FindItemById(event.GetId())
@@ -911,6 +922,7 @@ class EpLaunchFrame(wx.Frame):
         self.weather_recent.put_checkmark_on_item(self.current_weather_file)
         self.weather_favorites.uncheck_all()
         self.weather_favorites.put_checkmark_on_item(self.current_weather_file)
+        self.status_bar.SetStatusText('Weather: ' + self.current_weather_file, i=1)
 
     def handle_add_current_weather_to_favorites_menu_selection(self, event):
         self.weather_favorites.add_favorite(self.current_weather_file)
