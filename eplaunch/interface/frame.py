@@ -78,6 +78,7 @@ class EpLaunchFrame(wx.Frame):
         self.tb_idf_editor_id = None
         self.output_menu_item = None
         self.extra_output_menu_item = None
+        self.current_selected_version = None
 
         # this is currently just a single background thread, eventually we'll need to keep a list of them
         self.workflow_worker = None
@@ -615,9 +616,10 @@ class EpLaunchFrame(wx.Frame):
         self.option_version_menu = wx.Menu()
         for index, version_info in enumerate( self.list_of_versions):
             version_string = version_info['version']
-            specific_version_menu = self.option_version_menu.Append(710 + index, 'EnergyPlus ' + version_string, kind=wx.ITEM_RADIO)
+            specific_version_menu = self.option_version_menu.Append(710 + index, version_string, kind=wx.ITEM_RADIO)
             self.Bind(wx.EVT_MENU, self.handle_specific_version_menu, specific_version_menu)
         options_menu.Append(71, "Version", self.option_version_menu)
+        self.retrieve_selected_version_config()
         options_menu.AppendSeparator()
         menu_option_workflow_directories = options_menu.Append(72, "Workflow Directories...")
         self.Bind(wx.EVT_MENU, self.handle_menu_option_workflow_directories, menu_option_workflow_directories)
@@ -878,6 +880,7 @@ class EpLaunchFrame(wx.Frame):
         self.save_currect_directory_config()
         self.save_selected_workflow_config()
         self.save_window_size()
+        self.save_selected_version_config()
 
     def handle_menu_weather_select(self, event):
         filename = wx.FileSelector("Select a weather file", wildcard="EnergyPlus Weather File(*.epw)|*.epw",
@@ -1062,4 +1065,30 @@ class EpLaunchFrame(wx.Frame):
 
     def handle_specific_version_menu(self, event):
         menu_item = self.option_version_menu.FindItemById(event.GetId())
+        self.get_current_selected_version()
         print('from frame.py - specific version menu item:', menu_item.GetLabel(), menu_item.GetId())
+
+    def retrieve_selected_version_config(self):
+        possible_selected_version = self.config.Read("/ActiveWindow/CurrentVersion")
+        menu_list = self.option_version_menu.GetMenuItems()
+        for menu_item in menu_list:
+            if menu_item.GetLabel() == possible_selected_version:
+                menu_item.Check(True)
+                break
+
+    def get_current_selected_version(self):
+        self.current_selected_version = None
+        menu_list = self.option_version_menu.GetMenuItems()
+        for menu_item in menu_list:
+            if menu_item.IsChecked():
+                self.current_selected_version = menu_item.GetLabel()
+                break
+        return self.current_selected_version
+
+    def save_selected_version_config(self):
+        self.get_current_selected_version()
+        if self.current_selected_version:
+            self.config.Write("/ActiveWindow/CurrentVersion", self.current_selected_version)
+
+
+
