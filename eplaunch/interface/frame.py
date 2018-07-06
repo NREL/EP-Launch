@@ -1017,8 +1017,10 @@ class EpLaunchFrame(wx.Frame):
         self.external_runner.run_program_by_extension(output_file_name)
 
     def save_currect_directory_config(self):
-        self.config.Write("/ActiveWindow/CurrentDirectory", self.directory_name)
-        self.config.Write("/ActiveWindow/CurrentFileName", self.current_file_name)
+        if self.directory_name:
+            self.config.Write("/ActiveWindow/CurrentDirectory", self.directory_name)
+        if self.current_file_name:
+            self.config.Write("/ActiveWindow/CurrentFileName", self.current_file_name)
 
     def retrieve_current_directory_config(self):
         possible_directory_name = self.config.Read("/ActiveWindow/CurrentDirectory")
