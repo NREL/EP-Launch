@@ -652,25 +652,25 @@ class EpLaunchFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.handle_menu_command_line, self.menu_command_line)
         self.menu_bar.Append(options_menu, "&Settings")
 
-        help_menu = wx.Menu()
-        help_menu.Append(61, "EnergyPlus Getting Started")
-        help_menu.Append(62, "EnergyPlus Input Output Reference")
-        help_menu.Append(63, "EnergyPlus Output Details and Examples")
-        help_menu.Append(64, "EnergyPlus Engineering Reference")
-        help_menu.Append(65, "EnergyPlus Auxiliary Programs")
-        help_menu.Append(66, "Application Guide for Plant Loops")
-        help_menu.Append(67, "Application Guide for EMS")
-        help_menu.Append(68, "Using EnergyPlus for Compliance")
-        help_menu.Append(69, "External Interface Application Guide")
-        help_menu.Append(610, "Tips and Tricks Using EnergyPlus")
-        help_menu.Append(611, "EnergyPlus Acknowledgments")
-        help_menu.AppendSeparator()
-        help_menu.Append(612, "Check for Updates..")
-        help_menu.Append(613, "View Entire Update List on Web..")
-        help_menu.AppendSeparator()
-        help_menu.Append(614, "Using EP-Launch Help")
-        help_menu.Append(615, "About EP-Launch")
-        self.menu_bar.Append(help_menu, "&Help")
+        self.help_menu = wx.Menu()
+        self.help_menu.Append(61, "EnergyPlus Getting Started")
+        self.help_menu.Append(62, "EnergyPlus Input Output Reference")
+        self.help_menu.Append(63, "EnergyPlus Output Details and Examples")
+        self.help_menu.Append(64, "EnergyPlus Engineering Reference")
+        self.help_menu.Append(65, "EnergyPlus Auxiliary Programs")
+        self.help_menu.Append(66, "Application Guide for Plant Loops")
+        self.help_menu.Append(67, "Application Guide for EMS")
+        self.help_menu.Append(68, "Using EnergyPlus for Compliance")
+        self.help_menu.Append(69, "External Interface Application Guide")
+        self.help_menu.Append(610, "Tips and Tricks Using EnergyPlus")
+        self.help_menu.Append(611, "EnergyPlus Acknowledgments")
+        self.help_menu.AppendSeparator()
+        self.help_menu.Append(612, "Check for Updates..")
+        self.help_menu.Append(613, "View Entire Update List on Web..")
+        self.help_menu.AppendSeparator()
+        self.help_menu.Append(614, "Using EP-Launch Help")
+        self.help_menu.Append(615, "About EP-Launch")
+        self.menu_bar.Append(self.help_menu, "&Help")
 
         self.SetMenuBar(self.menu_bar)
 
@@ -1064,8 +1064,10 @@ class EpLaunchFrame(wx.Frame):
 
     def handle_specific_version_menu(self, event):
         menu_item = self.option_version_menu.FindItemById(event.GetId())
-        self.get_current_selected_version()
-        print('from frame.py - specific version menu item:', menu_item.GetLabel(), menu_item.GetId())
+        self.current_selected_version = self.get_current_selected_version()
+        self.current_workflow_directory = self.locate_workflows.get_workflow_directory(self.current_selected_version)
+        print('from frame.py - specific version menu item:', menu_item.GetLabel(), menu_item.GetId(), self.current_workflow_directory)
+        self.populate_help_menu()
 
     def retrieve_selected_version_config(self):
         possible_selected_version = self.config.Read("/ActiveWindow/CurrentVersion")
@@ -1088,3 +1090,19 @@ class EpLaunchFrame(wx.Frame):
         self.get_current_selected_version()
         if self.current_selected_version:
             self.config.Write("/ActiveWindow/CurrentVersion", self.current_selected_version)
+
+    def populate_help_menu(self):
+        self.remove_old_help_menu_items()
+        energyplus_application_directory, _ = os.path.split(self.current_workflow_directory)
+        energyplus_documentation_directory = os.path.join(energyplus_application_directory, 'Documentation')
+        documentation_files = os.listdir(energyplus_documentation_directory)
+        for index, doc in enumerate(documentation_files):
+            self.help_menu.Insert(index, 620 + index, doc, helpString=os.path.join(energyplus_documentation_directory, doc))
+
+    def remove_old_help_menu_items(self):
+        menu_list = self.help_menu.GetMenuItems()
+        for menu_item in menu_list:
+            if not menu_item.IsSeparator():
+                self.help_menu.Remove(menu_item)
+            else:
+                break

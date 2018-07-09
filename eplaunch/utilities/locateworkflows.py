@@ -88,3 +88,10 @@ class LocateWorkflows(object):
                 return True, matches['version'], matches['sha']
             else:
                 return False, '', ''  # pragma: no cover
+
+    def get_workflow_directory(self, version_string):
+        for version_dictionary in self.list_of_energyplus_versions:
+            if version_dictionary['version'] == version_string:
+                return version_dictionary['workflow']
+        else:
+            return ''
