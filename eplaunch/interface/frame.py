@@ -1089,7 +1089,8 @@ class EpLaunchFrame(wx.Frame):
         energyplus_documentation_directory = os.path.join(energyplus_application_directory, 'Documentation')
         documentation_files = os.listdir(energyplus_documentation_directory)
         for index, doc in enumerate(documentation_files):
-            self.help_menu.Insert(index, 620 + index, doc, helpString=os.path.join(energyplus_documentation_directory, doc))
+            specific_documentation_menu = self.help_menu.Insert(index, 620 + index, doc, helpString=os.path.join(energyplus_documentation_directory, doc))
+            self.Bind(wx.EVT_MENU, self.handle_specific_documentation_menu, specific_documentation_menu)
 
     def remove_old_help_menu_items(self):
         menu_list = self.help_menu.GetMenuItems()
@@ -1098,3 +1099,8 @@ class EpLaunchFrame(wx.Frame):
                 self.help_menu.Remove(menu_item)
             else:
                 break
+
+    def handle_specific_documentation_menu(self, event):
+        menu_item = self.help_menu.FindItemById(event.GetId())
+        documentation_item_full_path = menu_item.GetHelp()
+        self.external_runner.run_program_by_extension(documentation_item_full_path)
