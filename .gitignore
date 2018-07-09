@@ -108,3 +108,4 @@ venv.bak/
 /eplaunch/tests/eplusout.audit
 /eplaunch/tests/eplusout.err
 /eplaunch/tests/eplusout.iperr
+/eplaunch
