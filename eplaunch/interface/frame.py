@@ -346,7 +346,7 @@ class EpLaunchFrame(wx.Frame):
 
         # build tree view and add it to the left pane
         directory_tree_panel = wx.Panel(main_left_right_splitter, wx.ID_ANY)
-        self.directory_tree_control = wx.GenericDirCtrl(directory_tree_panel, -1, size=(200, 225),
+        self.directory_tree_control = wx.GenericDirCtrl(directory_tree_panel, -1, size=(600, 525),
                                                         style=wx.DIRCTRL_DIR_ONLY)
         tree = self.directory_tree_control.GetTreeCtrl()
         self.Bind(wx.EVT_TREE_ITEM_RIGHT_CLICK, self.handle_dir_right_click, tree)

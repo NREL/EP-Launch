@@ -18,8 +18,10 @@ class EPlusRunManager(object):
     # We will generate the path dynamically from __file__ and os.path.join to get to the E+ binary
     if platform.system() == 'Windows':
         EnergyPlusBinary = 'c:\\EnergyPlusV8-9-0\\energyplus.exe'
-    else:
+    elif platform.system() == 'Linux':
         EnergyPlusBinary = '/home/edwin/Programs/EnergyPlus-8-9-0/energyplus'
+    else:  # if platform.system() == 'Darwin':
+        EnergyPlusBinary = '/Applications/EnergyPlus-8-9-0/energyplus'
 
     @staticmethod
     def get_end_summary(end_file_path):
