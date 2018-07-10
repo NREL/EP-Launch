@@ -123,14 +123,14 @@ class EpLaunchFrame(wx.Frame):
         self.Destroy()
 
     @staticmethod
-    def update_workflow_list():
+    def update_workflow_list(workflow_path=None):
 
         workflow_choice_strings = []
         workflow_instances = []
 
         # "built-in" workflow classes will ultimately just be a couple core things that are packaged up with the tool
         # we will then also search through the workflow directories and get all available workflows from there as well
-        built_in_workflow_classes = workflow_manager.get_workflows()
+        built_in_workflow_classes = workflow_manager.get_workflows(workflow_path)
         for workflow_class in built_in_workflow_classes:
             workflow_instance = workflow_class()
             workflow_instances.append(workflow_instance)
@@ -1071,6 +1071,10 @@ class EpLaunchFrame(wx.Frame):
         self.current_selected_version = self.get_current_selected_version()
         self.current_workflow_directory = self.locate_workflows.get_workflow_directory(self.current_selected_version)
         print('from frame.py - specific version menu item:', menu_item.GetLabel(), menu_item.GetId(), self.current_workflow_directory)
+        self.workflow_instances, workflow_choice_strings = self.update_workflow_list(self.current_workflow_directory)
+        self.workflow_choice.Clear()
+        for choice in workflow_choice_strings:
+            self.workflow_choice.Append(choice)
         self.populate_help_menu()
 
     def retrieve_selected_version_config(self):
