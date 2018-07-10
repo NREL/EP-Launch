@@ -30,6 +30,7 @@ class EpLaunchFrame(wx.Frame):
     def __init__(self, *args, **kwargs):
 
         kwargs["style"] = wx.DEFAULT_FRAME_STYLE
+
         wx.Frame.__init__(self, *args, **kwargs)
 
         # Set the title!
@@ -415,11 +416,17 @@ class EpLaunchFrame(wx.Frame):
         t_size = (24, 24)
         self.primary_toolbar.SetToolBitmapSize(t_size)
 
-        ch_id = wx.NewId()
-
         self.workflow_instances, workflow_choice_strings = self.update_workflow_list()
-        self.workflow_choice = wx.Choice(self.primary_toolbar, ch_id, choices=workflow_choice_strings)
-        self.primary_toolbar.AddControl(self.workflow_choice)
+        self.workflow_choice = wx.Choice(self.primary_toolbar, choices=workflow_choice_strings)
+
+        # So, on my Mac, the workflow_choice went invisible when I left the AddControl call in there
+        # There was space where it obviously went, but it was invisible
+        # This needs to be remedied, big time, but until then, on this branch I am:
+        #  - removing the call to AddControl, thus the dropdown will show up, but not be aligned properly, then
+        #  -  making it really wide so that I can easily click it on the right half of the toolbar
+        self.workflow_choice.Size = (700, -1)
+        # self.primary_toolbar.AddControl(self.workflow_choice)
+
         self.primary_toolbar.Bind(wx.EVT_CHOICE, self.handle_choice_selection_change, self.workflow_choice)
 
         if not self.workflow_instances:
