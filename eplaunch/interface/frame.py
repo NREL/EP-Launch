@@ -79,6 +79,7 @@ class EpLaunchFrame(wx.Frame):
         self.output_menu_item = None
         self.extra_output_menu_item = None
         self.current_selected_version = None
+        self.current_workflow_directory = None
 
         # this is currently just a single background thread, eventually we'll need to keep a list of them
         self.workflow_worker = None
