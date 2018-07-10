@@ -1094,6 +1094,8 @@ class EpLaunchFrame(wx.Frame):
         self.remove_old_help_menu_items()
         energyplus_application_directory, _ = os.path.split(self.current_workflow_directory)
         energyplus_documentation_directory = os.path.join(energyplus_application_directory, 'Documentation')
+        if not os.path.exists(energyplus_documentation_directory):
+            return
         documentation_files = os.listdir(energyplus_documentation_directory)
         for index, doc in enumerate(documentation_files):
             specific_documentation_menu = self.help_menu.Insert(index, 620 + index, doc, helpString=os.path.join(energyplus_documentation_directory, doc))
