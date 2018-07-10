@@ -24,6 +24,7 @@ from eplaunch.utilities.locateworkflows import LocateWorkflows
 # noinspection PyUnusedLocal
 class EpLaunchFrame(wx.Frame):
     WeatherFileKey = 'weather'
+    DefaultSize = (900, 500)
 
     class Identifiers:
         ToolBarRunButtonID = 20
@@ -358,8 +359,7 @@ class EpLaunchFrame(wx.Frame):
 
         # build tree view and add it to the left pane
         directory_tree_panel = wx.Panel(main_left_right_splitter, wx.ID_ANY)
-        self.directory_tree_control = wx.GenericDirCtrl(directory_tree_panel, -1, size=(600, 525),
-                                                        style=wx.DIRCTRL_DIR_ONLY)
+        self.directory_tree_control = wx.GenericDirCtrl(directory_tree_panel, -1, style=wx.DIRCTRL_DIR_ONLY)
         tree = self.directory_tree_control.GetTreeCtrl()
         self.Bind(wx.EVT_TREE_ITEM_RIGHT_CLICK, self.handle_dir_right_click, tree)
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.handle_dir_selection_changed, tree)
@@ -419,9 +419,13 @@ class EpLaunchFrame(wx.Frame):
 
         # get the window size and position
         previous_height = self.config.ReadInt("/ActiveWindow/height")
+        previous_height = max(previous_height, self.DefaultSize[1])
         previous_width = self.config.ReadInt("/ActiveWindow/width")
+        previous_width = max(previous_width, self.DefaultSize[0])
         previous_x = self.config.ReadInt("/ActiveWindow/x")
+        previous_x = max(previous_x, 128)
         previous_y = self.config.ReadInt("/ActiveWindow/y")
+        previous_y = max(previous_y, 128)
         self.SetSize(previous_x, previous_y, previous_width, previous_height)
 
         # call this to finalize
