@@ -17,6 +17,7 @@ from eplaunch.utilities.exceptions import EPLaunchDevException, EPLaunchFileExce
 from eplaunch.utilities.filenamemanipulation import FileNameManipulation
 from eplaunch.utilities.version import Version
 from eplaunch.workflows import manager as workflow_manager
+from eplaunch.utilities.locateworkflows import LocateWorkflows
 
 
 # wx callbacks need an event argument even though we usually don't use it, so the next line disables that check
@@ -77,12 +78,18 @@ class EpLaunchFrame(wx.Frame):
         self.tb_idf_editor_id = None
         self.output_menu_item = None
         self.extra_output_menu_item = None
+        self.current_selected_version = None
 
         # this is currently just a single background thread, eventually we'll need to keep a list of them
         self.workflow_worker = None
 
         # get the saved workflow directories
         self.retrieve_workflow_directories_config()
+
+        # find workflow directories
+        self.locate_workflows = LocateWorkflows()
+        self.list_of_directories = self.locate_workflows.find()
+        self.list_of_versions = self.locate_workflows.get_energyplus_versions()
 
         # build out the whole GUI and do other one-time inits here
         self.gui_build()
@@ -95,6 +102,9 @@ class EpLaunchFrame(wx.Frame):
         self.update_control_list_columns()
         self.update_file_lists()
         self.update_workflow_dependent_menu_items()
+
+        # get the saved active directory
+        self.retrieve_current_directory_config()
 
         # create external program runner
         self.external_runner = EPLaunchExternalPrograms()
@@ -323,7 +333,7 @@ class EpLaunchFrame(wx.Frame):
     def run_workflow(self):
         if self.directory_name and self.current_file_name:
             if not self.workflow_worker:
-                self.status_bar.SetLabel('Starting workflow')
+                self.status_bar.SetLabel('Starting workflow', i=0)
                 self.workflow_worker = WorkflowThread(
                     self, self.current_workflow, self.directory_name, self.current_file_name,
                     {'weather': self.current_weather_file}
@@ -332,10 +342,10 @@ class EpLaunchFrame(wx.Frame):
                 self.primary_toolbar.Realize()
                 # self.menu_file_run.Enable(False)
             else:
-                self.status_bar.SetLabel('A workflow is already running, concurrence will come soon...')
+                self.status_bar.SetLabel('A workflow is already running, concurrence will come soon...', i=0)
         else:
             self.status_bar.SetLabel(
-                'Error: Make sure you select a directory and a file'
+                'Error: Make sure you select a directory and a file', i=0
             )
 
     def gui_build(self):
@@ -406,6 +416,13 @@ class EpLaunchFrame(wx.Frame):
         self.SetSizer(main_app_vertical_sizer)
         main_app_vertical_sizer.Fit(self)
 
+        # get the window size and position
+        previous_height = self.config.ReadInt("/ActiveWindow/height")
+        previous_width = self.config.ReadInt("/ActiveWindow/width")
+        previous_x = self.config.ReadInt("/ActiveWindow/x")
+        previous_y = self.config.ReadInt("/ActiveWindow/y")
+        self.SetSize(previous_x, previous_y, previous_width, previous_height)
+
         # call this to finalize
         self.Layout()
 
@@ -432,8 +449,21 @@ class EpLaunchFrame(wx.Frame):
         if not self.workflow_instances:
             self.current_workflow = None
         else:
-            self.current_workflow = self.workflow_instances[0]
-            self.workflow_choice.SetSelection(0)
+            previous_workflow = self.config.Read('/ActiveWindow/SelectedWorkflow')
+            if previous_workflow:
+                found = False
+                for index, workflow_choice_string in enumerate(workflow_choice_strings):
+                    if previous_workflow in workflow_choice_string:
+                        self.current_workflow = self.workflow_instances[index]
+                        self.workflow_choice.SetSelection(index)
+                        found = True
+                        break
+                if not found:
+                    self.current_workflow = self.workflow_instances[0]
+                    self.workflow_choice.SetSelection(0)
+            else:
+                self.current_workflow = self.workflow_instances[0]
+                self.workflow_choice.SetSelection(0)
 
         file_open_bmp = wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN, wx.ART_TOOLBAR, t_size)
         tb_weather = self.primary_toolbar.AddTool(
@@ -483,11 +513,11 @@ class EpLaunchFrame(wx.Frame):
         self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_update_file_version, tb_update_file_version)
 
         remove_bmp = wx.ArtProvider.GetBitmap(wx.ART_MINUS, wx.ART_TOOLBAR, t_size)
-        tb_hide_browser = self.primary_toolbar.AddTool(
-            100, "File Browser", remove_bmp, wx.NullBitmap, wx.ITEM_CHECK, "File Browser",
-            "Long help for 'File Browser'", None
+        tb_hide_all_files_pane = self.primary_toolbar.AddTool(
+            100, "All Files", remove_bmp, wx.NullBitmap, wx.ITEM_CHECK, "All Files",
+            "Long help for 'Show All Files Pane'", None
         )
-        self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_hide_browser, tb_hide_browser)
+        self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_hide_all_files_pane, tb_hide_all_files_pane)
 
         self.primary_toolbar.Realize()
 
@@ -589,12 +619,13 @@ class EpLaunchFrame(wx.Frame):
         self.menu_bar.Append(self.output_menu, "&Output")
 
         options_menu = wx.Menu()
-        option_version_menu = wx.Menu()
-        option_version_menu.Append(711, "EnergyPlus 8.6.0")
-        option_version_menu.Append(712, "EnergyPlus 8.7.0")
-        option_version_menu.Append(713, "EnergyPlus 8.8.0")
-        option_version_menu.Append(714, "EnergyPlus 8.9.0")
-        options_menu.Append(71, "Version", option_version_menu)
+        self.option_version_menu = wx.Menu()
+        for index, version_info in enumerate(self.list_of_versions):
+            version_string = version_info['version']
+            specific_version_menu = self.option_version_menu.Append(710 + index, version_string, kind=wx.ITEM_RADIO)
+            self.Bind(wx.EVT_MENU, self.handle_specific_version_menu, specific_version_menu)
+        options_menu.Append(71, "Version", self.option_version_menu)
+        self.retrieve_selected_version_config()
         options_menu.AppendSeparator()
         menu_option_workflow_directories = options_menu.Append(72, "Workflow Directories...")
         self.Bind(wx.EVT_MENU, self.handle_menu_option_workflow_directories, menu_option_workflow_directories)
@@ -628,30 +659,22 @@ class EpLaunchFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.handle_menu_command_line, self.menu_command_line)
         self.menu_bar.Append(options_menu, "&Settings")
 
-        help_menu = wx.Menu()
-        help_menu.Append(61, "EnergyPlus Getting Started")
-        help_menu.Append(62, "EnergyPlus Input Output Reference")
-        help_menu.Append(63, "EnergyPlus Output Details and Examples")
-        help_menu.Append(64, "EnergyPlus Engineering Reference")
-        help_menu.Append(65, "EnergyPlus Auxiliary Programs")
-        help_menu.Append(66, "Application Guide for Plant Loops")
-        help_menu.Append(67, "Application Guide for EMS")
-        help_menu.Append(68, "Using EnergyPlus for Compliance")
-        help_menu.Append(69, "External Interface Application Guide")
-        help_menu.Append(610, "Tips and Tricks Using EnergyPlus")
-        help_menu.Append(611, "EnergyPlus Acknowledgments")
-        help_menu.AppendSeparator()
-        help_menu.Append(612, "Check for Updates..")
-        help_menu.Append(613, "View Entire Update List on Web..")
-        help_menu.AppendSeparator()
-        help_menu.Append(614, "Using EP-Launch Help")
-        help_menu.Append(615, "About EP-Launch")
-        self.menu_bar.Append(help_menu, "&Help")
+        self.help_menu = wx.Menu()
+        self.help_menu.AppendSeparator()
+        self.help_menu.Append(612, "Check for Updates..")
+        self.help_menu.Append(613, "View Entire Update List on Web..")
+        self.help_menu.AppendSeparator()
+        self.help_menu.Append(614, "Using EP-Launch Help")
+        self.help_menu.Append(615, "About EP-Launch")
+        self.current_selected_version = self.get_current_selected_version()
+        self.current_workflow_directory = self.locate_workflows.get_workflow_directory(self.current_selected_version)
+        self.populate_help_menu()
+        self.menu_bar.Append(self.help_menu, "&Help")
 
         self.SetMenuBar(self.menu_bar)
 
     def gui_build_status_bar(self):
-        self.status_bar = self.CreateStatusBar(1)
+        self.status_bar = self.CreateStatusBar(3)
         # self.status_bar.SetStatusText('Status bar - reports on simulations in progress')
 
     def handle_list_ctrl_selection(self, event):
@@ -694,38 +717,38 @@ class EpLaunchFrame(wx.Frame):
         except Exception as e:  # noqa -- there is *no* telling what all exceptions could occur inside a workflow
             print(e)
             status_message = 'Workflow response was invalid'
-        self.status_bar.SetStatusText(status_message)
+        self.status_bar.SetStatusText(status_message, i=0)
         self.workflow_worker = None
         self.primary_toolbar.EnableTool(self.Identifiers.ToolBarRunButtonID, True)
 
     def handle_menu_file_cancel_selected(self, event):
-        self.status_bar.SetStatusText('Clicked File->CancelSelected')
+        self.status_bar.SetStatusText('Clicked File->CancelSelected', i=0)
 
     def handle_menu_file_cancel_all(self, event):
-        self.status_bar.SetStatusText('Clicked File->CancelAll')
+        self.status_bar.SetStatusText('Clicked File->CancelAll', i=0)
 
     def handle_menu_file_quit(self, event):
         self.close_frame()
-        self.status_bar.SetStatusText('Quitting Program')
+        self.status_bar.SetStatusText('Quitting Program', i=0)
 
     def handle_menu_edit_undo(self, event):
-        self.status_bar.SetStatusText('Clicked Edit->Undo')
+        self.status_bar.SetStatusText('Clicked Edit->Undo', i=0)
 
     def handle_menu_edit_cut(self, event):
-        self.status_bar.SetStatusText('Clicked Edit->Cut')
+        self.status_bar.SetStatusText('Clicked Edit->Cut', i=0)
 
     def handle_menu_edit_copy(self, event):
-        self.status_bar.SetStatusText('Clicked Edit->Copy')
+        self.status_bar.SetStatusText('Clicked Edit->Copy', i=0)
 
     def handle_menu_edit_paste(self, event):
-        self.status_bar.SetStatusText('Clicked Edit->Paste')
+        self.status_bar.SetStatusText('Clicked Edit->Paste', i=0)
 
     def handle_dir_item_selected(self, event):
-        self.status_bar.SetStatusText("Dir-ItemSelected")
+        self.status_bar.SetStatusText("Dir-ItemSelected", i=0)
         # event.Skip()
 
     def handle_dir_right_click(self, event):
-        self.status_bar.SetStatusText("Dir-RightClick")
+        self.status_bar.SetStatusText("Dir-RightClick", i=0)
         # event.Skip()
 
     def handle_dir_selection_changed(self, event):
@@ -738,7 +761,7 @@ class EpLaunchFrame(wx.Frame):
         self.folder_favorites.put_checkmark_on_item(self.directory_name)
         self.current_cache = CacheFile(self.directory_name)
         try:
-            self.status_bar.SetStatusText(self.directory_name)
+            self.status_bar.SetStatusText(self.directory_name, i=0)
             self.update_file_lists()
         except Exception as e:  # noqa -- status_bar and things may not exist during initialization, just ignore
             print(e)
@@ -750,12 +773,19 @@ class EpLaunchFrame(wx.Frame):
         self.update_control_list_columns()
         self.update_file_lists()
         self.update_workflow_dependent_menu_items()
-        self.status_bar.SetStatusText('Choice selection changed to ' + event.String)
+        self.status_bar.SetStatusText('Choice selection changed to ' + event.String, i=0)
 
     def handle_tb_weather(self, event):
-        self.status_bar.SetStatusText('Clicked Weather toolbar item')
+        filename = wx.FileSelector("Select a weather file", wildcard="EnergyPlus Weather File(*.epw)|*.epw",
+                                   flags=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+        self.current_weather_file = filename
+        self.weather_recent.uncheck_all()
+        self.weather_recent.add_recent(filename)
+        self.weather_favorites.uncheck_all()
+        self.weather_favorites.put_checkmark_on_item(filename)
+        self.status_bar.SetStatusText('Weather: ' + self.current_weather_file, i=1)
 
-    def handle_tb_hide_browser(self, event):
+    def handle_tb_hide_all_files_pane(self, event):
         # the following remove the top pane of the right hand splitter
         if self.file_lists_splitter.IsSplit():
             self.file_lists_splitter.Unsplit(toRemove=self.raw_file_list_panel)
@@ -845,6 +875,10 @@ class EpLaunchFrame(wx.Frame):
         self.weather_favorites.save_config()
         self.weather_recent.save_config()
         self.save_workflow_directories_config()
+        self.save_currect_directory_config()
+        self.save_selected_workflow_config()
+        self.save_window_size()
+        self.save_selected_version_config()
 
     def handle_menu_weather_select(self, event):
         filename = wx.FileSelector("Select a weather file", wildcard="EnergyPlus Weather File(*.epw)|*.epw",
@@ -852,6 +886,9 @@ class EpLaunchFrame(wx.Frame):
         self.current_weather_file = filename
         self.weather_recent.uncheck_all()
         self.weather_recent.add_recent(filename)
+        self.weather_favorites.uncheck_all()
+        self.weather_favorites.put_checkmark_on_item(filename)
+        self.status_bar.SetStatusText('Weather: ' + self.current_weather_file, i=1)
 
     def handle_folder_recent_menu_selection(self, event):
         menu_item = self.folder_menu.FindItemById(event.GetId())
@@ -883,6 +920,7 @@ class EpLaunchFrame(wx.Frame):
         self.weather_recent.put_checkmark_on_item(self.current_weather_file)
         self.weather_favorites.uncheck_all()
         self.weather_favorites.put_checkmark_on_item(self.current_weather_file)
+        self.status_bar.SetStatusText('Weather: ' + self.current_weather_file, i=1)
 
     def handle_weather_favorites_menu_selection(self, event):
         menu_item = self.weather_menu.FindItemById(event.GetId())
@@ -892,6 +930,7 @@ class EpLaunchFrame(wx.Frame):
         self.weather_recent.put_checkmark_on_item(self.current_weather_file)
         self.weather_favorites.uncheck_all()
         self.weather_favorites.put_checkmark_on_item(self.current_weather_file)
+        self.status_bar.SetStatusText('Weather: ' + self.current_weather_file, i=1)
 
     def handle_add_current_weather_to_favorites_menu_selection(self, event):
         self.weather_favorites.add_favorite(self.current_weather_file)
@@ -996,3 +1035,79 @@ class EpLaunchFrame(wx.Frame):
         output_file_name = self.file_name_manipulator.replace_extension_with_suffix(full_path_name,
                                                                                     menu_item.GetLabel())
         self.external_runner.run_program_by_extension(output_file_name)
+
+    def save_currect_directory_config(self):
+        if self.directory_name:
+            self.config.Write("/ActiveWindow/CurrentDirectory", self.directory_name)
+        if self.current_file_name:
+            self.config.Write("/ActiveWindow/CurrentFileName", self.current_file_name)
+
+    def retrieve_current_directory_config(self):
+        possible_directory_name = self.config.Read("/ActiveWindow/CurrentDirectory")
+        if possible_directory_name:
+            self.directory_name = possible_directory_name
+            real_path = os.path.abspath(self.directory_name)
+            self.directory_tree_control.SelectPath(real_path, True)
+            self.directory_tree_control.ExpandPath(real_path)
+
+    def save_selected_workflow_config(self):
+        self.config.Write("/ActiveWindow/SelectedWorkflow", self.current_workflow.name())
+
+    def save_window_size(self):
+        current_size = self.GetSize()
+        self.config.WriteInt("/ActiveWindow/height", current_size.height)
+        self.config.WriteInt("/ActiveWindow/width", current_size.width)
+        current_position = self.GetPosition()
+        self.config.WriteInt("/ActiveWindow/x", current_position.x)
+        self.config.WriteInt("/ActiveWindow/y", current_position.y)
+
+    def handle_specific_version_menu(self, event):
+        menu_item = self.option_version_menu.FindItemById(event.GetId())
+        self.current_selected_version = self.get_current_selected_version()
+        self.current_workflow_directory = self.locate_workflows.get_workflow_directory(self.current_selected_version)
+        print('from frame.py - specific version menu item:', menu_item.GetLabel(), menu_item.GetId(), self.current_workflow_directory)
+        self.populate_help_menu()
+
+    def retrieve_selected_version_config(self):
+        possible_selected_version = self.config.Read("/ActiveWindow/CurrentVersion")
+        menu_list = self.option_version_menu.GetMenuItems()
+        for menu_item in menu_list:
+            if menu_item.GetLabel() == possible_selected_version:
+                menu_item.Check(True)
+                break
+
+    def get_current_selected_version(self):
+        self.current_selected_version = None
+        menu_list = self.option_version_menu.GetMenuItems()
+        for menu_item in menu_list:
+            if menu_item.IsChecked():
+                self.current_selected_version = menu_item.GetLabel()
+                break
+        return self.current_selected_version
+
+    def save_selected_version_config(self):
+        self.get_current_selected_version()
+        if self.current_selected_version:
+            self.config.Write("/ActiveWindow/CurrentVersion", self.current_selected_version)
+
+    def populate_help_menu(self):
+        self.remove_old_help_menu_items()
+        energyplus_application_directory, _ = os.path.split(self.current_workflow_directory)
+        energyplus_documentation_directory = os.path.join(energyplus_application_directory, 'Documentation')
+        documentation_files = os.listdir(energyplus_documentation_directory)
+        for index, doc in enumerate(documentation_files):
+            specific_documentation_menu = self.help_menu.Insert(index, 620 + index, doc, helpString=os.path.join(energyplus_documentation_directory, doc))
+            self.Bind(wx.EVT_MENU, self.handle_specific_documentation_menu, specific_documentation_menu)
+
+    def remove_old_help_menu_items(self):
+        menu_list = self.help_menu.GetMenuItems()
+        for menu_item in menu_list:
+            if not menu_item.IsSeparator():
+                self.help_menu.Remove(menu_item)
+            else:
+                break
+
+    def handle_specific_documentation_menu(self, event):
+        menu_item = self.help_menu.FindItemById(event.GetId())
+        documentation_item_full_path = menu_item.GetHelp()
+        self.external_runner.run_program_by_extension(documentation_item_full_path)
