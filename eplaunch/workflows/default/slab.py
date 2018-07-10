@@ -4,7 +4,7 @@ from eplaunch.workflows.base import BaseEPLaunch3Workflow
 class SlabWorkflow(BaseEPLaunch3Workflow):
 
     def name(self):
-        return "Basement"
+        return "Slab"
 
     def description(self):
         return "Run Slab Pre-processor"

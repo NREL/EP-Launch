@@ -74,6 +74,12 @@ def get_workflows(external_workflow_directories):
                     file_type_string += ")"
 
                     description = "%s %s" % (workflow_name, file_type_string)
+
+                    if dir_is_eplus and version_id:
+                        description += ' (E+ v%s)' % version_id
+                    elif built_in_workflow_directory == workflow_directory:
+                        description += ' (builtin)'
+
                     work_flows.append(WorkflowDetail(
                         workflow_instance,
                         description,
