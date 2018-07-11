@@ -90,10 +90,10 @@ class EpLaunchFrame(wx.Frame):
 
         # find workflow directories
         self.locate_workflows = LocateWorkflows()
-        self.list_of_directories = self.locate_workflows.find()
         self.list_of_versions = self.locate_workflows.get_energyplus_versions()
+        self.update_workflow_list()
 
-        # build out the whole GUI and do other one-time inits here
+        # build out the whole GUI and do other one-time init here
         self.gui_build()
         self.reset_raw_list_columns()
 
@@ -211,32 +211,19 @@ class EpLaunchFrame(wx.Frame):
 
     @staticmethod
     def get_files_in_directory(directory_name):
-        debug = False
-        if debug:
-            file_list = [
-                {"name": "5Zone.idf", "size": 128, "modified": "1/2/3"},
-                {"name": "6Zone.idf", "size": 256, "modified": "1/2/3"},
-                {"name": "7Zone.idf", "size": 389, "modified": "1/2/3"},
-                {"name": "8Zone.idf", "size": 495, "modified": "1/2/3"},
-                {"name": "9Zone.what", "size": 529, "modified": "1/2/3"},
-                {"name": "admin.html", "size": 639, "modified": "1/2/3"}
-            ]
-        else:
-            if directory_name:
-                file_list = []
-                files = os.listdir(directory_name)
-                for this_file in files:
-                    if this_file.startswith('.'):
-                        continue
-                    file_path = os.path.join(directory_name, this_file)
-                    if os.path.isdir(file_path):
-                        continue
-                    file_modified_time = os.path.getmtime(file_path)
-                    modified_time_string = datetime.datetime.fromtimestamp(file_modified_time).replace(microsecond=0)
-                    file_size_string = '{0:12,.0f} KB'.format(os.path.getsize(file_path) / 1024)  # size
-                    file_list.append({"name": this_file, "size": file_size_string, "modified": modified_time_string})
-            else:
-                file_list = []
+        file_list = []
+        if directory_name:
+            files = os.listdir(directory_name)
+            for this_file in files:
+                if this_file.startswith('.'):
+                    continue
+                file_path = os.path.join(directory_name, this_file)
+                if os.path.isdir(file_path):
+                    continue
+                file_modified_time = os.path.getmtime(file_path)
+                modified_time_string = datetime.datetime.fromtimestamp(file_modified_time).replace(microsecond=0)
+                file_size_string = '{0:12,.0f} KB'.format(os.path.getsize(file_path) / 1024)  # size
+                file_list.append({"name": this_file, "size": file_size_string, "modified": modified_time_string})
         file_list.sort(key=lambda x: x['name'])
         return file_list
 
@@ -411,6 +398,25 @@ class EpLaunchFrame(wx.Frame):
         # call this to finalize
         self.Layout()
 
+    def refresh_workflow_selection(self, workflow_to_match):
+        if not self.work_flows:
+            self.current_workflow = None
+        else:
+            if workflow_to_match:
+                found = False
+                for index, workflow_choice in enumerate(self.work_flows):
+                    if workflow_to_match == workflow_choice.workflow_instance.name():
+                        self.current_workflow = self.work_flows[index]
+                        self.workflow_choice.SetSelection(index)
+                        found = True
+                        break
+                if not found:
+                    self.current_workflow = self.work_flows[0]
+                    self.workflow_choice.SetSelection(0)
+            else:
+                self.current_workflow = self.work_flows[0]
+                self.workflow_choice.SetSelection(0)
+
     def gui_build_primary_toolbar(self):
 
         self.primary_toolbar = wx.ToolBar(self, style=wx.TB_HORIZONTAL | wx.NO_BORDER | wx.TB_FLAT | wx.TB_TEXT)
@@ -418,7 +424,6 @@ class EpLaunchFrame(wx.Frame):
         t_size = (24, 24)
         self.primary_toolbar.SetToolBitmapSize(t_size)
 
-        self.update_workflow_list()
         choice_strings = [w.description for w in self.work_flows]
         self.workflow_choice = wx.Choice(self.primary_toolbar, choices=choice_strings)
 
@@ -434,24 +439,8 @@ class EpLaunchFrame(wx.Frame):
 
         self.primary_toolbar.Bind(wx.EVT_CHOICE, self.handle_choice_selection_change, self.workflow_choice)
 
-        if not self.work_flows:
-            self.current_workflow = None
-        else:
-            previous_workflow = self.config.Read('/ActiveWindow/SelectedWorkflow')
-            if previous_workflow:
-                found = False
-                for index, workflow_choice_string in enumerate(choice_strings):
-                    if previous_workflow in workflow_choice_string:
-                        self.current_workflow = self.work_flows[index]
-                        self.workflow_choice.SetSelection(index)
-                        found = True
-                        break
-                if not found:
-                    self.current_workflow = self.work_flows[0]
-                    self.workflow_choice.SetSelection(0)
-            else:
-                self.current_workflow = self.work_flows[0]
-                self.workflow_choice.SetSelection(0)
+        previous_workflow = self.config.Read('/ActiveWindow/SelectedWorkflow', defaultVal='')
+        self.refresh_workflow_selection(previous_workflow)
 
         file_open_bmp = wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN, wx.ART_TOOLBAR, t_size)
         tb_weather = self.primary_toolbar.AddTool(
