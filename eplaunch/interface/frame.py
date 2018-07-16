@@ -18,6 +18,7 @@ from eplaunch.utilities.filenamemanipulation import FileNameManipulation
 from eplaunch.utilities.version import Version
 from eplaunch.workflows import manager as workflow_manager
 from eplaunch.utilities.locateworkflows import LocateWorkflows
+from eplaunch.utilities.crossplatform import Platform
 
 
 # wx callbacks need an event argument even though we usually don't use it, so the next line disables that check
@@ -1107,5 +1108,12 @@ class EpLaunchFrame(wx.Frame):
         self.external_runner.run_program_by_extension(documentation_item_full_path)
 
     def handle_tb_explorer(self, event):
-        print("explorer button")
-        pass
+        current_platform = Platform.get_current_platform()
+        if current_platform == Platform.WINDOWS:  # pragma: no cover
+            os.system('start {}'.format(self.directory_name))
+        elif current_platform == Platform.LINUX:
+            os.system('xdg-open "{}"'.format(self.directory_name))
+        elif current_platform == Platform.MAC:  # pragma: no cover
+            os.system('open "{}"'.format(self.directory_name))
+        else:
+            pass
