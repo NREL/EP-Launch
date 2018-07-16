@@ -495,9 +495,10 @@ class EpLaunchFrame(wx.Frame):
         self.primary_toolbar.AddSeparator()
 
         folder_bmp = wx.ArtProvider.GetBitmap(wx.ART_FOLDER, wx.ART_TOOLBAR, t_size)
-        self.primary_toolbar.AddTool(
+        tb_explorer = self.primary_toolbar.AddTool(
             80, "Explorer", folder_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Explorer", "Long help for 'Explorer'", None
         )
+        self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_explorer, tb_explorer)
 
         up_bmp = wx.ArtProvider.GetBitmap(wx.ART_GO_UP, wx.ART_TOOLBAR, t_size)
         tb_update_file_version = self.primary_toolbar.AddTool(
@@ -1104,3 +1105,7 @@ class EpLaunchFrame(wx.Frame):
         menu_item = self.help_menu.FindItemById(event.GetId())
         documentation_item_full_path = menu_item.GetHelp()
         self.external_runner.run_program_by_extension(documentation_item_full_path)
+
+    def handle_tb_explorer(self, event):
+        print("explorer button")
+        pass
