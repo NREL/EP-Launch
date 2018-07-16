@@ -332,7 +332,7 @@ class EpLaunchFrame(wx.Frame):
     def run_workflow(self):
         if self.directory_name and self.current_file_name:
             if not self.workflow_worker:
-                self.status_bar.SetLabel('Starting workflow', i=0)
+                self.status_bar.SetStatusText('Starting workflow', i=0)
                 self.workflow_worker = WorkflowThread(
                     self, self.current_workflow, self.directory_name, self.current_file_name,
                     {'weather': self.current_weather_file}
@@ -341,9 +341,9 @@ class EpLaunchFrame(wx.Frame):
                 self.primary_toolbar.Realize()
                 # self.menu_file_run.Enable(False)
             else:
-                self.status_bar.SetLabel('A workflow is already running, concurrence will come soon...', i=0)
+                self.status_bar.SetStatusText('A workflow is already running, concurrence will come soon...', i=0)
         else:
-            self.status_bar.SetLabel(
+            self.status_bar.SetStatusText(
                 'Error: Make sure you select a directory and a file', i=0
             )
 
