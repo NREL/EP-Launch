@@ -1116,4 +1116,4 @@ class EpLaunchFrame(wx.Frame):
         elif current_platform == Platform.MAC:  # pragma: no cover
             os.system('open "{}"'.format(self.directory_name))
         else:
-            pass
+            pass 
