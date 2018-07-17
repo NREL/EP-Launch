@@ -166,6 +166,7 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
         # run E+ and gather (for now fake) data
         process = subprocess.run(
             command_line_args,
+            creationflags=subprocess.CREATE_NEW_CONSOLE,
             cwd=run_directory
         )
         time.sleep(5)
