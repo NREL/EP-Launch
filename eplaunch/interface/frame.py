@@ -18,6 +18,7 @@ from eplaunch.utilities.filenamemanipulation import FileNameManipulation
 from eplaunch.utilities.version import Version
 from eplaunch.workflows import manager as workflow_manager
 from eplaunch.utilities.locateworkflows import LocateWorkflows
+from eplaunch.utilities.transitionversion import TransitionVersion
 
 
 # wx callbacks need an event argument even though we usually don't use it, so the next line disables that check
@@ -983,6 +984,8 @@ class EpLaunchFrame(wx.Frame):
         v = Version()
         is_version_found, version_string, version_number = v.check_energyplus_version(full_path_name)
         print(is_version_found, version_string, version_number)
+        transition_version = TransitionVersion(self.current_workflow_directory)
+
 
     def handle_tb_idf_editor(self, event):
         full_path_name = os.path.join(self.directory_name, self.current_file_name)

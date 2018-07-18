@@ -52,3 +52,18 @@ class Version:
         for part in parts:
             numeric_version = numeric_version * 100 + int(part)
         return numeric_version
+
+    def numeric_version_from_dash_string(self, string_version):
+        # remove leading 'V' if included
+        if string_version[0] == 'V':
+            string_version = string_version[1:]
+        # the rest of the version number should just be separated by periods
+        parts = string_version.split("-")
+        numeric_version = 0
+        parts = parts[:3]
+        # if only a two part version number add a zero.
+        if len(parts) == 2:
+            parts.append("0")
+        for part in parts:
+            numeric_version = numeric_version * 100 + int(part)
+        return numeric_version
