@@ -694,9 +694,9 @@ class EpLaunchFrame(wx.Frame):
                 self.current_cache.add_config(
                     self.current_workflow.name(), self.current_file_name, {'weather': self.current_weather_file}
                 )
+                self.current_cache.write()
                 self.run_workflow()
-            self.current_cache.write()
-            self.update_output_file_status()
+                self.update_output_file_status()
         else:
             if not self.current_weather_file:
                 self.current_weather_file = ''
