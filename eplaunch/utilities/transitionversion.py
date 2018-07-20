@@ -1,4 +1,7 @@
 import os
+import subprocess
+import shutil
+
 from eplaunch.utilities.version import Version
 
 class TransitionVersion(object):
@@ -13,7 +16,7 @@ class TransitionVersion(object):
         energyplus_root_folder, _ = os.path.split(worflow_location)
         preprocess_folder = os.path.join(energyplus_root_folder, 'PreProcess')
         idfversionupdateer_folder = os.path.join(preprocess_folder, 'IDFVersionUpdater')
-        transition_exes = [os.path.abspath(f) for f in os.listdir(idfversionupdateer_folder) if 'Transition-V' in f]
+        transition_exes = [os.path.join(idfversionupdateer_folder, f) for f in os.listdir(idfversionupdateer_folder) if 'Transition-V' in f]
         transition_exes.sort()
         transition_dict = {}
         for transition_exe in transition_exes:
@@ -56,4 +59,71 @@ class TransitionVersion(object):
             return False, 'Updating the IDF file {} that is from version {} is not supported.'.format(path_to_old_file, original_version_string)
 
     def run_single_transition(self, transition_exe_path, file_to_update, old_verson_string):
-        pass
+        file_no_extension, _ = os.path.splitext(file_to_update)
+        run_directory, _ = os.path.split(transition_exe_path)
+        command_line_args = [transition_exe_path, file_to_update]
+        idf_copy_of_old_file_temp = file_to_update + '_tempcopy'
+        # make temporary copy that preserve file date
+        shutil.copy2(file_to_update,idf_copy_of_old_file_temp)
+        # see if rvi file is used
+        orig_rvi_file = file_no_extension + '.rvi'
+        if os.path.exists(orig_rvi_file):
+            rvi_copy_of_old_file_temp = file_no_extension + '.rvi_tempcopy'
+            shutil.copy2(orig_rvi_file,rvi_copy_of_old_file_temp)
+        # see if mvi file is used
+        orig_mvi_file = file_no_extension + '.mvi'
+        if os.path.exists(orig_mvi_file):
+            mvi_copy_of_old_file_temp = file_no_extension + '.mvi_tempcopy'
+            shutil.copy2(orig_mvi_file,mvi_copy_of_old_file_temp)
+        # perform transition
+        process = subprocess.run(
+            command_line_args,
+            creationflags=subprocess.CREATE_NEW_CONSOLE,
+            cwd=run_directory
+        )
+        if process.returncode == 0:
+            print('convertion complete')
+            # delete the extra outputs that are not needed
+            idfnew_path = file_no_extension + '.idfnew'
+            if os.path.exists(idfnew_path):
+                os.remove(idfnew_path)
+                idfold_path = file_no_extension + '.idfold'
+                if os.path.exists(idfold_path):
+                    os.remove(idfold_path)
+                # rename the previously copied file to preserve the old version
+                idf_revised_old_path = file_no_extension + '_' + old_verson_string + '.idf'
+                if os.path.exists(idf_copy_of_old_file_temp):
+                    os.rename(idf_copy_of_old_file_temp, idf_revised_old_path)
+                # work on the rvi update
+                rvinew_path = file_no_extension + '.rvinew'
+                if os.path.exists(rvinew_path):
+                    os.remove(rvinew_path)
+                rviold_path = file_no_extension + '.rviold'
+                if os.path.exists(rviold_path):
+                    os.remove(rviold_path)
+                rvi_revised_old_path = file_no_extension + '_' + old_verson_string + '.rvi'
+                if os.path.exists(orig_rvi_file):
+                    os.rename(rvi_copy_of_old_file_temp, rvi_revised_old_path)
+                # work on the rvi update
+                mvinew_path = file_no_extension + '.mvinew'
+                if os.path.exists(mvinew_path):
+                    os.remove(mvinew_path)
+                mviold_path = file_no_extension + '.mviold'
+                if os.path.exists(mviold_path):
+                    os.remove(mviold_path)
+                mvi_revised_old_path = file_no_extension + '_' + old_verson_string + '.mvi'
+                if os.path.exists(orig_mvi_file):
+                    os.rename(mvi_copy_of_old_file_temp, mvi_revised_old_path)
+                # process any error file
+                vcperr_file = file_no_extension + '.vcperr'
+                if os.path.exists(vcperr_file):
+                    vcperr_revised_file = file_no_extension + '_' + old_verson_string + '.vcperr'
+                    os.rename(vcperr_file, vcperr_revised_file)
+                return True
+            else:
+                print('convertion problem-2', transition_exe_path, file_to_update)
+                return False
+        else:
+            print('convertion problem-1', transition_exe_path, file_to_update)
+            return False
+
