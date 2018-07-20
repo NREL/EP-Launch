@@ -4,12 +4,14 @@ import platform
 import time
 
 from eplaunch.workflows.base import BaseEPLaunch3Workflow, EPLaunch3WorkflowResponse
+from eplaunch.utilities.version import Version
 
 
 class ColumnNames(object):
     Errors = 'Errors'
     Warnings = 'Warnings'
     Runtime = 'Runtime [s]'
+    Version = 'Version'
 
 
 class EPlusRunManager(object):
@@ -139,56 +141,85 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
         return {"Hey, it's extra": "data"}
 
     def get_interface_columns(self):
-        return [ColumnNames.Errors, ColumnNames.Warnings, ColumnNames.Runtime]
+        return [ColumnNames.Errors, ColumnNames.Warnings, ColumnNames.Runtime, ColumnNames.Version]
 
     def main(self, run_directory, file_name, args):
         full_file_path = os.path.join(run_directory, file_name)
         file_name_no_ext, extension = os.path.splitext(file_name)
 
-        # start with the binary name, obviously
-        command_line_args = [EPlusRunManager.EnergyPlusBinary]
+        v = Version()
+        is_found, current_version, numeric_version = v.check_energyplus_version(full_file_path)
+        if is_found:
+            if numeric_version >= 80900:
 
-        # need to run readvars
-        command_line_args += ['--readvars']
+                # start with the binary name, obviously
+                command_line_args = [EPlusRunManager.EnergyPlusBinary]
 
-        # add some config parameters
-        command_line_args += ['--output-prefix', file_name_no_ext, '--output-suffix', 'C']
+                # need to run readvars
+                command_line_args += ['--readvars']
 
-        # add in simulation control args
-        if 'weather' in args and args['weather']:
-            command_line_args += ['--weather', args['weather']]
+                # add some config parameters
+                command_line_args += ['--output-prefix', file_name_no_ext, '--output-suffix', 'C']
+
+                # add in simulation control args
+                if 'weather' in args and args['weather']:
+                    command_line_args += ['--weather', args['weather']]
+                else:
+                    command_line_args += ['--design-day']
+
+                # and at the very end, add the file to run
+                command_line_args += [file_name]
+
+                # run E+ and gather (for now fake) data
+                process = subprocess.run(
+                    command_line_args,
+                    cwd=run_directory
+                )
+                time.sleep(5)
+                status_code = process.returncode
+
+                if status_code != 0:
+                    return EPLaunch3WorkflowResponse(
+                        success=False,
+                        message="EnergyPlus failed for file: %s!" % full_file_path,
+                        column_data={}
+                    )
+
+                end_file_name = "{0}.end".format(file_name_no_ext)
+                end_file_path = os.path.join(run_directory, end_file_name)
+                success, errors, warnings, runtime = EPlusRunManager.get_end_summary(end_file_path)
+
+                column_data = {ColumnNames.Errors: errors, ColumnNames.Warnings: warnings, ColumnNames.Runtime: runtime, ColumnNames.Version: current_version}
+
+                # now leave
+                return EPLaunch3WorkflowResponse(
+                    success=True,
+                    message="Ran EnergyPlus OK for file: %s!" % file_name,
+                    column_data=column_data
+                )
+            else:
+                errors = "wrong version"
+                column_data = {ColumnNames.Errors: errors, ColumnNames.Warnings: '', ColumnNames.Runtime: 0,
+                               ColumnNames.Version: current_version}
+
+                # now leave
+                return EPLaunch3WorkflowResponse(
+                    success=False,
+                    message="Incorrect Version found {}: {}!".format(current_version, file_name),
+                    column_data=column_data
+                )
+
         else:
-            command_line_args += ['--design-day']
 
-        # and at the very end, add the file to run
-        command_line_args += [file_name]
+            errors = "wrong version"
+            column_data = {ColumnNames.Errors: errors, ColumnNames.Warnings: '', ColumnNames.Runtime: 0, ColumnNames.Version: current_version}
 
-        # run E+ and gather (for now fake) data
-        process = subprocess.run(
-            command_line_args,
-            cwd=run_directory
-        )
-        time.sleep(5)
-        status_code = process.returncode
-
-        if status_code != 0:
+            # now leave
             return EPLaunch3WorkflowResponse(
                 success=False,
-                message="EnergyPlus failed for file: %s!" % full_file_path,
-                column_data={}
+                message="Incorrect Version found {}: {}!".format(current_version, file_name),
+                column_data=column_data
             )
-
-        end_file_name = "{0}.end".format(file_name_no_ext)
-        end_file_path = os.path.join(run_directory, end_file_name)
-        success, errors, warnings, runtime = EPlusRunManager.get_end_summary(end_file_path)
-        column_data = {ColumnNames.Errors: errors, ColumnNames.Warnings: warnings, ColumnNames.Runtime: runtime}
-
-        # now leave
-        return EPLaunch3WorkflowResponse(
-            success=True,
-            message="Ran EnergyPlus OK for file: %s!" % file_name,
-            column_data=column_data
-        )
 
 
 class EnergyPlusWorkflowIP(BaseEPLaunch3Workflow):
@@ -209,36 +240,64 @@ class EnergyPlusWorkflowIP(BaseEPLaunch3Workflow):
         return {"Hey, it's extra": "data"}
 
     def get_interface_columns(self):
-        return [ColumnNames.Errors, ColumnNames.Warnings, ColumnNames.Runtime]
+        return [ColumnNames.Errors, ColumnNames.Warnings, ColumnNames.Runtime, ColumnNames.Version]
 
     def main(self, run_directory, file_name, args):
         full_file_path = os.path.join(run_directory, file_name)
         file_name_no_ext, extension = os.path.splitext(file_name)
 
-        # run E+ and gather (for now fake) data
-        process = subprocess.run(
-            [
-                EPlusRunManager.EnergyPlusBinary, '--output-prefix', file_name_no_ext, '--design-day', file_name
-            ],
-            cwd=run_directory
-        )
-        status_code = process.returncode
+        v = Version()
+        is_found, current_version, numeric_version = v.check_energyplus_version(full_file_path)
+        if is_found:
+            if numeric_version >= 80900:
 
-        if status_code != 0:
+                # run E+ and gather (for now fake) data
+                process = subprocess.run(
+                    [
+                        EPlusRunManager.EnergyPlusBinary, '--output-prefix', file_name_no_ext, '--design-day', file_name
+                    ],
+                    cwd=run_directory
+                )
+                status_code = process.returncode
+
+                if status_code != 0:
+                    return EPLaunch3WorkflowResponse(
+                        success=False,
+                        message="EnergyPlus failed for file: %s!" % full_file_path,
+                        column_data={}
+                    )
+
+                end_file_name = "{0}out.end".format(file_name_no_ext)
+                end_file_path = os.path.join(run_directory, end_file_name)
+                success, errors, warnings, runtime = EPlusRunManager.get_end_summary(end_file_path)
+
+                column_data = {ColumnNames.Errors: errors, ColumnNames.Warnings: warnings, ColumnNames.Runtime: runtime, ColumnNames.Version: current_version}
+
+                # now leave
+                return EPLaunch3WorkflowResponse(
+                    success=True,
+                    message="Ran EnergyPlus OK for file: %s!" % file_name,
+                    column_data=column_data
+                )
+            else:
+                errors = "wrong version"
+                column_data = {ColumnNames.Errors: errors, ColumnNames.Warnings: '', ColumnNames.Runtime: 0,
+                               ColumnNames.Version: current_version}
+
+                # now leave
+                return EPLaunch3WorkflowResponse(
+                    success=False,
+                    message="Incorrect Version found {}: {}!".format(current_version, file_name),
+                    column_data=column_data
+                )
+        else:
+
+            errors = "wrong version"
+            column_data = {ColumnNames.Errors: errors, ColumnNames.Warnings: '', ColumnNames.Runtime: 0, ColumnNames.Version: current_version}
+
+            # now leave
             return EPLaunch3WorkflowResponse(
                 success=False,
-                message="EnergyPlus failed for file: %s!" % full_file_path,
-                column_data={}
+                message="Incorrect Version found {}: {}!".format(current_version, file_name),
+                column_data=column_data
             )
-
-        end_file_name = "{0}out.end".format(file_name_no_ext)
-        end_file_path = os.path.join(run_directory, end_file_name)
-        success, errors, warnings, runtime = EPlusRunManager.get_end_summary(end_file_path)
-        column_data = {ColumnNames.Errors: errors, ColumnNames.Warnings: warnings, ColumnNames.Runtime: runtime}
-
-        # now leave
-        return EPLaunch3WorkflowResponse(
-            success=True,
-            message="Ran EnergyPlus OK for file: %s!" % file_name,
-            column_data=column_data
-        )
