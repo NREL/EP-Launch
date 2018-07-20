@@ -197,6 +197,17 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
                     message="Ran EnergyPlus OK for file: %s!" % file_name,
                     column_data=column_data
                 )
+            else:
+                errors = "wrong version"
+                column_data = {ColumnNames.Errors: errors, ColumnNames.Warnings: '', ColumnNames.Runtime: 0,
+                               ColumnNames.Version: current_version}
+
+                # now leave
+                return EPLaunch3WorkflowResponse(
+                    success=False,
+                    message="Incorrect Version found {}: {}!".format(current_version, file_name),
+                    column_data=column_data
+                )
 
         else:
 
