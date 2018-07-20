@@ -18,6 +18,7 @@ from eplaunch.utilities.filenamemanipulation import FileNameManipulation
 from eplaunch.utilities.version import Version
 from eplaunch.workflows import manager as workflow_manager
 from eplaunch.utilities.locateworkflows import LocateWorkflows
+from eplaunch.utilities.crossplatform import Platform
 from eplaunch.utilities.transitionversion import TransitionVersion
 
 
@@ -496,9 +497,10 @@ class EpLaunchFrame(wx.Frame):
         self.primary_toolbar.AddSeparator()
 
         folder_bmp = wx.ArtProvider.GetBitmap(wx.ART_FOLDER, wx.ART_TOOLBAR, t_size)
-        self.primary_toolbar.AddTool(
+        tb_explorer = self.primary_toolbar.AddTool(
             80, "Explorer", folder_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Explorer", "Long help for 'Explorer'", None
         )
+        self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_explorer, tb_explorer)
 
         up_bmp = wx.ArtProvider.GetBitmap(wx.ART_GO_UP, wx.ART_TOOLBAR, t_size)
         tb_update_file_version = self.primary_toolbar.AddTool(
@@ -1105,3 +1107,14 @@ class EpLaunchFrame(wx.Frame):
         menu_item = self.help_menu.FindItemById(event.GetId())
         documentation_item_full_path = menu_item.GetHelp()
         self.external_runner.run_program_by_extension(documentation_item_full_path)
+
+    def handle_tb_explorer(self, event):
+        current_platform = Platform.get_current_platform()
+        if current_platform == Platform.WINDOWS:  # pragma: no cover
+            os.system('start {}'.format(self.directory_name))
+        elif current_platform == Platform.LINUX:
+            os.system('xdg-open "{}"'.format(self.directory_name))
+        elif current_platform == Platform.MAC:  # pragma: no cover
+            os.system('open "{}"'.format(self.directory_name))
+        else:
+            pass
