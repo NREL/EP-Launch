@@ -200,7 +200,7 @@ class EpLaunchFrame(wx.Frame):
         for count, tb_output_suffix in enumerate(tb_output_suffixes):
             out_tb_button = self.output_toolbar.AddTool(
                 10 + count, tb_output_suffix, norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, tb_output_suffix,
-                "Long help for " + tb_output_suffix,
+                "Open the file ending with " + tb_output_suffix,
                 None
             )
             self.output_toolbar.Bind(wx.EVT_TOOL, self.handle_out_tb_button, out_tb_button)
@@ -467,21 +467,21 @@ class EpLaunchFrame(wx.Frame):
 
         file_open_bmp = wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN, wx.ART_TOOLBAR, t_size)
         tb_weather = self.primary_toolbar.AddTool(
-            10, "Weather", file_open_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Weather", "Long help for 'Weather'", None
+            10, "Weather", file_open_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Weather", "Select a weather file", None
         )
         self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_weather, tb_weather)
 
         forward_bmp = wx.ArtProvider.GetBitmap(wx.ART_GO_FORWARD, wx.ART_TOOLBAR, t_size)
         self.tb_run = self.primary_toolbar.AddTool(
             self.Identifiers.ToolBarRunButtonID, "Run", forward_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Run",
-            "Long help for 'Run'", None
+            "Run the selected workflow on the selected file", None
         )
         self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_run, self.tb_run)
 
-        error_bmp = wx.ArtProvider.GetBitmap(wx.ART_ERROR, wx.ART_TOOLBAR, t_size)
-        self.primary_toolbar.AddTool(
-            30, "Cancel", error_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Cancel", "Long help for 'Cancel'",
-            None)
+        # unimplemented error_bmp = wx.ArtProvider.GetBitmap(wx.ART_ERROR, wx.ART_TOOLBAR, t_size)
+        # unimplemented self.primary_toolbar.AddTool(
+        # unimplemented     30, "Cancel", error_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Cancel", "Long help for 'Cancel'",
+        # unimplemented     None)
 
         self.primary_toolbar.AddSeparator()
 
@@ -489,12 +489,12 @@ class EpLaunchFrame(wx.Frame):
         self.tb_idf_editor_id = 40
         tb_idf_editor = self.primary_toolbar.AddTool(
             self.tb_idf_editor_id, "IDF Editor", exe_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "IDF Editor",
-            "Long help for 'IDF Editor'", None
+            "Open the selected file using the IDF Editor", None
         )
         self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_idf_editor, tb_idf_editor)
 
         tb_text_editor = self.primary_toolbar.AddTool(
-            50, "Text Editor", exe_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Text Editor", "Long help for 'Text Editor'",
+            50, "Text Editor", exe_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Text Editor", "Open the selected file using the text editor",
             None
         )
         self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_text_editor, tb_text_editor)
@@ -503,20 +503,20 @@ class EpLaunchFrame(wx.Frame):
 
         folder_bmp = wx.ArtProvider.GetBitmap(wx.ART_FOLDER, wx.ART_TOOLBAR, t_size)
         tb_explorer = self.primary_toolbar.AddTool(
-            80, "Explorer", folder_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Explorer", "Long help for 'Explorer'", None
+            80, "Explorer", folder_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Explorer", "Open the file explorer in the current directory", None
         )
         self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_explorer, tb_explorer)
 
         up_bmp = wx.ArtProvider.GetBitmap(wx.ART_GO_UP, wx.ART_TOOLBAR, t_size)
         tb_update_file_version = self.primary_toolbar.AddTool(
-            90, "Update", up_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Update", "Long help for 'Update'", None
+            90, "Update", up_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Update", "Update the current file to the latest version", None
         )
         self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_update_file_version, tb_update_file_version)
 
         remove_bmp = wx.ArtProvider.GetBitmap(wx.ART_MINUS, wx.ART_TOOLBAR, t_size)
         tb_hide_all_files_pane = self.primary_toolbar.AddTool(
             100, "All Files", remove_bmp, wx.NullBitmap, wx.ITEM_CHECK, "All Files",
-            "Long help for 'Show All Files Pane'", None
+            "Show the panel with all the files for the directory", None
         )
         self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_hide_all_files_pane, tb_hide_all_files_pane)
 
