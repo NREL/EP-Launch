@@ -418,10 +418,10 @@ class EpLaunchFrame(wx.Frame):
         main_app_vertical_sizer.Fit(self)
 
         # get the window size and position
-        previous_height = self.config.ReadInt("/ActiveWindow/height")
-        previous_width = self.config.ReadInt("/ActiveWindow/width")
-        previous_x = self.config.ReadInt("/ActiveWindow/x")
-        previous_y = self.config.ReadInt("/ActiveWindow/y")
+        previous_height = self.config.ReadInt("/ActiveWindow/height", 600)
+        previous_width = self.config.ReadInt("/ActiveWindow/width", 800)
+        previous_x = self.config.ReadInt("/ActiveWindow/x", 100)
+        previous_y = self.config.ReadInt("/ActiveWindow/y", 100)
         self.SetSize(previous_x, previous_y, previous_width, previous_height)
 
         # call this to finalize
