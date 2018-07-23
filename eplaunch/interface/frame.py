@@ -445,6 +445,11 @@ class EpLaunchFrame(wx.Frame):
             self.current_workflow = None
         else:
             previous_workflow = self.config.Read('/ActiveWindow/SelectedWorkflow')
+            # if blank try to set the workflow to something with the word EnergyPlus in it
+            if not previous_workflow:
+                energyplus_workflows = [x for x in workflow_choice_strings if 'ENERGYPLUS' in x.upper()]
+                if energyplus_workflows:
+                    previous_workflow = energyplus_workflows[0]
             if previous_workflow:
                 found = False
                 for index, workflow_choice_string in enumerate(workflow_choice_strings):
@@ -457,6 +462,7 @@ class EpLaunchFrame(wx.Frame):
                     self.current_workflow = self.workflow_instances[0]
                     self.workflow_choice.SetSelection(0)
             else:
+                # if still no previous work flow identified then just use the first
                 self.current_workflow = self.workflow_instances[0]
                 self.workflow_choice.SetSelection(0)
 
@@ -1040,6 +1046,10 @@ class EpLaunchFrame(wx.Frame):
 
     def retrieve_current_directory_config(self):
         possible_directory_name = self.config.Read("/ActiveWindow/CurrentDirectory")
+        # set the default to the ExampleFiles directory
+        if not possible_directory_name:
+            current_energyplus_directory, _ = os.path.split(self.current_workflow_directory)
+            possible_directory_name = os.path.join(current_energyplus_directory, 'ExampleFiles')
         if possible_directory_name:
             self.directory_name = possible_directory_name
             real_path = os.path.abspath(self.directory_name)
@@ -1067,10 +1077,16 @@ class EpLaunchFrame(wx.Frame):
     def retrieve_selected_version_config(self):
         possible_selected_version = self.config.Read("/ActiveWindow/CurrentVersion")
         menu_list = self.option_version_menu.GetMenuItems()
-        for menu_item in menu_list:
-            if menu_item.GetLabel() == possible_selected_version:
-                menu_item.Check(True)
-                break
+        if not possible_selected_version and len(menu_list) >= 1:
+            count = -1
+            for menu_item in menu_list:
+                count = count + 1
+            menu_list[count].Check(True)
+        else:
+            for menu_item in menu_list:
+                if menu_item.GetLabel() == possible_selected_version:
+                    menu_item.Check(True)
+                    break
 
     def get_current_selected_version(self):
         self.current_selected_version = None
