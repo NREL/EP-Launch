@@ -7,8 +7,8 @@ from gettext import gettext as _
 import wx
 
 from eplaunch.interface.filenamemenus.base import FileNameMenus
-from eplaunch.interface import command_line_dialog
-from eplaunch.interface import viewer_dialog
+# unimplemented from eplaunch.interface import command_line_dialog
+# unimplemented from eplaunch.interface import viewer_dialog
 from eplaunch.interface import workflow_directories_dialog
 from eplaunch.interface.externalprograms import EPLaunchExternalPrograms
 from eplaunch.interface.workflow_processing import event_result, WorkflowThread
@@ -152,7 +152,7 @@ class EpLaunchFrame(wx.Frame):
     def update_workflow_dependent_menu_items(self):
         current_workflow_name = self.current_workflow.name()
         self.menu_output_toolbar.SetText("%s Output Toolbar..." % current_workflow_name)
-        self.menu_command_line.SetText("%s Command Line..." % current_workflow_name)
+        # unimplemented self.menu_command_line.SetText("%s Command Line..." % current_workflow_name)
         self.update_output_menu()
         self.update_output_toolbar()
 
@@ -200,7 +200,7 @@ class EpLaunchFrame(wx.Frame):
         for count, tb_output_suffix in enumerate(tb_output_suffixes):
             out_tb_button = self.output_toolbar.AddTool(
                 10 + count, tb_output_suffix, norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, tb_output_suffix,
-                "Long help for " + tb_output_suffix,
+                "Open the file ending with " + tb_output_suffix,
                 None
             )
             self.output_toolbar.Bind(wx.EVT_TOOL, self.handle_out_tb_button, out_tb_button)
@@ -467,21 +467,21 @@ class EpLaunchFrame(wx.Frame):
 
         file_open_bmp = wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN, wx.ART_TOOLBAR, t_size)
         tb_weather = self.primary_toolbar.AddTool(
-            10, "Weather", file_open_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Weather", "Long help for 'Weather'", None
+            10, "Weather", file_open_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Weather", "Select a weather file", None
         )
         self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_weather, tb_weather)
 
         forward_bmp = wx.ArtProvider.GetBitmap(wx.ART_GO_FORWARD, wx.ART_TOOLBAR, t_size)
         self.tb_run = self.primary_toolbar.AddTool(
             self.Identifiers.ToolBarRunButtonID, "Run", forward_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Run",
-            "Long help for 'Run'", None
+            "Run the selected workflow on the selected file", None
         )
         self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_run, self.tb_run)
 
-        error_bmp = wx.ArtProvider.GetBitmap(wx.ART_ERROR, wx.ART_TOOLBAR, t_size)
-        self.primary_toolbar.AddTool(
-            30, "Cancel", error_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Cancel", "Long help for 'Cancel'",
-            None)
+        # unimplemented error_bmp = wx.ArtProvider.GetBitmap(wx.ART_ERROR, wx.ART_TOOLBAR, t_size)
+        # unimplemented self.primary_toolbar.AddTool(
+        # unimplemented     30, "Cancel", error_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Cancel", "Long help for 'Cancel'",
+        # unimplemented     None)
 
         self.primary_toolbar.AddSeparator()
 
@@ -489,12 +489,12 @@ class EpLaunchFrame(wx.Frame):
         self.tb_idf_editor_id = 40
         tb_idf_editor = self.primary_toolbar.AddTool(
             self.tb_idf_editor_id, "IDF Editor", exe_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "IDF Editor",
-            "Long help for 'IDF Editor'", None
+            "Open the selected file using the IDF Editor", None
         )
         self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_idf_editor, tb_idf_editor)
 
         tb_text_editor = self.primary_toolbar.AddTool(
-            50, "Text Editor", exe_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Text Editor", "Long help for 'Text Editor'",
+            50, "Text Editor", exe_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Text Editor", "Open the selected file using the text editor",
             None
         )
         self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_text_editor, tb_text_editor)
@@ -503,20 +503,20 @@ class EpLaunchFrame(wx.Frame):
 
         folder_bmp = wx.ArtProvider.GetBitmap(wx.ART_FOLDER, wx.ART_TOOLBAR, t_size)
         tb_explorer = self.primary_toolbar.AddTool(
-            80, "Explorer", folder_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Explorer", "Long help for 'Explorer'", None
+            80, "Explorer", folder_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Explorer", "Open the file explorer in the current directory", None
         )
         self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_explorer, tb_explorer)
 
         up_bmp = wx.ArtProvider.GetBitmap(wx.ART_GO_UP, wx.ART_TOOLBAR, t_size)
         tb_update_file_version = self.primary_toolbar.AddTool(
-            90, "Update", up_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Update", "Long help for 'Update'", None
+            90, "Update", up_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Update", "Update the current file to the latest version", None
         )
         self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_update_file_version, tb_update_file_version)
 
         remove_bmp = wx.ArtProvider.GetBitmap(wx.ART_MINUS, wx.ART_TOOLBAR, t_size)
         tb_hide_all_files_pane = self.primary_toolbar.AddTool(
             100, "All Files", remove_bmp, wx.NullBitmap, wx.ITEM_CHECK, "All Files",
-            "Long help for 'Show All Files Pane'", None
+            "Show the panel with all the files for the directory", None
         )
         self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_hide_all_files_pane, tb_hide_all_files_pane)
 
@@ -537,28 +537,22 @@ class EpLaunchFrame(wx.Frame):
         file_menu = wx.Menu()
         self.menu_file_run = file_menu.Append(10, "Run File", "Run currently selected file for selected workflow")
         self.Bind(wx.EVT_MENU, self.handle_menu_file_run, self.menu_file_run)
-        menu_file_cancel_selected = file_menu.Append(11, "Cancel Selected", "Cancel selected files")
-        self.Bind(wx.EVT_MENU, self.handle_menu_file_cancel_selected, menu_file_cancel_selected)
-        menu_file_cancel_all = file_menu.Append(13, "Cancel All", "Cancel all queued files")
-        self.Bind(wx.EVT_MENU, self.handle_menu_file_cancel_all, menu_file_cancel_all)
+        # unimplemented menu_file_cancel_selected = file_menu.Append(11, "Cancel Selected", "Cancel selected files")
+        # unimplemented menu_file_cancel_all = file_menu.Append(13, "Cancel All", "Cancel all queued files")
         menu_file_quit = file_menu.Append(wx.ID_EXIT, 'Quit', 'Quit application')
         self.Bind(wx.EVT_MENU, self.handle_menu_file_quit, menu_file_quit)
         self.menu_bar.Append(file_menu, '&File')
 
-        edit_menu = wx.Menu()
-        menu_edit_undo = edit_menu.Append(20, "Undo")
-        self.Bind(wx.EVT_MENU, self.handle_menu_edit_undo, menu_edit_undo)
-        edit_menu.AppendSeparator()
-        menu_edit_cut = edit_menu.Append(21, "Cut")
-        self.Bind(wx.EVT_MENU, self.handle_menu_edit_cut, menu_edit_cut)
-        menu_edit_copy = edit_menu.Append(22, "Copy")
-        self.Bind(wx.EVT_MENU, self.handle_menu_edit_copy, menu_edit_copy)
-        menu_edit_paste = edit_menu.Append(23, "Paste")
-        self.Bind(wx.EVT_MENU, self.handle_menu_edit_paste, menu_edit_paste)
-        self.menu_bar.Append(edit_menu, "&Edit")
+        # unimplemented edit_menu = wx.Menu()
+        # unimplemented menu_edit_undo = edit_menu.Append(20, "Undo")
+        # unimplemented edit_menu.AppendSeparator()
+        # unimplemented menu_edit_cut = edit_menu.Append(21, "Cut")
+        # unimplemented menu_edit_copy = edit_menu.Append(22, "Copy")
+        # unimplemented menu_edit_paste = edit_menu.Append(23, "Paste")
+        # unimplemented self.menu_bar.Append(edit_menu, "&Edit")
 
         self.folder_menu = wx.Menu()
-        self.folder_menu.Append(301, "Recent", "Recent folders where a workflow as run.")
+        self.folder_menu.Append(301, "Recent", "Recently used folders.")
         self.folder_menu.Append(302, kind=wx.ITEM_SEPARATOR)
         self.folder_menu.Append(303, kind=wx.ITEM_SEPARATOR)
         self.folder_recent = FileNameMenus(self.folder_menu, 302, 303, self.config, "/FolderMenu/Recent")
@@ -566,7 +560,7 @@ class EpLaunchFrame(wx.Frame):
         for menu_item in self.folder_recent.menu_items_for_files:
             self.Bind(wx.EVT_MENU, self.handle_folder_recent_menu_selection, menu_item)
 
-        self.folder_menu.Append(304, "Favorites")
+        self.folder_menu.Append(304, "Favorites", "Favorite folders.")
         self.folder_menu.Append(305, kind=wx.ITEM_SEPARATOR)
         self.folder_menu.Append(306, kind=wx.ITEM_SEPARATOR)
         self.folder_favorites = FileNameMenus(self.folder_menu, 305, 306, self.config, "/FolderMenu/Favorite")
@@ -574,10 +568,10 @@ class EpLaunchFrame(wx.Frame):
         for menu_item in self.folder_favorites.menu_items_for_files:
             self.Bind(wx.EVT_MENU, self.handle_folder_favorites_menu_selection, menu_item)
 
-        add_current_folder_to_favorites = self.folder_menu.Append(307, "Add Current Folder to Favorites")
+        add_current_folder_to_favorites = self.folder_menu.Append(307, "Add Current Folder to Favorites", "Add Current Folder to Favorites")
         self.Bind(wx.EVT_MENU, self.handle_add_current_folder_to_favorites_menu_selection,
                   add_current_folder_to_favorites)
-        remove_current_folder_from_favorites = self.folder_menu.Append(308, "Remove Current Folder from Favorites")
+        remove_current_folder_from_favorites = self.folder_menu.Append(308, "Remove Current Folder from Favorites", "Remove Current Folder from Favorites")
         self.Bind(wx.EVT_MENU, self.handle_remove_current_folder_from_favorites_menu_selection,
                   remove_current_folder_from_favorites)
         self.menu_bar.Append(self.folder_menu, "F&older")
@@ -586,10 +580,10 @@ class EpLaunchFrame(wx.Frame):
         self.menu_bar.Enable(304, False)
 
         self.weather_menu = wx.Menu()
-        menu_weather_select = self.weather_menu.Append(401, "Select..")
+        menu_weather_select = self.weather_menu.Append(401, "Select..", "Select a weather file")
         self.Bind(wx.EVT_MENU, self.handle_menu_weather_select, menu_weather_select)
         self.weather_menu.Append(402, kind=wx.ITEM_SEPARATOR)
-        self.weather_menu.Append(403, "Recent")
+        self.weather_menu.Append(403, "Recent", "Recently selected weather files.")
         self.weather_menu.Append(404, kind=wx.ITEM_SEPARATOR)
         self.weather_menu.Append(405, kind=wx.ITEM_SEPARATOR)
         self.weather_recent = FileNameMenus(self.weather_menu, 404, 405, self.config, "/WeatherMenu/Recent")
@@ -597,13 +591,13 @@ class EpLaunchFrame(wx.Frame):
         for menu_item in self.weather_recent.menu_items_for_files:
             self.Bind(wx.EVT_MENU, self.handle_weather_recent_menu_selection, menu_item)
 
-        self.weather_menu.Append(406, "Favorites")
+        self.weather_menu.Append(406, "Favorites", "Favorite weather files")
         self.weather_menu.Append(407, kind=wx.ITEM_SEPARATOR)
         self.weather_menu.Append(408, kind=wx.ITEM_SEPARATOR)
-        add_current_weather_to_favorites = self.weather_menu.Append(409, "Add Weather to Favorites")
+        add_current_weather_to_favorites = self.weather_menu.Append(409, "Add Weather to Favorites", "Add Weather to Favorites")
         self.Bind(wx.EVT_MENU, self.handle_add_current_weather_to_favorites_menu_selection,
                   add_current_weather_to_favorites)
-        remove_current_weather_from_favorites = self.weather_menu.Append(410, "Remove Weather from Favorites")
+        remove_current_weather_from_favorites = self.weather_menu.Append(410, "Remove Weather from Favorites", "Remove Weather from Favorites")
         self.Bind(wx.EVT_MENU, self.handle_remove_current_weather_from_favorites_menu_selection,
                   remove_current_weather_from_favorites)
         self.weather_favorites = FileNameMenus(self.weather_menu, 407, 408, self.config, "/WeatherMenu/Favorite")
@@ -627,12 +621,12 @@ class EpLaunchFrame(wx.Frame):
             self.Bind(wx.EVT_MENU, self.handle_specific_version_menu, specific_version_menu)
         options_menu.Append(71, "Version", self.option_version_menu)
         self.retrieve_selected_version_config()
-        options_menu.AppendSeparator()
-        menu_option_workflow_directories = options_menu.Append(72, "Workflow Directories...")
+        # unimplemented options_menu.AppendSeparator()
+        menu_option_workflow_directories = options_menu.Append(72, "Workflow Directories...", 'Select directories where workflows are located')
         self.Bind(wx.EVT_MENU, self.handle_menu_option_workflow_directories, menu_option_workflow_directories)
-        menu_workflow_order = options_menu.Append(73, "Workflow Order...")
-        self.Bind(wx.EVT_MENU, self.handle_menu_workflow_order, menu_workflow_order)
-        options_menu.AppendSeparator()
+        # unimplemented menu_workflow_order = options_menu.Append(73, "Workflow Order...")
+        # unimplemented self.Bind(wx.EVT_MENU, self.handle_menu_workflow_order, menu_workflow_order)
+        # unimplemented options_menu.AppendSeparator()
 
         # for now do not allow changing of the number of favorites
         # option_favorite_menu = wx.Menu()
@@ -650,23 +644,24 @@ class EpLaunchFrame(wx.Frame):
         # option_recent_menu.Append(744, "Clear")
         # options_menu.Append(74, "Recent", option_recent_menu)
 
-        options_menu.Append(75, "Remote...")
-        menu_viewers = options_menu.Append(77, "Viewers...")
-        self.Bind(wx.EVT_MENU, self.handle_menu_viewers, menu_viewers)
-        options_menu.AppendSeparator()
+        # unimplemented options_menu.Append(75, "Remote...")
+        # unimplemented menu_viewers = options_menu.Append(77, "Viewers...")
+        # unimplemented self.Bind(wx.EVT_MENU, self.handle_menu_viewers, menu_viewers)
+        # unimplemented options_menu.AppendSeparator()
         self.menu_output_toolbar = options_menu.Append(761, "<workspacename> Output Toolbar...")
         self.Bind(wx.EVT_MENU, self.handle_menu_output_toolbar, self.menu_output_toolbar)
-        self.menu_command_line = options_menu.Append(763, "<workspacename> Command Line...")
-        self.Bind(wx.EVT_MENU, self.handle_menu_command_line, self.menu_command_line)
+        # unimplemented self.menu_command_line = options_menu.Append(763, "<workspacename> Command Line...")
+        # unimplemented self.Bind(wx.EVT_MENU, self.handle_menu_command_line, self.menu_command_line)
         self.menu_bar.Append(options_menu, "&Settings")
 
         self.help_menu = wx.Menu()
+        # unimplemented self.help_menu.AppendSeparator()
+        # unimplemented self.help_menu.Append(612, "Check for Updates..")
+        # unimplemented self.help_menu.Append(613, "View Entire Update List on Web..")
         self.help_menu.AppendSeparator()
-        self.help_menu.Append(612, "Check for Updates..")
-        self.help_menu.Append(613, "View Entire Update List on Web..")
-        self.help_menu.AppendSeparator()
-        self.help_menu.Append(614, "Using EP-Launch Help")
-        self.help_menu.Append(615, "About EP-Launch")
+        # unimplemented self.help_menu.Append(614, "Using EP-Launch Help")
+        menu_help_about = self.help_menu.Append(615, "About EP-Launch")
+        self.Bind(wx.EVT_MENU, self.handle_menu_help_about, menu_help_about)
         self.current_selected_version = self.get_current_selected_version()
         self.current_workflow_directory = self.locate_workflows.get_workflow_directory(self.current_selected_version)
         self.populate_help_menu()
@@ -722,27 +717,9 @@ class EpLaunchFrame(wx.Frame):
         self.workflow_worker = None
         self.primary_toolbar.EnableTool(self.Identifiers.ToolBarRunButtonID, True)
 
-    def handle_menu_file_cancel_selected(self, event):
-        self.status_bar.SetStatusText('Clicked File->CancelSelected', i=0)
-
-    def handle_menu_file_cancel_all(self, event):
-        self.status_bar.SetStatusText('Clicked File->CancelAll', i=0)
-
     def handle_menu_file_quit(self, event):
         self.close_frame()
         self.status_bar.SetStatusText('Quitting Program', i=0)
-
-    def handle_menu_edit_undo(self, event):
-        self.status_bar.SetStatusText('Clicked Edit->Undo', i=0)
-
-    def handle_menu_edit_cut(self, event):
-        self.status_bar.SetStatusText('Clicked Edit->Cut', i=0)
-
-    def handle_menu_edit_copy(self, event):
-        self.status_bar.SetStatusText('Clicked Edit->Copy', i=0)
-
-    def handle_menu_edit_paste(self, event):
-        self.status_bar.SetStatusText('Clicked Edit->Paste', i=0)
 
     def handle_dir_item_selected(self, event):
         self.status_bar.SetStatusText("Dir-ItemSelected", i=0)
@@ -803,40 +780,36 @@ class EpLaunchFrame(wx.Frame):
         # May need to refresh the main UI if something changed in the settings
         workflow_dir_dialog.Destroy()
 
-    def handle_menu_workflow_order(self, event):
+    # unimplemented def handle_menu_workflow_order(self, event):
+    # unimplemented     items = [
+    # unimplemented         "EnergyPlus SI (*.IDF)",
+    # unimplemented         "EnergyPlus IP (*.IDF)",
+    # unimplemented         "AppGPostProcess (*.HTML)",
+    # unimplemented         "CalcSoilSurfTemp",
+    # unimplemented         "CoeffCheck",
+    # unimplemented         "CoeffConv",
+    # unimplemented         "Basement",
+    # unimplemented         "Slab",
+    # unimplemented         "File Operations"
+    # unimplemented          ]
+    # unimplemented     order = [0, 1, 2, 3, 4, 5, 6, 7, 8]
+    # unimplemented     dlg = wx.RearrangeDialog(None,
+    # unimplemented                                  "Arrange the workflows in the order to appear in the toolbar",
+    # unimplemented                                  "Workflow Order",
+    # unimplemented                                  order, items)
+    # unimplemented     if dlg.ShowModal() == wx.ID_OK:
+    # unimplemented         order = dlg.GetOrder()
+    # unimplemented # for n in order:
+    # unimplemented #     if n >= 0:
+    # unimplemented #         wx.LogMessage("Your most preferred item is \"%s\"" % n)
+    # unimplemented #         break
 
-        items = [
-            "EnergyPlus SI (*.IDF)",
-            "EnergyPlus IP (*.IDF)",
-            "AppGPostProcess (*.HTML)",
-            "CalcSoilSurfTemp",
-            "CoeffCheck",
-            "CoeffConv",
-            "Basement",
-            "Slab",
-            "File Operations"
-        ]
-
-        order = [0, 1, 2, 3, 4, 5, 6, 7, 8]
-
-        dlg = wx.RearrangeDialog(None,
-                                 "Arrange the workflows in the order to appear in the toolbar",
-                                 "Workflow Order",
-                                 order, items)
-
-        if dlg.ShowModal() == wx.ID_OK:
-            order = dlg.GetOrder()
-            # for n in order:
-            #     if n >= 0:
-            #         wx.LogMessage("Your most preferred item is \"%s\"" % n)
-            #         break
-
-    def handle_menu_command_line(self, event):
-        cmdline_dialog = command_line_dialog.CommandLineDialog(None)
-        return_value = cmdline_dialog.ShowModal()
-        print(return_value)
-        # May need to refresh the main UI if something changed in the settings
-        cmdline_dialog.Destroy()
+    # unimplemented def handle_menu_command_line(self, event):
+        # unimplemented cmdline_dialog = command_line_dialog.CommandLineDialog(None)
+        # unimplemented return_value = cmdline_dialog.ShowModal()
+        # unimplemented print(return_value)
+        # unimplemented # May need to refresh the main UI if something changed in the settings
+        # unimplemented cmdline_dialog.Destroy()
 
     def handle_menu_output_toolbar(self, event):
 
@@ -863,12 +836,12 @@ class EpLaunchFrame(wx.Frame):
             self.current_workflow.output_toolbar_order = order
             self.update_output_toolbar()
 
-    def handle_menu_viewers(self, event):
-        file_viewer_dialog = viewer_dialog.ViewerDialog(None)
-        return_value = file_viewer_dialog.ShowModal()
-        print(return_value)
-        # May need to refresh the main UI if something changed in the settings
-        file_viewer_dialog.Destroy()
+    # unimplemented def handle_menu_viewers(self, event):
+        # unimplemented file_viewer_dialog = viewer_dialog.ViewerDialog(None)
+        # unimplemented return_value = file_viewer_dialog.ShowModal()
+        # unimplemented print(return_value)
+        # unimplemented # May need to refresh the main UI if something changed in the settings
+        # unimplemented file_viewer_dialog.Destroy()
 
     def save_config(self):
         self.folder_favorites.save_config()
@@ -1134,3 +1107,41 @@ class EpLaunchFrame(wx.Frame):
             os.system('open "{}"'.format(self.directory_name))
         else:
             pass
+
+    def handle_menu_help_about(self, evt):
+        dlg = wx.MessageDialog(self, 'EP-Launch ' +
+                               '\n\nVersion 0.9' +
+                               '\nCopyright (c) 2018, Alliance for Sustainable Energy, LLC  and GARD Analytics, Inc' +
+                               '\n' +
+                               '\nRedistribution and use in source and binary forms, with or without' +
+                               '\nmodification, are permitted provided that the following conditions are met:' +
+                               '\n' +
+                               '\n* Redistributions of source code must retain the above copyright notice, this' +
+                               '\n  list of conditions and the following disclaimer.' +
+                               '\n' +
+                               '\n* Redistributions in binary form must reproduce the above copyright notice,' +
+                               '\nthis list of conditions and the following disclaimer in the documentation' +
+                               '\nand/or other materials provided with the distribution.' +
+                               '\n' +
+                               '\n* The name of the copyright holder(s), any contributors, the United States' +
+                               '\nGovernment, the United States Department of Energy, or any of their employees' +
+                               '\nmay not be used to endorse or promote products derived from this software' +
+                               '\nwithout specific prior written permission from the respective party.' +
+                               '\n' +
+                               '\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER(S) AND ANY CONTRIBUTORS' +
+                               '\n"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,' +
+                               '\nTHE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR ' +
+                               '\nPURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER(S), ANY , ' +
+                               '\nCONTRIBUTORS THE UNITED STATES GOVERNMENT, OR THE UNITED STATES DEPARTMENT  ' +
+                               '\nOF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, ' +
+                               '\nINCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT  ' +
+                               '\nNOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, ' +
+                               '\nDATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY ' +
+                               '\nOF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING ' +
+                               '\nNEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,' +
+                               '\nEVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.',
+                               'About EP-Launch',
+                               wx.OK | wx.ICON_INFORMATION
+                               )
+        dlg.ShowModal()
+        dlg.Destroy()
