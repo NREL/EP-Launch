@@ -15,7 +15,6 @@ from eplaunch.interface.workflow_processing import event_result, WorkflowThread
 from eplaunch.utilities.cache import CacheFile
 from eplaunch.utilities.exceptions import EPLaunchDevException, EPLaunchFileException
 from eplaunch.utilities.filenamemanipulation import FileNameManipulation
-from eplaunch.utilities.version import Version
 from eplaunch.workflows import manager as workflow_manager
 from eplaunch.utilities.locateworkflows import LocateWorkflows
 from eplaunch.utilities.crossplatform import Platform
@@ -991,7 +990,6 @@ class EpLaunchFrame(wx.Frame):
         full_path_name = os.path.join(self.directory_name, self.current_file_name)
         transition_version = TransitionVersion(self.current_workflow_directory)
         transition_version.perform_transition(full_path_name)
-
 
     def handle_tb_idf_editor(self, event):
         full_path_name = os.path.join(self.directory_name, self.current_file_name)

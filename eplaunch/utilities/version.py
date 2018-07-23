@@ -68,6 +68,6 @@ class Version:
             numeric_version = numeric_version * 100 + int(part)
         return numeric_version
 
-    def string_version_from_number(self,version_number):
+    def string_version_from_number(self, version_number):
         # converts a coded number like 50200 (fictional version 5.2) to string with leading zeros 'V050200'
         return 'V' + str(version_number).zfill(6)

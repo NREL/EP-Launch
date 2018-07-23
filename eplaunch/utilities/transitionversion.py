@@ -4,9 +4,10 @@ import shutil
 
 from eplaunch.utilities.version import Version
 
+
 class TransitionVersion(object):
 
-    def __init__(self,worflow_location):
+    def __init__(self, worflow_location):
 
         self.versionclass = Version()
         self.transition_executable_files = self.find_transition_executable_files(worflow_location)
@@ -24,7 +25,7 @@ class TransitionVersion(object):
             transition_dict[start_number] = [end_number, transition_exe]
         return transition_dict
 
-    def get_start_end_version_from_exe(self,exe_file_name):
+    def get_start_end_version_from_exe(self, exe_file_name):
         if '\\' in exe_file_name:
             parts = exe_file_name.split('\\')
             filename = parts[-1]
@@ -40,9 +41,9 @@ class TransitionVersion(object):
             end_number = self.versionclass.numeric_version_from_dash_string(end_version)
             return start_number, end_number
         else:
-            return 0,0
+            return 0, 0
 
-    def perform_transition(self,path_to_old_file):
+    def perform_transition(self, path_to_old_file):
         v = Version()
         is_version_found, original_version_string, original_version_number = v.check_energyplus_version(path_to_old_file)
         print(is_version_found, original_version_string, original_version_number)
@@ -64,17 +65,17 @@ class TransitionVersion(object):
         command_line_args = [transition_exe_path, file_to_update]
         idf_copy_of_old_file_temp = file_to_update + '_tempcopy'
         # make temporary copy that preserve file date
-        shutil.copy2(file_to_update,idf_copy_of_old_file_temp)
+        shutil.copy2(file_to_update, idf_copy_of_old_file_temp)
         # see if rvi file is used
         orig_rvi_file = file_no_extension + '.rvi'
         if os.path.exists(orig_rvi_file):
             rvi_copy_of_old_file_temp = file_no_extension + '.rvi_tempcopy'
-            shutil.copy2(orig_rvi_file,rvi_copy_of_old_file_temp)
+            shutil.copy2(orig_rvi_file, rvi_copy_of_old_file_temp)
         # see if mvi file is used
         orig_mvi_file = file_no_extension + '.mvi'
         if os.path.exists(orig_mvi_file):
             mvi_copy_of_old_file_temp = file_no_extension + '.mvi_tempcopy'
-            shutil.copy2(orig_mvi_file,mvi_copy_of_old_file_temp)
+            shutil.copy2(orig_mvi_file, mvi_copy_of_old_file_temp)
         # perform transition
         process = subprocess.run(
             command_line_args,
@@ -126,4 +127,3 @@ class TransitionVersion(object):
         else:
             print('convertion problem-1', transition_exe_path, file_to_update)
             return False
-
