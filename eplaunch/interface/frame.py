@@ -552,7 +552,7 @@ class EpLaunchFrame(wx.Frame):
         # unimplemented self.menu_bar.Append(edit_menu, "&Edit")
 
         self.folder_menu = wx.Menu()
-        self.folder_menu.Append(301, "Recent", "Recent folders where a workflow as run.")
+        self.folder_menu.Append(301, "Recent", "Recently used folders.")
         self.folder_menu.Append(302, kind=wx.ITEM_SEPARATOR)
         self.folder_menu.Append(303, kind=wx.ITEM_SEPARATOR)
         self.folder_recent = FileNameMenus(self.folder_menu, 302, 303, self.config, "/FolderMenu/Recent")
@@ -560,7 +560,7 @@ class EpLaunchFrame(wx.Frame):
         for menu_item in self.folder_recent.menu_items_for_files:
             self.Bind(wx.EVT_MENU, self.handle_folder_recent_menu_selection, menu_item)
 
-        self.folder_menu.Append(304, "Favorites")
+        self.folder_menu.Append(304, "Favorites", "Favorite folders.")
         self.folder_menu.Append(305, kind=wx.ITEM_SEPARATOR)
         self.folder_menu.Append(306, kind=wx.ITEM_SEPARATOR)
         self.folder_favorites = FileNameMenus(self.folder_menu, 305, 306, self.config, "/FolderMenu/Favorite")
@@ -568,10 +568,10 @@ class EpLaunchFrame(wx.Frame):
         for menu_item in self.folder_favorites.menu_items_for_files:
             self.Bind(wx.EVT_MENU, self.handle_folder_favorites_menu_selection, menu_item)
 
-        add_current_folder_to_favorites = self.folder_menu.Append(307, "Add Current Folder to Favorites")
+        add_current_folder_to_favorites = self.folder_menu.Append(307, "Add Current Folder to Favorites", "Add Current Folder to Favorites")
         self.Bind(wx.EVT_MENU, self.handle_add_current_folder_to_favorites_menu_selection,
                   add_current_folder_to_favorites)
-        remove_current_folder_from_favorites = self.folder_menu.Append(308, "Remove Current Folder from Favorites")
+        remove_current_folder_from_favorites = self.folder_menu.Append(308, "Remove Current Folder from Favorites", "Remove Current Folder from Favorites")
         self.Bind(wx.EVT_MENU, self.handle_remove_current_folder_from_favorites_menu_selection,
                   remove_current_folder_from_favorites)
         self.menu_bar.Append(self.folder_menu, "F&older")
@@ -580,10 +580,10 @@ class EpLaunchFrame(wx.Frame):
         self.menu_bar.Enable(304, False)
 
         self.weather_menu = wx.Menu()
-        menu_weather_select = self.weather_menu.Append(401, "Select..")
+        menu_weather_select = self.weather_menu.Append(401, "Select..", "Select a weather file")
         self.Bind(wx.EVT_MENU, self.handle_menu_weather_select, menu_weather_select)
         self.weather_menu.Append(402, kind=wx.ITEM_SEPARATOR)
-        self.weather_menu.Append(403, "Recent")
+        self.weather_menu.Append(403, "Recent", "Recently selected weather files.")
         self.weather_menu.Append(404, kind=wx.ITEM_SEPARATOR)
         self.weather_menu.Append(405, kind=wx.ITEM_SEPARATOR)
         self.weather_recent = FileNameMenus(self.weather_menu, 404, 405, self.config, "/WeatherMenu/Recent")
@@ -591,13 +591,13 @@ class EpLaunchFrame(wx.Frame):
         for menu_item in self.weather_recent.menu_items_for_files:
             self.Bind(wx.EVT_MENU, self.handle_weather_recent_menu_selection, menu_item)
 
-        self.weather_menu.Append(406, "Favorites")
+        self.weather_menu.Append(406, "Favorites", "Favorite weather files")
         self.weather_menu.Append(407, kind=wx.ITEM_SEPARATOR)
         self.weather_menu.Append(408, kind=wx.ITEM_SEPARATOR)
-        add_current_weather_to_favorites = self.weather_menu.Append(409, "Add Weather to Favorites")
+        add_current_weather_to_favorites = self.weather_menu.Append(409, "Add Weather to Favorites", "Add Weather to Favorites")
         self.Bind(wx.EVT_MENU, self.handle_add_current_weather_to_favorites_menu_selection,
                   add_current_weather_to_favorites)
-        remove_current_weather_from_favorites = self.weather_menu.Append(410, "Remove Weather from Favorites")
+        remove_current_weather_from_favorites = self.weather_menu.Append(410, "Remove Weather from Favorites", "Remove Weather from Favorites")
         self.Bind(wx.EVT_MENU, self.handle_remove_current_weather_from_favorites_menu_selection,
                   remove_current_weather_from_favorites)
         self.weather_favorites = FileNameMenus(self.weather_menu, 407, 408, self.config, "/WeatherMenu/Favorite")
@@ -622,7 +622,7 @@ class EpLaunchFrame(wx.Frame):
         options_menu.Append(71, "Version", self.option_version_menu)
         self.retrieve_selected_version_config()
         # unimplemented options_menu.AppendSeparator()
-        menu_option_workflow_directories = options_menu.Append(72, "Workflow Directories...")
+        menu_option_workflow_directories = options_menu.Append(72, "Workflow Directories...", 'Select directories where workflows are located')
         self.Bind(wx.EVT_MENU, self.handle_menu_option_workflow_directories, menu_option_workflow_directories)
         # unimplemented menu_workflow_order = options_menu.Append(73, "Workflow Order...")
         # unimplemented self.Bind(wx.EVT_MENU, self.handle_menu_workflow_order, menu_workflow_order)
