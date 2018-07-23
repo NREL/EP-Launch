@@ -152,7 +152,7 @@ class EpLaunchFrame(wx.Frame):
     def update_workflow_dependent_menu_items(self):
         current_workflow_name = self.current_workflow.name()
         self.menu_output_toolbar.SetText("%s Output Toolbar..." % current_workflow_name)
-        self.menu_command_line.SetText("%s Command Line..." % current_workflow_name)
+        # unimplemented self.menu_command_line.SetText("%s Command Line..." % current_workflow_name)
         self.update_output_menu()
         self.update_output_toolbar()
 
@@ -537,25 +537,19 @@ class EpLaunchFrame(wx.Frame):
         file_menu = wx.Menu()
         self.menu_file_run = file_menu.Append(10, "Run File", "Run currently selected file for selected workflow")
         self.Bind(wx.EVT_MENU, self.handle_menu_file_run, self.menu_file_run)
-        menu_file_cancel_selected = file_menu.Append(11, "Cancel Selected", "Cancel selected files")
-        self.Bind(wx.EVT_MENU, self.handle_menu_file_cancel_selected, menu_file_cancel_selected)
-        menu_file_cancel_all = file_menu.Append(13, "Cancel All", "Cancel all queued files")
-        self.Bind(wx.EVT_MENU, self.handle_menu_file_cancel_all, menu_file_cancel_all)
+        # unimplemented menu_file_cancel_selected = file_menu.Append(11, "Cancel Selected", "Cancel selected files")
+        # unimplemented menu_file_cancel_all = file_menu.Append(13, "Cancel All", "Cancel all queued files")
         menu_file_quit = file_menu.Append(wx.ID_EXIT, 'Quit', 'Quit application')
         self.Bind(wx.EVT_MENU, self.handle_menu_file_quit, menu_file_quit)
         self.menu_bar.Append(file_menu, '&File')
 
-        edit_menu = wx.Menu()
-        menu_edit_undo = edit_menu.Append(20, "Undo")
-        self.Bind(wx.EVT_MENU, self.handle_menu_edit_undo, menu_edit_undo)
-        edit_menu.AppendSeparator()
-        menu_edit_cut = edit_menu.Append(21, "Cut")
-        self.Bind(wx.EVT_MENU, self.handle_menu_edit_cut, menu_edit_cut)
-        menu_edit_copy = edit_menu.Append(22, "Copy")
-        self.Bind(wx.EVT_MENU, self.handle_menu_edit_copy, menu_edit_copy)
-        menu_edit_paste = edit_menu.Append(23, "Paste")
-        self.Bind(wx.EVT_MENU, self.handle_menu_edit_paste, menu_edit_paste)
-        self.menu_bar.Append(edit_menu, "&Edit")
+        # unimplemented edit_menu = wx.Menu()
+        # unimplemented menu_edit_undo = edit_menu.Append(20, "Undo")
+        # unimplemented edit_menu.AppendSeparator()
+        # unimplemented menu_edit_cut = edit_menu.Append(21, "Cut")
+        # unimplemented menu_edit_copy = edit_menu.Append(22, "Copy")
+        # unimplemented menu_edit_paste = edit_menu.Append(23, "Paste")
+        # unimplemented self.menu_bar.Append(edit_menu, "&Edit")
 
         self.folder_menu = wx.Menu()
         self.folder_menu.Append(301, "Recent", "Recent folders where a workflow as run.")
@@ -627,12 +621,12 @@ class EpLaunchFrame(wx.Frame):
             self.Bind(wx.EVT_MENU, self.handle_specific_version_menu, specific_version_menu)
         options_menu.Append(71, "Version", self.option_version_menu)
         self.retrieve_selected_version_config()
-        options_menu.AppendSeparator()
+        # unimplemented options_menu.AppendSeparator()
         menu_option_workflow_directories = options_menu.Append(72, "Workflow Directories...")
         self.Bind(wx.EVT_MENU, self.handle_menu_option_workflow_directories, menu_option_workflow_directories)
-        menu_workflow_order = options_menu.Append(73, "Workflow Order...")
-        self.Bind(wx.EVT_MENU, self.handle_menu_workflow_order, menu_workflow_order)
-        options_menu.AppendSeparator()
+        # unimplemented menu_workflow_order = options_menu.Append(73, "Workflow Order...")
+        # unimplemented self.Bind(wx.EVT_MENU, self.handle_menu_workflow_order, menu_workflow_order)
+        # unimplemented options_menu.AppendSeparator()
 
         # for now do not allow changing of the number of favorites
         # option_favorite_menu = wx.Menu()
@@ -650,22 +644,22 @@ class EpLaunchFrame(wx.Frame):
         # option_recent_menu.Append(744, "Clear")
         # options_menu.Append(74, "Recent", option_recent_menu)
 
-        options_menu.Append(75, "Remote...")
-        menu_viewers = options_menu.Append(77, "Viewers...")
-        self.Bind(wx.EVT_MENU, self.handle_menu_viewers, menu_viewers)
-        options_menu.AppendSeparator()
+        # unimplemented options_menu.Append(75, "Remote...")
+        # unimplemented menu_viewers = options_menu.Append(77, "Viewers...")
+        # unimplemented self.Bind(wx.EVT_MENU, self.handle_menu_viewers, menu_viewers)
+        # unimplemented options_menu.AppendSeparator()
         self.menu_output_toolbar = options_menu.Append(761, "<workspacename> Output Toolbar...")
         self.Bind(wx.EVT_MENU, self.handle_menu_output_toolbar, self.menu_output_toolbar)
-        self.menu_command_line = options_menu.Append(763, "<workspacename> Command Line...")
-        self.Bind(wx.EVT_MENU, self.handle_menu_command_line, self.menu_command_line)
+        # unimplemented self.menu_command_line = options_menu.Append(763, "<workspacename> Command Line...")
+        # unimplemented self.Bind(wx.EVT_MENU, self.handle_menu_command_line, self.menu_command_line)
         self.menu_bar.Append(options_menu, "&Settings")
 
         self.help_menu = wx.Menu()
+        # unimplemented self.help_menu.AppendSeparator()
+        # unimplemented self.help_menu.Append(612, "Check for Updates..")
+        # unimplemented self.help_menu.Append(613, "View Entire Update List on Web..")
         self.help_menu.AppendSeparator()
-        self.help_menu.Append(612, "Check for Updates..")
-        self.help_menu.Append(613, "View Entire Update List on Web..")
-        self.help_menu.AppendSeparator()
-        self.help_menu.Append(614, "Using EP-Launch Help")
+        # unimplemented self.help_menu.Append(614, "Using EP-Launch Help")
         self.help_menu.Append(615, "About EP-Launch")
         self.current_selected_version = self.get_current_selected_version()
         self.current_workflow_directory = self.locate_workflows.get_workflow_directory(self.current_selected_version)
@@ -722,27 +716,9 @@ class EpLaunchFrame(wx.Frame):
         self.workflow_worker = None
         self.primary_toolbar.EnableTool(self.Identifiers.ToolBarRunButtonID, True)
 
-    def handle_menu_file_cancel_selected(self, event):
-        self.status_bar.SetStatusText('Clicked File->CancelSelected', i=0)
-
-    def handle_menu_file_cancel_all(self, event):
-        self.status_bar.SetStatusText('Clicked File->CancelAll', i=0)
-
     def handle_menu_file_quit(self, event):
         self.close_frame()
         self.status_bar.SetStatusText('Quitting Program', i=0)
-
-    def handle_menu_edit_undo(self, event):
-        self.status_bar.SetStatusText('Clicked Edit->Undo', i=0)
-
-    def handle_menu_edit_cut(self, event):
-        self.status_bar.SetStatusText('Clicked Edit->Cut', i=0)
-
-    def handle_menu_edit_copy(self, event):
-        self.status_bar.SetStatusText('Clicked Edit->Copy', i=0)
-
-    def handle_menu_edit_paste(self, event):
-        self.status_bar.SetStatusText('Clicked Edit->Paste', i=0)
 
     def handle_dir_item_selected(self, event):
         self.status_bar.SetStatusText("Dir-ItemSelected", i=0)
@@ -803,40 +779,36 @@ class EpLaunchFrame(wx.Frame):
         # May need to refresh the main UI if something changed in the settings
         workflow_dir_dialog.Destroy()
 
-    def handle_menu_workflow_order(self, event):
+    # unimplemented def handle_menu_workflow_order(self, event):
+    # unimplemented     items = [
+    # unimplemented         "EnergyPlus SI (*.IDF)",
+    # unimplemented         "EnergyPlus IP (*.IDF)",
+    # unimplemented         "AppGPostProcess (*.HTML)",
+    # unimplemented         "CalcSoilSurfTemp",
+    # unimplemented         "CoeffCheck",
+    # unimplemented         "CoeffConv",
+    # unimplemented         "Basement",
+    # unimplemented         "Slab",
+    # unimplemented         "File Operations"
+    # unimplemented          ]
+    # unimplemented     order = [0, 1, 2, 3, 4, 5, 6, 7, 8]
+    # unimplemented     dlg = wx.RearrangeDialog(None,
+    # unimplemented                                  "Arrange the workflows in the order to appear in the toolbar",
+    # unimplemented                                  "Workflow Order",
+    # unimplemented                                  order, items)
+    # unimplemented     if dlg.ShowModal() == wx.ID_OK:
+    # unimplemented         order = dlg.GetOrder()
+    # unimplemented # for n in order:
+    # unimplemented #     if n >= 0:
+    # unimplemented #         wx.LogMessage("Your most preferred item is \"%s\"" % n)
+    # unimplemented #         break
 
-        items = [
-            "EnergyPlus SI (*.IDF)",
-            "EnergyPlus IP (*.IDF)",
-            "AppGPostProcess (*.HTML)",
-            "CalcSoilSurfTemp",
-            "CoeffCheck",
-            "CoeffConv",
-            "Basement",
-            "Slab",
-            "File Operations"
-        ]
-
-        order = [0, 1, 2, 3, 4, 5, 6, 7, 8]
-
-        dlg = wx.RearrangeDialog(None,
-                                 "Arrange the workflows in the order to appear in the toolbar",
-                                 "Workflow Order",
-                                 order, items)
-
-        if dlg.ShowModal() == wx.ID_OK:
-            order = dlg.GetOrder()
-            # for n in order:
-            #     if n >= 0:
-            #         wx.LogMessage("Your most preferred item is \"%s\"" % n)
-            #         break
-
-    def handle_menu_command_line(self, event):
-        cmdline_dialog = command_line_dialog.CommandLineDialog(None)
-        return_value = cmdline_dialog.ShowModal()
-        print(return_value)
-        # May need to refresh the main UI if something changed in the settings
-        cmdline_dialog.Destroy()
+    # unimplemented def handle_menu_command_line(self, event):
+        # unimplemented cmdline_dialog = command_line_dialog.CommandLineDialog(None)
+        # unimplemented return_value = cmdline_dialog.ShowModal()
+        # unimplemented print(return_value)
+        # unimplemented # May need to refresh the main UI if something changed in the settings
+        # unimplemented cmdline_dialog.Destroy()
 
     def handle_menu_output_toolbar(self, event):
 
@@ -863,12 +835,12 @@ class EpLaunchFrame(wx.Frame):
             self.current_workflow.output_toolbar_order = order
             self.update_output_toolbar()
 
-    def handle_menu_viewers(self, event):
-        file_viewer_dialog = viewer_dialog.ViewerDialog(None)
-        return_value = file_viewer_dialog.ShowModal()
-        print(return_value)
-        # May need to refresh the main UI if something changed in the settings
-        file_viewer_dialog.Destroy()
+    # unimplemented def handle_menu_viewers(self, event):
+        # unimplemented file_viewer_dialog = viewer_dialog.ViewerDialog(None)
+        # unimplemented return_value = file_viewer_dialog.ShowModal()
+        # unimplemented print(return_value)
+        # unimplemented # May need to refresh the main UI if something changed in the settings
+        # unimplemented file_viewer_dialog.Destroy()
 
     def save_config(self):
         self.folder_favorites.save_config()
