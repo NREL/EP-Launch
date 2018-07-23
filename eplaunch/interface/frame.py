@@ -15,7 +15,6 @@ from eplaunch.interface.workflow_processing import event_result, WorkflowThread
 from eplaunch.utilities.cache import CacheFile
 from eplaunch.utilities.exceptions import EPLaunchDevException, EPLaunchFileException
 from eplaunch.utilities.filenamemanipulation import FileNameManipulation
-from eplaunch.utilities.version import Version
 from eplaunch.workflows import manager as workflow_manager
 from eplaunch.utilities.locateworkflows import LocateWorkflows
 from eplaunch.utilities.crossplatform import Platform
@@ -418,10 +417,10 @@ class EpLaunchFrame(wx.Frame):
         main_app_vertical_sizer.Fit(self)
 
         # get the window size and position
-        previous_height = self.config.ReadInt("/ActiveWindow/height")
-        previous_width = self.config.ReadInt("/ActiveWindow/width")
-        previous_x = self.config.ReadInt("/ActiveWindow/x")
-        previous_y = self.config.ReadInt("/ActiveWindow/y")
+        previous_height = self.config.ReadInt("/ActiveWindow/height", 600)
+        previous_width = self.config.ReadInt("/ActiveWindow/width", 800)
+        previous_x = self.config.ReadInt("/ActiveWindow/x", 100)
+        previous_y = self.config.ReadInt("/ActiveWindow/y", 100)
         self.SetSize(previous_x, previous_y, previous_width, previous_height)
 
         # call this to finalize
@@ -445,6 +444,11 @@ class EpLaunchFrame(wx.Frame):
             self.current_workflow = None
         else:
             previous_workflow = self.config.Read('/ActiveWindow/SelectedWorkflow')
+            # if blank try to set the workflow to something with the word EnergyPlus in it
+            if not previous_workflow:
+                energyplus_workflows = [x for x in workflow_choice_strings if 'ENERGYPLUS' in x.upper()]
+                if energyplus_workflows:
+                    previous_workflow = energyplus_workflows[0]
             if previous_workflow:
                 found = False
                 for index, workflow_choice_string in enumerate(workflow_choice_strings):
@@ -457,6 +461,7 @@ class EpLaunchFrame(wx.Frame):
                     self.current_workflow = self.workflow_instances[0]
                     self.workflow_choice.SetSelection(0)
             else:
+                # if still no previous work flow identified then just use the first
                 self.current_workflow = self.workflow_instances[0]
                 self.workflow_choice.SetSelection(0)
 
@@ -986,7 +991,6 @@ class EpLaunchFrame(wx.Frame):
         transition_version = TransitionVersion(self.current_workflow_directory)
         transition_version.perform_transition(full_path_name)
 
-
     def handle_tb_idf_editor(self, event):
         full_path_name = os.path.join(self.directory_name, self.current_file_name)
         self.external_runner.run_idf_editor(full_path_name)
@@ -1040,6 +1044,10 @@ class EpLaunchFrame(wx.Frame):
 
     def retrieve_current_directory_config(self):
         possible_directory_name = self.config.Read("/ActiveWindow/CurrentDirectory")
+        # set the default to the ExampleFiles directory
+        if not possible_directory_name:
+            current_energyplus_directory, _ = os.path.split(self.current_workflow_directory)
+            possible_directory_name = os.path.join(current_energyplus_directory, 'ExampleFiles')
         if possible_directory_name:
             self.directory_name = possible_directory_name
             real_path = os.path.abspath(self.directory_name)
@@ -1067,10 +1075,16 @@ class EpLaunchFrame(wx.Frame):
     def retrieve_selected_version_config(self):
         possible_selected_version = self.config.Read("/ActiveWindow/CurrentVersion")
         menu_list = self.option_version_menu.GetMenuItems()
-        for menu_item in menu_list:
-            if menu_item.GetLabel() == possible_selected_version:
-                menu_item.Check(True)
-                break
+        if not possible_selected_version and len(menu_list) >= 1:
+            count = -1
+            for menu_item in menu_list:
+                count = count + 1
+            menu_list[count].Check(True)
+        else:
+            for menu_item in menu_list:
+                if menu_item.GetLabel() == possible_selected_version:
+                    menu_item.Check(True)
+                    break
 
     def get_current_selected_version(self):
         self.current_selected_version = None
@@ -1088,12 +1102,14 @@ class EpLaunchFrame(wx.Frame):
 
     def populate_help_menu(self):
         self.remove_old_help_menu_items()
-        energyplus_application_directory, _ = os.path.split(self.current_workflow_directory)
-        energyplus_documentation_directory = os.path.join(energyplus_application_directory, 'Documentation')
-        documentation_files = os.listdir(energyplus_documentation_directory)
-        for index, doc in enumerate(documentation_files):
-            specific_documentation_menu = self.help_menu.Insert(index, 620 + index, doc, helpString=os.path.join(energyplus_documentation_directory, doc))
-            self.Bind(wx.EVT_MENU, self.handle_specific_documentation_menu, specific_documentation_menu)
+        if self.current_workflow_directory:
+            energyplus_application_directory, _ = os.path.split(self.current_workflow_directory)
+            energyplus_documentation_directory = os.path.join(energyplus_application_directory, 'Documentation')
+            if os.path.exists(energyplus_documentation_directory):
+                documentation_files = os.listdir(energyplus_documentation_directory)
+                for index, doc in enumerate(documentation_files):
+                    specific_documentation_menu = self.help_menu.Insert(index, 620 + index, doc, helpString=os.path.join(energyplus_documentation_directory, doc))
+                    self.Bind(wx.EVT_MENU, self.handle_specific_documentation_menu, specific_documentation_menu)
 
     def remove_old_help_menu_items(self):
         menu_list = self.help_menu.GetMenuItems()
