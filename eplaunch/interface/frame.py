@@ -7,8 +7,8 @@ from gettext import gettext as _
 import wx
 
 from eplaunch.interface.filenamemenus.base import FileNameMenus
-from eplaunch.interface import command_line_dialog
-from eplaunch.interface import viewer_dialog
+# unimplemented from eplaunch.interface import command_line_dialog
+# unimplemented from eplaunch.interface import viewer_dialog
 from eplaunch.interface import workflow_directories_dialog
 from eplaunch.interface.externalprograms import EPLaunchExternalPrograms
 from eplaunch.interface.workflow_processing import event_result, WorkflowThread
@@ -660,7 +660,8 @@ class EpLaunchFrame(wx.Frame):
         # unimplemented self.help_menu.Append(613, "View Entire Update List on Web..")
         self.help_menu.AppendSeparator()
         # unimplemented self.help_menu.Append(614, "Using EP-Launch Help")
-        self.help_menu.Append(615, "About EP-Launch")
+        menu_help_about = self.help_menu.Append(615, "About EP-Launch")
+        self.Bind(wx.EVT_MENU, self.handle_menu_help_about, menu_help_about)
         self.current_selected_version = self.get_current_selected_version()
         self.current_workflow_directory = self.locate_workflows.get_workflow_directory(self.current_selected_version)
         self.populate_help_menu()
@@ -1106,3 +1107,41 @@ class EpLaunchFrame(wx.Frame):
             os.system('open "{}"'.format(self.directory_name))
         else:
             pass
+
+    def handle_menu_help_about(self, evt):
+        dlg = wx.MessageDialog(self, 'EP-Launch ' +
+                               '\n\nVersion 0.9' +
+                               '\nCopyright (c) 2018, Alliance for Sustainable Energy, LLC  and GARD Analytics, Inc' +
+                               '\n' +
+                               '\nRedistribution and use in source and binary forms, with or without' +
+                               '\nmodification, are permitted provided that the following conditions are met:' +
+                               '\n' +
+                               '\n* Redistributions of source code must retain the above copyright notice, this' +
+                               '\n  list of conditions and the following disclaimer.' +
+                               '\n' +
+                               '\n* Redistributions in binary form must reproduce the above copyright notice,' +
+                               '\nthis list of conditions and the following disclaimer in the documentation' +
+                               '\nand/or other materials provided with the distribution.' +
+                               '\n' +
+                               '\n* The name of the copyright holder(s), any contributors, the United States' +
+                               '\nGovernment, the United States Department of Energy, or any of their employees' +
+                               '\nmay not be used to endorse or promote products derived from this software' +
+                               '\nwithout specific prior written permission from the respective party.' +
+                               '\n' +
+                               '\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER(S) AND ANY CONTRIBUTORS' +
+                               '\n"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,' +
+                               '\nTHE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR ' +
+                               '\nPURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER(S), ANY , ' +
+                               '\nCONTRIBUTORS THE UNITED STATES GOVERNMENT, OR THE UNITED STATES DEPARTMENT  ' +
+                               '\nOF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, ' +
+                               '\nINCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT  ' +
+                               '\nNOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, ' +
+                               '\nDATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY ' +
+                               '\nOF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING ' +
+                               '\nNEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,' +
+                               '\nEVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.',
+                               'About EP-Launch',
+                               wx.OK | wx.ICON_INFORMATION
+                               )
+        dlg.ShowModal()
+        dlg.Destroy()
