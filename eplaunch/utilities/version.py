@@ -1,6 +1,25 @@
+import os
+import json
+
+
 class Version:
 
     def check_energyplus_version(self, file_path):
+        _, extension = os.path.splitext(file_path)
+        extension = extension.upper()
+        if extension == '.IDF':
+            found, string_version, number_version = self.check_idf_imf_energyplus_version(file_path)
+        elif extension == '.IMF':
+            found, string_version, number_version = self.check_idf_imf_energyplus_version(file_path)
+        elif extension == '.EPJSON':
+            found, string_version, number_version = self.check_json_energyplus_version(file_path)
+        else:
+            found = False
+            string_version = ''
+            number_version = 0
+        return found, string_version, number_version
+
+    def check_idf_imf_energyplus_version(self, file_path):
         found = False
         current_version = ''
         with open(file_path, "r") as f:
@@ -71,3 +90,15 @@ class Version:
     def string_version_from_number(self, version_number):
         # converts a coded number like 50200 (fictional version 5.2) to string with leading zeros 'V050200'
         return 'V' + str(version_number).zfill(6)
+
+    def check_json_energyplus_version(self, file_path):
+        with open(file_path, "r") as readfile:
+            data = json.load(readfile)
+        version_dict = data['Version']
+        if version_dict:
+            field_dict = version_dict['Version 1']
+            if field_dict:
+                current_version = field_dict['version_identifier']
+                if current_version:
+                    return True, current_version, self.numeric_version_from_string(current_version)
+        return False, '', 0
