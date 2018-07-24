@@ -3,7 +3,7 @@ import shutil
 import subprocess
 import platform
 
-from eplaunch.workflows.base import BaseEPLaunch3Workflow,EPLaunch3WorkflowResponse
+from eplaunch.workflows.base import BaseEPLaunch3Workflow, EPLaunch3WorkflowResponse
 
 
 class CoeffCheckWorkflow(BaseEPLaunch3Workflow):
