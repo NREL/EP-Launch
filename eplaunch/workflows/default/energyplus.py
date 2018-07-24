@@ -132,7 +132,7 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
         return "Run EnergyPlus with SI unit system"
 
     def get_file_types(self):
-        return ["*.idf", "*.imf"]
+        return ["*.idf", "*.imf", "*.epJSON"]
 
     def get_output_suffixes(self):
         return EPlusRunManager.eplus_suffixes()
@@ -147,8 +147,14 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
         full_file_path = os.path.join(run_directory, file_name)
         file_name_no_ext, extension = os.path.splitext(file_name)
 
-        v = Version()
-        is_found, current_version, numeric_version = v.check_energyplus_version(full_file_path)
+        if extension != '.epJSON':
+            v = Version()
+            is_found, current_version, numeric_version = v.check_energyplus_version(full_file_path)
+        else:
+            # need to implement version checking for epJSON files
+            is_found = True
+            current_version = '8.9'
+            numeric_version = 80900
         if is_found:
             if numeric_version >= 80900:
 
@@ -231,7 +237,7 @@ class EnergyPlusWorkflowIP(BaseEPLaunch3Workflow):
         return "Run EnergyPlus with IP unit system"
 
     def get_file_types(self):
-        return ["*.idf", "*.imf"]
+        return ["*.idf", "*.imf", "*.epJSON"]
 
     def get_output_suffixes(self):
         return EPlusRunManager.eplus_suffixes()
@@ -246,8 +252,14 @@ class EnergyPlusWorkflowIP(BaseEPLaunch3Workflow):
         full_file_path = os.path.join(run_directory, file_name)
         file_name_no_ext, extension = os.path.splitext(file_name)
 
-        v = Version()
-        is_found, current_version, numeric_version = v.check_energyplus_version(full_file_path)
+        if extension != '.epJSON':
+            v = Version()
+            is_found, current_version, numeric_version = v.check_energyplus_version(full_file_path)
+        else:
+            # need to implement version checking for epJSON files
+            is_found = True
+            current_version = '8.9'
+            numeric_version = 80900
         if is_found:
             if numeric_version >= 80900:
 
