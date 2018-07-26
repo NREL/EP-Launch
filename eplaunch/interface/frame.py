@@ -25,7 +25,6 @@ from eplaunch.utilities.transitionversion import TransitionVersion
 # wx callbacks need an event argument even though we usually don't use it, so the next line disables that check
 # noinspection PyUnusedLocal
 class EpLaunchFrame(wx.Frame):
-    WeatherFileKey = 'weather'
 
     class Identifiers:
         ToolBarRunButtonID = 20
@@ -80,6 +79,9 @@ class EpLaunchFrame(wx.Frame):
         self.output_menu_item = None
         self.extra_output_menu_item = None
         self.current_selected_version = None
+        self.current_workflow_directory = None
+        self.option_version_menu = None
+        self.help_menu = None
 
         # this is a map of the background workers, using a uuid as a key
         self.workflow_workers = {}
@@ -114,7 +116,6 @@ class EpLaunchFrame(wx.Frame):
         self.file_name_manipulator = FileNameManipulation()
 
     def close_frame(self):
-        """May do additional things during close, including saving the current window state/settings"""
         self.save_config()
         self.Close()
 
@@ -306,8 +307,8 @@ class EpLaunchFrame(wx.Frame):
             if file_name in files_in_workflow:
                 cached_file_info = files_in_workflow[file_name]
                 if CacheFile.ParametersKey in cached_file_info:
-                    if self.WeatherFileKey in cached_file_info[CacheFile.ParametersKey]:
-                        full_weather_path = cached_file_info[CacheFile.ParametersKey][self.WeatherFileKey]
+                    if CacheFile.WeatherFileKey in cached_file_info[CacheFile.ParametersKey]:
+                        full_weather_path = cached_file_info[CacheFile.ParametersKey][CacheFile.WeatherFileKey]
                         row.append(os.path.basename(full_weather_path))
                     else:
                         row.append('<no_weather_files>')
@@ -499,8 +500,8 @@ class EpLaunchFrame(wx.Frame):
         self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_idf_editor, tb_idf_editor)
 
         tb_text_editor = self.primary_toolbar.AddTool(
-            50, "Text Editor", exe_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Text Editor", "Open the selected file using the text editor",
-            None
+            50, "Text Editor", exe_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Text Editor",
+            "Open the selected file using the text editor", None
         )
         self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_text_editor, tb_text_editor)
 
@@ -508,13 +509,15 @@ class EpLaunchFrame(wx.Frame):
 
         folder_bmp = wx.ArtProvider.GetBitmap(wx.ART_FOLDER, wx.ART_TOOLBAR, t_size)
         tb_explorer = self.primary_toolbar.AddTool(
-            80, "Explorer", folder_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Explorer", "Open the file explorer in the current directory", None
+            80, "Explorer", folder_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Explorer",
+            "Open the file explorer in the current directory", None
         )
         self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_explorer, tb_explorer)
 
         up_bmp = wx.ArtProvider.GetBitmap(wx.ART_GO_UP, wx.ART_TOOLBAR, t_size)
         tb_update_file_version = self.primary_toolbar.AddTool(
-            90, "Update", up_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Update", "Update the current file to the latest version", None
+            90, "Update", up_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Update",
+            "Update the current file to the latest version", None
         )
         self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_update_file_version, tb_update_file_version)
 
@@ -573,10 +576,14 @@ class EpLaunchFrame(wx.Frame):
         for menu_item in self.folder_favorites.menu_items_for_files:
             self.Bind(wx.EVT_MENU, self.handle_folder_favorites_menu_selection, menu_item)
 
-        add_current_folder_to_favorites = self.folder_menu.Append(307, "Add Current Folder to Favorites", "Add Current Folder to Favorites")
+        add_current_folder_to_favorites = self.folder_menu.Append(
+            307, "Add Current Folder to Favorites", "Add Current Folder to Favorites"
+        )
         self.Bind(wx.EVT_MENU, self.handle_add_current_folder_to_favorites_menu_selection,
                   add_current_folder_to_favorites)
-        remove_current_folder_from_favorites = self.folder_menu.Append(308, "Remove Current Folder from Favorites", "Remove Current Folder from Favorites")
+        remove_current_folder_from_favorites = self.folder_menu.Append(
+            308, "Remove Current Folder from Favorites", "Remove Current Folder from Favorites"
+        )
         self.Bind(wx.EVT_MENU, self.handle_remove_current_folder_from_favorites_menu_selection,
                   remove_current_folder_from_favorites)
         self.menu_bar.Append(self.folder_menu, "F&older")
@@ -599,10 +606,14 @@ class EpLaunchFrame(wx.Frame):
         self.weather_menu.Append(406, "Favorites", "Favorite weather files")
         self.weather_menu.Append(407, kind=wx.ITEM_SEPARATOR)
         self.weather_menu.Append(408, kind=wx.ITEM_SEPARATOR)
-        add_current_weather_to_favorites = self.weather_menu.Append(409, "Add Weather to Favorites", "Add Weather to Favorites")
+        add_current_weather_to_favorites = self.weather_menu.Append(
+            409, "Add Weather to Favorites", "Add Weather to Favorites"
+        )
         self.Bind(wx.EVT_MENU, self.handle_add_current_weather_to_favorites_menu_selection,
                   add_current_weather_to_favorites)
-        remove_current_weather_from_favorites = self.weather_menu.Append(410, "Remove Weather from Favorites", "Remove Weather from Favorites")
+        remove_current_weather_from_favorites = self.weather_menu.Append(
+            410, "Remove Weather from Favorites", "Remove Weather from Favorites"
+        )
         self.Bind(wx.EVT_MENU, self.handle_remove_current_weather_from_favorites_menu_selection,
                   remove_current_weather_from_favorites)
         self.weather_favorites = FileNameMenus(self.weather_menu, 407, 408, self.config, "/WeatherMenu/Favorite")
@@ -627,7 +638,9 @@ class EpLaunchFrame(wx.Frame):
         options_menu.Append(71, "Version", self.option_version_menu)
         self.retrieve_selected_version_config()
         # unimplemented options_menu.AppendSeparator()
-        menu_option_workflow_directories = options_menu.Append(72, "Workflow Directories...", 'Select directories where workflows are located')
+        menu_option_workflow_directories = options_menu.Append(
+            72, "Workflow Directories...", 'Select directories where workflows are located'
+        )
         self.Bind(wx.EVT_MENU, self.handle_menu_option_workflow_directories, menu_option_workflow_directories)
         # unimplemented menu_workflow_order = options_menu.Append(73, "Workflow Order...")
         # unimplemented self.Bind(wx.EVT_MENU, self.handle_menu_workflow_order, menu_workflow_order)
@@ -1051,7 +1064,9 @@ class EpLaunchFrame(wx.Frame):
         menu_item = self.option_version_menu.FindItemById(event.GetId())
         self.current_selected_version = self.get_current_selected_version()
         self.current_workflow_directory = self.locate_workflows.get_workflow_directory(self.current_selected_version)
-        print('from frame.py - specific version menu item:', menu_item.GetLabel(), menu_item.GetId(), self.current_workflow_directory)
+        print('from frame.py - specific version menu item:',
+              menu_item.GetLabel(), menu_item.GetId(), self.current_workflow_directory
+              )
         self.populate_help_menu()
 
     def retrieve_selected_version_config(self):
@@ -1090,7 +1105,9 @@ class EpLaunchFrame(wx.Frame):
             if os.path.exists(energyplus_documentation_directory):
                 documentation_files = os.listdir(energyplus_documentation_directory)
                 for index, doc in enumerate(documentation_files):
-                    specific_documentation_menu = self.help_menu.Insert(index, 620 + index, doc, helpString=os.path.join(energyplus_documentation_directory, doc))
+                    specific_documentation_menu = self.help_menu.Insert(
+                        index, 620 + index, doc, helpString=os.path.join(energyplus_documentation_directory, doc)
+                    )
                     self.Bind(wx.EVT_MENU, self.handle_specific_documentation_menu, specific_documentation_menu)
 
     def remove_old_help_menu_items(self):
