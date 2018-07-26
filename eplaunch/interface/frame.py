@@ -3,6 +3,7 @@ import fnmatch
 import json
 import os
 from gettext import gettext as _
+import uuid
 
 import wx
 
@@ -80,8 +81,8 @@ class EpLaunchFrame(wx.Frame):
         self.extra_output_menu_item = None
         self.current_selected_version = None
 
-        # this is currently just a single background thread, eventually we'll need to keep a list of them
-        self.workflow_worker = None
+        # this is a map of the background workers, using a uuid as a key
+        self.workflow_workers = {}
 
         # get the saved workflow directories
         self.retrieve_workflow_directories_config()
@@ -94,6 +95,7 @@ class EpLaunchFrame(wx.Frame):
         # build out the whole GUI and do other one-time inits here
         self.gui_build()
         self.reset_raw_list_columns()
+        self.update_num_processes_status()
 
         # this sets up an event handler for workflow completion events
         event_result(self, self.handle_workflow_done)
@@ -311,9 +313,10 @@ class EpLaunchFrame(wx.Frame):
                         row.append('<no_weather_files>')
                 else:
                     row.append('<no_weather_file>')
-                for column in self.current_workflow.get_interface_columns():
-                    if column in cached_file_info[CacheFile.ResultsKey]:
-                        row.append(cached_file_info[CacheFile.ResultsKey][column])
+                if CacheFile.ResultsKey in cached_file_info:
+                    for column in self.current_workflow.get_interface_columns():
+                        if column in cached_file_info[CacheFile.ResultsKey]:
+                            row.append(cached_file_info[CacheFile.ResultsKey][column])
             # always add the row to the main list
             control_list_rows.append(row)
 
@@ -332,21 +335,23 @@ class EpLaunchFrame(wx.Frame):
 
     def run_workflow(self):
         if self.directory_name and self.current_file_name:
-            if not self.workflow_worker:
-                self.status_bar.SetStatusText('Starting workflow', i=0)
-                self.workflow_worker = WorkflowThread(
-                    self, self.current_workflow, self.directory_name, self.current_file_name,
-                    {'weather': self.current_weather_file}
-                )
-                self.tb_run.Enable(False)
-                self.primary_toolbar.Realize()
-                # self.menu_file_run.Enable(False)
-            else:
-                self.status_bar.SetStatusText('A workflow is already running, concurrence will come soon...', i=0)
+            new_uuid = str(uuid.uuid4())
+            self.status_bar.SetStatusText('Starting workflow', i=0)
+            self.workflow_workers[new_uuid] = WorkflowThread(
+                new_uuid, self, self.current_workflow, self.directory_name, self.current_file_name,
+                {'weather': self.current_weather_file}
+            )
+            # self.tb_run.Enable(False)
+            # self.primary_toolbar.Realize()
+            # self.menu_file_run.Enable(False)
         else:
             self.status_bar.SetStatusText(
                 'Error: Make sure you select a directory and a file', i=0
             )
+        self.update_num_processes_status()
+
+    def update_num_processes_status(self):
+        self.status_bar.SetStatusText("Currently %s processes running" % len(self.workflow_workers), i=2)
 
     def gui_build(self):
 
@@ -714,8 +719,12 @@ class EpLaunchFrame(wx.Frame):
             print(e)
             status_message = 'Workflow response was invalid'
         self.status_bar.SetStatusText(status_message, i=0)
-        self.workflow_worker = None
-        self.primary_toolbar.EnableTool(self.Identifiers.ToolBarRunButtonID, True)
+        try:
+            del self.workflow_workers[event.id]
+        except Exception as e:
+            print(e)
+        # self.primary_toolbar.EnableTool(self.Identifiers.ToolBarRunButtonID, True)
+        self.update_num_processes_status()
 
     def handle_menu_file_quit(self, event):
         self.close_frame()

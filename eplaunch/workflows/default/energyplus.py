@@ -146,7 +146,7 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
     def main(self, run_directory, file_name, args):
         full_file_path = os.path.join(run_directory, file_name)
         file_name_no_ext, extension = os.path.splitext(file_name)
-
+        time.sleep(4)
         v = Version()
         is_found, current_version, numeric_version = v.check_energyplus_version(full_file_path)
         if is_found:
