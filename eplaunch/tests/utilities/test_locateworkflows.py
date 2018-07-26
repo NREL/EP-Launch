@@ -76,6 +76,19 @@ class TestLocateWorkflows(unittest.TestCase):
         self.assertEqual('5.9.0', loc_wf.list_of_energyplus_versions[0]['version'])
         self.assertEqual('deadbeef01', loc_wf.list_of_energyplus_versions[0]['sha'])
 
+    def test_get_workflow_directory(self):
+
+        loc_wf = LocateWorkflows()
+        loc_wf.list_of_energyplus_versions = [
+            {'version': 1.0, 'workflow': 'first'},
+            {'version': 2.0, 'workflow': 'second'},
+            {'version': 3.0, 'workflow': 'third'}
+        ]
+        self.assertEqual('first', loc_wf.get_workflow_directory(1.0))
+        self.assertEqual('second', loc_wf.get_workflow_directory(2.0))
+        self.assertEqual('third', loc_wf.get_workflow_directory(3.0))
+        self.assertEqual('', loc_wf.get_workflow_directory(4.0))
+
     def tearDown(self):
         try:
             shutil.rmtree(self.workflow_directory)
