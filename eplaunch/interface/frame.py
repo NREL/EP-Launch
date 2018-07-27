@@ -336,7 +336,7 @@ class EpLaunchFrame(wx.Frame):
                 self.status_bar.SetStatusText('Starting workflow', i=0)
                 self.workflow_worker = WorkflowThread(
                     self, self.current_workflow, self.directory_name, self.current_file_name,
-                    {'weather': self.current_weather_file}
+                    {'weather': self.current_weather_file, 'workflow location': self.current_workflow_directory}
                 )
                 self.tb_run.Enable(False)
                 self.primary_toolbar.Realize()
