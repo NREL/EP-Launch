@@ -1,7 +1,6 @@
 import os
 import subprocess
 import shutil
-import platform
 
 from eplaunch.workflows.base import BaseEPLaunch3Workflow, EPLaunch3WorkflowResponse
 from eplaunch.utilities.version import Version
@@ -35,10 +34,10 @@ class TransitionWorkflow(BaseEPLaunch3Workflow):
                 if os.path.exists(full_file_path):
                     returned_success, returned_message = self.perform_transition(full_file_path)
                     return EPLaunch3WorkflowResponse(
-                         success=returned_success,
-                         message=returned_message,
-                         column_data=[]
-                     )
+                        success=returned_success,
+                        message=returned_message,
+                        column_data=[]
+                    )
                 else:
                     return EPLaunch3WorkflowResponse(
                         success=False,

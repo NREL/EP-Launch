@@ -42,7 +42,7 @@ class WorkflowThread(threading.Thread):
             workflow_response = EPLaunch3WorkflowResponse(
                 success=False,
                 message='Current workflow main function did not respond properly',
-                column_data = []
+                column_data=[]
             )
         wx.PostEvent(self._notify_window, ResultEvent(workflow_response))
 
