@@ -26,10 +26,26 @@ class AppGPostProcessWorkflow(BaseEPLaunch3Workflow):
         return []
 
     def main(self, run_directory, file_name, args):
-        if platform.system() == 'Windows':
-            appgpp_binary = 'c:\\EnergyPlusV8-9-0\\PostProcess\\AppGPostProcess\\appgpostprocess.exe'
+        if 'workflow location' in args:
+            energyplus_root_folder, _ = os.path.split(args['workflow location'])
+            postprocess_folder = os.path.join(energyplus_root_folder, 'PostProcess')
+            appgpp_folder = os.path.join(postprocess_folder, 'AppGPostProcess')
+            if platform.system() == 'Windows':
+                appgpp_binary = os.path.join(appgpp_folder, 'appgpostprocess.exe')
+            else:
+                appgpp_binary = os.path.join(appgpp_folder, 'appgpostprocess')
+            if not os.path.exists(appgpp_binary):
+                return EPLaunch3WorkflowResponse(
+                    success=False,
+                    message="AppGPostProcess binary not found: {}!".format(appgpp_binary),
+                    column_data=[]
+                )
         else:
-            appgpp_binary = '/home/edwin/Programs/EnergyPlus-8-9-0/PostProcess/AppGPostProcess/appgpostprocess'
+            return EPLaunch3WorkflowResponse(
+                success=False,
+                message="Workflow location missing: {}!".format(args['worflow location']),
+                column_data=[]
+            )
 
         html_in_file_with_path = os.path.join(run_directory, file_name)
         html_in_file_no_ext, _ = os.path.splitext(html_in_file_with_path)
