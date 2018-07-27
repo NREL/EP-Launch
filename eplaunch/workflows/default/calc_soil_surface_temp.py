@@ -33,11 +33,26 @@ class CalcSoilSurfTempWorkflow(BaseEPLaunch3Workflow):
         return [ColumnNames.AverageSurfTemp, ColumnNames.AmplitudeSurfTemp, ColumnNames.PhaseConstant]
 
     def main(self, run_directory, file_name, args):
-
-        if platform.system() == 'Windows':
-            calc_soil_surf_temp_binary = 'c:\\EnergyPlusV8-9-0\\PreProcess\\CalcSoilSurfTemp\\CalcSoilSurfTemp.exe'
+        if 'workflow location' in args:
+            energyplus_root_folder, _ = os.path.split(args['workflow location'])
+            preprocess_folder = os.path.join(energyplus_root_folder, 'PreProcess')
+            calc_soil_surf_temp_folder = os.path.join(preprocess_folder, 'CalcSoilSurfTemp')
+            if platform.system() == 'Windows':
+                calc_soil_surf_temp_binary = os.path.join(calc_soil_surf_temp_folder, 'CalcSoilSurfTemp.exe')
+            else:
+                calc_soil_surf_temp_binary = os.path.join(calc_soil_surf_temp_folder, 'CalcSoilSurfTemp')
+            if not os.path.exists(calc_soil_surf_temp_binary):
+                return EPLaunch3WorkflowResponse(
+                    success=False,
+                    message="CalcSoilSurfTemp binary not found: {}!".format(calc_soil_surf_temp_binary),
+                    column_data=[]
+                )
         else:
-            calc_soil_surf_temp_binary = '/home/edwin/Programs/EnergyPlus-8-9-0/PreProcess/CalcSoilSurfTemp/CalcSoilSurfTemp'
+            return EPLaunch3WorkflowResponse(
+                success=False,
+                message="Workflow location missing: {}!".format(args['worflow location']),
+                column_data=[]
+            )
 
         full_file_path = os.path.join(run_directory, file_name)
         full_file_no_ext, _ = os.path.splitext(full_file_path)
