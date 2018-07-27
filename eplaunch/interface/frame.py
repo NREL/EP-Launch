@@ -331,7 +331,7 @@ class EpLaunchFrame(wx.Frame):
 
     def run_workflow(self):
         if self.directory_name and self.current_file_name:
-            if not self.workflow_worker:
+#            if not self.workflow_worker:
                 self.status_bar.SetStatusText('Starting workflow', i=0)
                 self.workflow_worker = WorkflowThread(
                     self, self.current_workflow, self.directory_name, self.current_file_name,
@@ -340,8 +340,8 @@ class EpLaunchFrame(wx.Frame):
                 self.tb_run.Enable(False)
                 self.primary_toolbar.Realize()
                 # self.menu_file_run.Enable(False)
-            else:
-                self.status_bar.SetStatusText('A workflow is already running, concurrence will come soon...', i=0)
+#            else:
+#                self.status_bar.SetStatusText('A workflow is already running, concurrence will come soon...', i=0)
         else:
             self.status_bar.SetStatusText(
                 'Error: Make sure you select a directory and a file', i=0
@@ -670,6 +670,11 @@ class EpLaunchFrame(wx.Frame):
         self.current_file_name = event.Item.Text
         self.update_output_file_status()
         self.enable_disable_idf_editor_button()
+        self.control_file_list_selected = []
+        for specific_row in range(self.control_file_list.ItemCount):
+            if self.control_file_list.IsSelected(specific_row):
+                self.control_file_list_selected.append(specific_row)
+        print("list selected", self.control_file_list_selected)
 
     def handle_menu_file_run(self, event):
         self.folder_recent.add_recent(self.directory_tree_control.GetPath())
@@ -677,14 +682,26 @@ class EpLaunchFrame(wx.Frame):
 
     def handle_tb_run(self, event):
         self.folder_recent.add_recent(self.directory_tree_control.GetPath())
-        if not self.current_weather_file:
-            self.current_weather_file = ''
-        self.current_cache.add_config(
-            self.current_workflow.name(), self.current_file_name, {'weather': self.current_weather_file}
-        )
-        self.current_cache.write()
-        self.run_workflow()
-        self.update_output_file_status()
+        if self.control_file_list.GetSelectedItemCount() > 1:
+            for selected_row in self.control_file_list_selected:
+                self.current_file_name = self.control_file_list.GetItem(selected_row).Text
+                if not self.current_weather_file:
+                    self.current_weather_file = ''
+                self.current_cache.add_config(
+                    self.current_workflow.name(), self.current_file_name, {'weather': self.current_weather_file}
+                )
+                self.current_cache.write()
+                self.run_workflow()
+                self.update_output_file_status()
+        else:
+            if not self.current_weather_file:
+                self.current_weather_file = ''
+            self.current_cache.add_config(
+                self.current_workflow.name(), self.current_file_name, {'weather': self.current_weather_file}
+            )
+            self.current_cache.write()
+            self.run_workflow()
+            self.update_output_file_status()
 
     def handle_workflow_done(self, event):
         status_message = 'Invalid workflow response'
@@ -730,6 +747,7 @@ class EpLaunchFrame(wx.Frame):
         self.folder_recent.put_checkmark_on_item(self.directory_name)
         self.folder_favorites.uncheck_all()
         self.folder_favorites.put_checkmark_on_item(self.directory_name)
+        self.control_file_list_selected = []
         self.current_cache = CacheFile(self.directory_name)
         try:
             self.status_bar.SetStatusText(self.directory_name, i=0)
