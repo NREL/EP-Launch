@@ -27,10 +27,26 @@ class CoeffConvWorkflow(BaseEPLaunch3Workflow):
         return []
 
     def main(self, run_directory, file_name, args):
-        if platform.system() == 'Windows':
-            coeffconv_binary = 'c:\\EnergyPlusV8-9-0\\PreProcess\\CoeffConv\\CoeffConv.exe'
+        if 'workflow location' in args:
+            energyplus_root_folder, _ = os.path.split(args['workflow location'])
+            preprocess_folder = os.path.join(energyplus_root_folder, 'PreProcess')
+            coeffconv_folder = os.path.join(preprocess_folder, 'CoeffConv')
+            if platform.system() == 'Windows':
+                coeffconv_binary = os.path.join(coeffconv_folder, 'CoeffConv.exe')
+            else:
+                coeffconv_binary = os.path.join(coeffconv_folder, 'CoeffConv')
+            if not os.path.exists(coeffconv_binary):
+                return EPLaunch3WorkflowResponse(
+                    success=False,
+                    message="CoeffConv binary not found: {}!".format(coeffconv_binary),
+                    column_data=[]
+                )
         else:
-            coeffconv_binary = '/home/edwin/Programs/EnergyPlus-8-9-0/Preprocess/CoeffConv/CoeffConv'
+            return EPLaunch3WorkflowResponse(
+                success=False,
+                message="Workflow location missing: {}!".format(args['worflow location']),
+                column_data=[]
+            )
 
         coi_file_with_path = os.path.join(run_directory, file_name)
         coi_file_no_ext, _ = os.path.splitext(coi_file_with_path)
