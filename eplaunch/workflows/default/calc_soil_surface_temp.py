@@ -1,4 +1,7 @@
 import os
+import shutil
+import platform
+
 from subprocess import Popen, PIPE
 
 from eplaunch.workflows.base import BaseEPLaunch3Workflow, EPLaunch3WorkflowResponse
@@ -21,7 +24,7 @@ class CalcSoilSurfTempWorkflow(BaseEPLaunch3Workflow):
         return ["*.epw"]
 
     def get_output_suffixes(self):
-        return [".txt"]
+        return [".out"]
 
     def get_extra_data(self):
         return {"Hey, it's extra": "data"}
@@ -30,10 +33,35 @@ class CalcSoilSurfTempWorkflow(BaseEPLaunch3Workflow):
         return [ColumnNames.AverageSurfTemp, ColumnNames.AmplitudeSurfTemp, ColumnNames.PhaseConstant]
 
     def main(self, run_directory, file_name, args):
+        if 'workflow location' in args:
+            energyplus_root_folder, _ = os.path.split(args['workflow location'])
+            preprocess_folder = os.path.join(energyplus_root_folder, 'PreProcess')
+            calc_soil_surf_temp_folder = os.path.join(preprocess_folder, 'CalcSoilSurfTemp')
+            if platform.system() == 'Windows':
+                calc_soil_surf_temp_binary = os.path.join(calc_soil_surf_temp_folder, 'CalcSoilSurfTemp.exe')
+            else:
+                calc_soil_surf_temp_binary = os.path.join(calc_soil_surf_temp_folder, 'CalcSoilSurfTemp')
+            if not os.path.exists(calc_soil_surf_temp_binary):
+                return EPLaunch3WorkflowResponse(
+                    success=False,
+                    message="CalcSoilSurfTemp binary not found: {}!".format(calc_soil_surf_temp_binary),
+                    column_data=[]
+                )
+        else:
+            return EPLaunch3WorkflowResponse(
+                success=False,
+                message="Workflow location missing: {}!".format(args['worflow location']),
+                column_data=[]
+            )
 
-        calc_soil_surf_temp = '/home/edwin/Programs/EnergyPlus-8-9-0/PreProcess/CalcSoilSurfTemp/CalcSoilSurfTemp'
+        full_file_path = os.path.join(run_directory, file_name)
+        full_file_no_ext, _ = os.path.splitext(full_file_path)
+        out_file_path = full_file_no_ext + '.out'
 
-        out_file_path = os.path.join(run_directory, 'CalcSoilSurfTemp.out')
+        csst_out = os.path.join(run_directory, 'CalcSoilSurfTemp.out')
+        if os.path.exists(csst_out):
+            os.remove(csst_out)
+
         if os.path.exists(out_file_path):
             try:
                 os.remove(out_file_path)
@@ -44,18 +72,26 @@ class CalcSoilSurfTempWorkflow(BaseEPLaunch3Workflow):
                     column_data={}
                 )
 
-        full_file_path = os.path.join(run_directory, file_name)
-
         # run E+ and gather (for now fake) data
-        p1 = Popen([calc_soil_surf_temp, file_name], stdout=PIPE, stdin=PIPE, cwd=run_directory)
+        p1 = Popen([calc_soil_surf_temp_binary, file_name], stdout=PIPE, stdin=PIPE, cwd=run_directory)
         p1.communicate(input=b'1\n1\n')
 
-        if not os.path.exists(out_file_path):
+        if not os.path.exists(csst_out):
             return EPLaunch3WorkflowResponse(
                 success=False,
                 message="CalcSoilSurfTemp failed for file: %s!" % full_file_path,
                 column_data={}
             )
+
+        if os.path.exists(out_file_path):
+            os.remove(out_file_path)
+
+        # Copy output files to input/output path
+        shutil.copy2(csst_out, out_file_path)
+
+        # Clean up directory.
+        if os.path.exists(csst_out):
+            os.remove(csst_out)
 
         try:
             with open(out_file_path, 'r') as f:

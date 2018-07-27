@@ -18,7 +18,6 @@ from eplaunch.utilities.filenamemanipulation import FileNameManipulation
 from eplaunch.workflows import manager as workflow_manager
 from eplaunch.utilities.locateworkflows import LocateWorkflows
 from eplaunch.utilities.crossplatform import Platform
-from eplaunch.utilities.transitionversion import TransitionVersion
 
 
 # wx callbacks need an event argument even though we usually don't use it, so the next line disables that check
@@ -336,7 +335,7 @@ class EpLaunchFrame(wx.Frame):
                 self.status_bar.SetStatusText('Starting workflow', i=0)
                 self.workflow_worker = WorkflowThread(
                     self, self.current_workflow, self.directory_name, self.current_file_name,
-                    {'weather': self.current_weather_file}
+                    {'weather': self.current_weather_file, 'workflow location': self.current_workflow_directory}
                 )
                 self.tb_run.Enable(False)
                 self.primary_toolbar.Realize()
@@ -506,12 +505,6 @@ class EpLaunchFrame(wx.Frame):
             80, "Explorer", folder_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Explorer", "Open the file explorer in the current directory", None
         )
         self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_explorer, tb_explorer)
-
-        up_bmp = wx.ArtProvider.GetBitmap(wx.ART_GO_UP, wx.ART_TOOLBAR, t_size)
-        tb_update_file_version = self.primary_toolbar.AddTool(
-            90, "Update", up_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Update", "Update the current file to the latest version", None
-        )
-        self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_update_file_version, tb_update_file_version)
 
         remove_bmp = wx.ArtProvider.GetBitmap(wx.ART_MINUS, wx.ART_TOOLBAR, t_size)
         tb_hide_all_files_pane = self.primary_toolbar.AddTool(
@@ -958,11 +951,6 @@ class EpLaunchFrame(wx.Frame):
             if os.path.exists(path_no_ext + cur_tool.GetLabel()):
                 self.output_toolbar.EnableTool(cur_id, True)
         self.output_toolbar.Realize()
-
-    def handle_tb_update_file_version(self, event):
-        full_path_name = os.path.join(self.directory_name, self.current_file_name)
-        transition_version = TransitionVersion(self.current_workflow_directory)
-        transition_version.perform_transition(full_path_name)
 
     def handle_tb_idf_editor(self, event):
         full_path_name = os.path.join(self.directory_name, self.current_file_name)

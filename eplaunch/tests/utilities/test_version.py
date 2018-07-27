@@ -36,6 +36,13 @@ class TestVersion(unittest.TestCase):
         self.assertEqual(version_string, "8.9.1")
         self.assertEqual(version_number, 80901)
 
+    def test_check_energyplus_version_epJSON(self):
+        file_path = os.path.join(os.path.dirname(__file__), "Minimal.epJSON")
+        is_version_found, version_string, version_number = self.v.check_energyplus_version(file_path)
+        self.assertTrue(is_version_found)
+        self.assertEqual(version_string, "8.9")
+        self.assertEqual(version_number, 80900)
+
     def test_numeric_version_from_dash_string(self):
         dash_string = 'V0-2'
         numeric = self.v.numeric_version_from_dash_string(dash_string)

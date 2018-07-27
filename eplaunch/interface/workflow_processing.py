@@ -41,7 +41,8 @@ class WorkflowThread(threading.Thread):
         if type(workflow_response) is not EPLaunch3WorkflowResponse:
             workflow_response = EPLaunch3WorkflowResponse(
                 success=False,
-                message='Current workflow main function did not respond properly'
+                message='Current workflow main function did not respond properly',
+                column_data=[]
             )
         wx.PostEvent(self._notify_window, ResultEvent(workflow_response))
 
