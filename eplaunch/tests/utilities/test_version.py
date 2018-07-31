@@ -43,6 +43,20 @@ class TestVersion(unittest.TestCase):
         self.assertEqual(version_string, "8.9")
         self.assertEqual(version_number, 80900)
 
+    def test_check_energyplus_version_bad_extension(self):
+        file_path = os.path.join(os.path.dirname(__file__), "hi.txt")
+        is_version_found, version_string, version_number = self.v.check_energyplus_version(file_path)
+        self.assertFalse(is_version_found)
+        self.assertEqual('', version_string)
+        self.assertEqual(0, version_number)
+
+    def test_check_energyplus_version_epJSON_no_version(self):
+        file_path = os.path.join(os.path.dirname(__file__), "Minimal_No_Version.epJSON")
+        is_version_found, version_string, version_number = self.v.check_energyplus_version(file_path)
+        self.assertFalse(is_version_found)
+        self.assertEqual('', version_string)
+        self.assertEqual(0, version_number)
+
     def test_numeric_version_from_dash_string(self):
         dash_string = 'V0-2'
         numeric = self.v.numeric_version_from_dash_string(dash_string)
