@@ -19,7 +19,6 @@ from eplaunch.utilities.filenamemanipulation import FileNameManipulation
 from eplaunch.workflows import manager as workflow_manager
 from eplaunch.utilities.locateworkflows import LocateWorkflows
 from eplaunch.utilities.crossplatform import Platform
-from eplaunch.utilities.transitionversion import TransitionVersion
 
 
 # wx callbacks need an event argument even though we usually don't use it, so the next line disables that check
@@ -340,11 +339,8 @@ class EpLaunchFrame(wx.Frame):
             self.status_bar.SetStatusText('Starting workflow', i=0)
             self.workflow_workers[new_uuid] = WorkflowThread(
                 new_uuid, self, self.current_workflow, self.directory_name, self.current_file_name,
-                {'weather': self.current_weather_file}
+                {'weather': self.current_weather_file, 'workflow location': self.current_workflow_directory}
             )
-            # self.tb_run.Enable(False)
-            # self.primary_toolbar.Realize()
-            # self.menu_file_run.Enable(False)
         else:
             self.status_bar.SetStatusText(
                 'Error: Make sure you select a directory and a file', i=0
@@ -980,11 +976,6 @@ class EpLaunchFrame(wx.Frame):
             if os.path.exists(path_no_ext + cur_tool.GetLabel()):
                 self.output_toolbar.EnableTool(cur_id, True)
         self.output_toolbar.Realize()
-
-    def handle_tb_update_file_version(self, event):
-        full_path_name = os.path.join(self.directory_name, self.current_file_name)
-        transition_version = TransitionVersion(self.current_workflow_directory)
-        transition_version.perform_transition(full_path_name)
 
     def handle_tb_idf_editor(self, event):
         full_path_name = os.path.join(self.directory_name, self.current_file_name)

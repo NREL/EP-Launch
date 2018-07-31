@@ -15,13 +15,6 @@ class ColumnNames(object):
 
 
 class EPlusRunManager(object):
-    # This will eventually be a path relative to this script.
-    # Since these workflows will live at /EnergyPlus/Install/workflows/energyplus.py
-    # We will generate the path dynamically from __file__ and os.path.join to get to the E+ binary
-    if platform.system() == 'Windows':
-        EnergyPlusBinary = 'c:\\EnergyPlusV8-9-0\\energyplus.exe'
-    else:
-        EnergyPlusBinary = '/home/edwin/Programs/EnergyPlus-8-9-0/energyplus'
 
     @staticmethod
     def get_end_summary(end_file_path):
@@ -132,7 +125,7 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
         return "Run EnergyPlus with SI unit system"
 
     def get_file_types(self):
-        return ["*.idf", "*.imf"]
+        return ["*.idf", "*.imf", "*.epJSON"]
 
     def get_output_suffixes(self):
         return EPlusRunManager.eplus_suffixes()
@@ -146,14 +139,32 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
     def main(self, run_directory, file_name, args):
         full_file_path = os.path.join(run_directory, file_name)
         file_name_no_ext, extension = os.path.splitext(file_name)
-        time.sleep(4)
+        if 'workflow location' in args:
+            energyplus_root_folder, _ = os.path.split(args['workflow location'])
+            if platform.system() == 'Windows':
+                self.EnergyPlusBinary = os.path.join(energyplus_root_folder, 'energyplus.exe')
+            else:
+                self.EnergyPlusBinary = os.path.join(energyplus_root_folder, 'energyplus')
+            if not os.path.exists(self.EnergyPlusBinary):
+                return EPLaunch3WorkflowResponse(
+                    success=False,
+                    message="EnergyPlus binary not found: {}!".format(self.EnergyPlusBinary),
+                    column_data=[]
+                )
+        else:
+            return EPLaunch3WorkflowResponse(
+                success=False,
+                message="Workflow location missing: {}!".format(args['worflow location']),
+                column_data=[]
+            )
+
         v = Version()
         is_found, current_version, numeric_version = v.check_energyplus_version(full_file_path)
         if is_found:
             if numeric_version >= 80900:
 
                 # start with the binary name, obviously
-                command_line_args = [EPlusRunManager.EnergyPlusBinary]
+                command_line_args = [self.EnergyPlusBinary]
 
                 # need to run readvars
                 command_line_args += ['--readvars']
@@ -231,7 +242,7 @@ class EnergyPlusWorkflowIP(BaseEPLaunch3Workflow):
         return "Run EnergyPlus with IP unit system"
 
     def get_file_types(self):
-        return ["*.idf", "*.imf"]
+        return ["*.idf", "*.imf", "*.epJSON"]
 
     def get_output_suffixes(self):
         return EPlusRunManager.eplus_suffixes()
@@ -246,18 +257,54 @@ class EnergyPlusWorkflowIP(BaseEPLaunch3Workflow):
         full_file_path = os.path.join(run_directory, file_name)
         file_name_no_ext, extension = os.path.splitext(file_name)
 
+        if 'workflow location' in args:
+            energyplus_root_folder, _ = os.path.split(args['workflow location'])
+            if platform.system() == 'Windows':
+                self.EnergyPlusBinary = os.path.join(energyplus_root_folder, 'energyplus.exe')
+            else:
+                self.EnergyPlusBinary = os.path.join(energyplus_root_folder, 'energyplus')
+            if not os.path.exists(self.EnergyPlusBinary):
+                return EPLaunch3WorkflowResponse(
+                    success=False,
+                    message="EnergyPlus binary not found: {}!".format(self.EnergyPlusBinary),
+                    column_data=[]
+                )
+        else:
+            return EPLaunch3WorkflowResponse(
+                success=False,
+                message="Workflow location missing: {}!".format(args['worflow location']),
+                column_data=[]
+            )
+
         v = Version()
         is_found, current_version, numeric_version = v.check_energyplus_version(full_file_path)
         if is_found:
             if numeric_version >= 80900:
 
+                # start with the binary name, obviously
+                command_line_args = [self.EnergyPlusBinary]
+
+                # need to run readvars
+                command_line_args += ['--readvars']
+
+                # add some config parameters
+                command_line_args += ['--output-prefix', file_name_no_ext, '--output-suffix', 'C']
+
+                # add in simulation control args
+                if 'weather' in args and args['weather']:
+                    command_line_args += ['--weather', args['weather']]
+                else:
+                    command_line_args += ['--design-day']
+
+                # and at the very end, add the file to run
+                command_line_args += [file_name]
+
                 # run E+ and gather (for now fake) data
                 process = subprocess.run(
-                    [
-                        EPlusRunManager.EnergyPlusBinary, '--output-prefix', file_name_no_ext, '--design-day', file_name
-                    ],
+                    command_line_args,
                     cwd=run_directory
                 )
+                time.sleep(5)
                 status_code = process.returncode
 
                 if status_code != 0:

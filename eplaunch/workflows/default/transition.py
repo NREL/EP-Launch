@@ -2,16 +2,60 @@ import os
 import subprocess
 import shutil
 
+from eplaunch.workflows.base import BaseEPLaunch3Workflow, EPLaunch3WorkflowResponse
 from eplaunch.utilities.version import Version
 
 
-class TransitionVersion(object):
+class TransitionWorkflow(BaseEPLaunch3Workflow):
 
-    def __init__(self, worflow_location):
+    def name(self):
+        return "Transition"
 
+    def description(self):
+        return "Run Version Transition"
+
+    def get_file_types(self):
+        return ["*.idf"]
+
+    def get_output_suffixes(self):
+        return [".vcperr"]
+
+    def get_extra_data(self):
+        return {"Hey, it's extra": "data"}
+
+    def main(self, run_directory, file_name, args):
+        print(args['workflow location'])
         self.versionclass = Version()
-        self.transition_executable_files = self.find_transition_executable_files(worflow_location)
-        print(self.transition_executable_files)
+        if 'workflow location' in args:
+            self.transition_executable_files = self.find_transition_executable_files(args['workflow location'])
+            if self.transition_executable_files:
+                print(self.transition_executable_files)
+                full_file_path = os.path.join(run_directory, file_name)
+                if os.path.exists(full_file_path):
+                    returned_success, returned_message = self.perform_transition(full_file_path)
+                    return EPLaunch3WorkflowResponse(
+                        success=returned_success,
+                        message=returned_message,
+                        column_data=[]
+                    )
+                else:
+                    return EPLaunch3WorkflowResponse(
+                        success=False,
+                        message="Transition file not found: {}!".format(''),
+                        column_data=[]
+                    )
+            else:
+                return EPLaunch3WorkflowResponse(
+                    success=False,
+                    message="Transition exefile not found: {}!".format(''),
+                    column_data=[]
+                )
+        else:
+            return EPLaunch3WorkflowResponse(
+                success=False,
+                message="Workflow location missing: {}!".format(args['worflow location']),
+                column_data=[]
+            )
 
     def find_transition_executable_files(self, worflow_location):
         energyplus_root_folder, _ = os.path.split(worflow_location)
