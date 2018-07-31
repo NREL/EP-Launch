@@ -29,6 +29,13 @@ class TestVersion(unittest.TestCase):
         self.assertEqual(version_string, "8.9")
         self.assertEqual(version_number, 80900)
 
+    def test_check_energyplus_version_imf(self):
+        file_path = os.path.join(os.path.dirname(__file__), "Minimal.imf")
+        is_version_found, version_string, version_number = self.v.check_energyplus_version(file_path)
+        self.assertTrue(is_version_found)
+        self.assertEqual(version_string, "8.9")
+        self.assertEqual(version_number, 80900)
+
     def test_check_energyplus_version_two_lines(self):
         file_path = os.path.join(os.path.dirname(__file__), "Minimal2.idf")
         is_version_found, version_string, version_number = self.v.check_energyplus_version(file_path)
