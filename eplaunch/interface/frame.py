@@ -285,7 +285,7 @@ class EpLaunchFrame(wx.Frame):
                 else:
                     row.append('<no_weather_file>')
                 if CacheFile.ResultsKey in cached_file_info:
-                    for column in self.current_workflow.get_interface_columns():
+                    for column in self.current_workflow.workflow_instance.get_interface_columns():
                         if column in cached_file_info[CacheFile.ResultsKey]:
                             row.append(cached_file_info[CacheFile.ResultsKey][column])
 
@@ -310,7 +310,7 @@ class EpLaunchFrame(wx.Frame):
             new_uuid = str(uuid.uuid4())
             self.status_bar.SetStatusText('Starting workflow', i=0)
             self.workflow_workers[new_uuid] = WorkflowThread(
-                new_uuid, self, self.current_workflow, self.directory_name, self.current_file_name,
+                new_uuid, self, self.current_workflow.workflow_instance, self.directory_name, self.current_file_name,
                 {'weather': self.current_weather_file, 'workflow location': self.current_workflow_directory}
             )
         else:
