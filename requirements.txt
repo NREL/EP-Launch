@@ -39,6 +39,15 @@
 #   - Change the filename in the following URL to match your System, wxPython, and Python version
 #   - pip install -U -f https://extras.wxpython.org/wxPython4/extras/linux/gtk2/ubuntu-16.04/wxPython-4.0.0b2-cp36-cp36mu-linux_x86_64.whl wxPython
 
+# On MacOS, I also had trouble getting it running.  I found out that when I create a virtual environment, I need to make
+# sure that the base installation is a "framework" build.  This isn't hard to do with pyenv, just add an environment
+# variable when installing the base version, then create a virtual environment off of it
+# $ env PYTHON_CONFIGURE_OPTS="--enable-framework" pyenv install 3.6.3
+# $ pyenv virtualenv 3.6.3 eplaunch3env
+# To debug, verify you have a framework build using the sysconfig package:
+# from sysconfig import get_config_var
+# if get_config_var("PYTHONFRAMEWORK"): # then you have a framework build (it returns the string 'Python' for me)
+
 # Here are the *actual* PyPi dependencies that are listed in this file
 coveralls==1.1
 coverage==4.2

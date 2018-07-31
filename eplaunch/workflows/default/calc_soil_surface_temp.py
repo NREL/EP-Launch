@@ -14,6 +14,7 @@ class ColumnNames(object):
 
 
 class CalcSoilSurfTempWorkflow(BaseEPLaunch3Workflow):
+
     def name(self):
         return "CalcSoilSurfTemp"
 

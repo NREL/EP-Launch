@@ -19,6 +19,7 @@ class CacheFile(object):
     FilesKey = 'files'
     ParametersKey = 'config'
     ResultsKey = 'result'
+    WeatherFileKey = 'weather'
 
     def __init__(self, working_directory):
         self.file_path = os.path.join(working_directory, self.FileName)
