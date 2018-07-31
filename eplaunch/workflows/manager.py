@@ -1,7 +1,6 @@
 from importlib import util as import_util
 import inspect
 import os
-import re
 
 
 class WorkflowDetail:
@@ -30,7 +29,7 @@ def get_workflows(external_workflow_directories):
         # re_dots = re.compile('(?P<version>(\d.\d.\d))')
         if 'ENERGYPLUS.' in uc_directory:
             dir_is_eplus = True
-            trailing_string = uc_directory[uc_directory.index('ENERGYPLUS.')+11:]
+            trailing_string = uc_directory[uc_directory.index('ENERGYPLUS.') + 11:]
             if '/' in trailing_string:
                 version_id = trailing_string[:trailing_string.index('/')]
 

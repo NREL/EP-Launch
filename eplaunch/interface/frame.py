@@ -1039,7 +1039,6 @@ class EpLaunchFrame(wx.Frame):
         self.config.WriteInt("/ActiveWindow/y", current_position.y)
 
     def handle_specific_version_menu(self, event):
-        menu_item = self.option_version_menu.FindItemById(event.GetId())
         self.current_selected_version = self.get_current_selected_version()
         for eplus_dir in self.energyplus_workflow_directories:
             formatted_dir = eplus_dir.upper().replace('-', '.')

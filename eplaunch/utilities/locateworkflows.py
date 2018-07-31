@@ -17,7 +17,7 @@ class LocateWorkflows(object):
     def find(self):
         search_roots = {
             Platform.WINDOWS: ["%s:\\" % c for c in string.ascii_uppercase],
-            Platform.LINUX: ['/usr/local/bin/', '/tmp/', '/home/edwin/Programs/'],
+            Platform.LINUX: ['/usr/local/bin/', '/tmp/'],
             Platform.MAC: ['/Applications/', '/tmp/'],
             Platform.UNKNOWN: [],
         }
