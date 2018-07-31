@@ -200,7 +200,12 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
                 end_file_path = os.path.join(run_directory, end_file_name)
                 success, errors, warnings, runtime = EPlusRunManager.get_end_summary(end_file_path)
 
-                column_data = {ColumnNames.Errors: errors, ColumnNames.Warnings: warnings, ColumnNames.Runtime: runtime, ColumnNames.Version: current_version}
+                column_data = {
+                    ColumnNames.Errors: errors,
+                    ColumnNames.Warnings: warnings,
+                    ColumnNames.Runtime: runtime,
+                    ColumnNames.Version: current_version
+                }
 
                 # now leave
                 return EPLaunch3WorkflowResponse(
@@ -223,7 +228,12 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
         else:
 
             errors = "wrong version"
-            column_data = {ColumnNames.Errors: errors, ColumnNames.Warnings: '', ColumnNames.Runtime: 0, ColumnNames.Version: current_version}
+            column_data = {
+                ColumnNames.Errors: errors,
+                ColumnNames.Warnings: '',
+                ColumnNames.Runtime: 0,
+                ColumnNames.Version: current_version
+            }
 
             # now leave
             return EPLaunch3WorkflowResponse(
@@ -318,7 +328,12 @@ class EnergyPlusWorkflowIP(BaseEPLaunch3Workflow):
                 end_file_path = os.path.join(run_directory, end_file_name)
                 success, errors, warnings, runtime = EPlusRunManager.get_end_summary(end_file_path)
 
-                column_data = {ColumnNames.Errors: errors, ColumnNames.Warnings: warnings, ColumnNames.Runtime: runtime, ColumnNames.Version: current_version}
+                column_data = {
+                    ColumnNames.Errors: errors,
+                    ColumnNames.Warnings: warnings,
+                    ColumnNames.Runtime: runtime,
+                    ColumnNames.Version: current_version
+                }
 
                 # now leave
                 return EPLaunch3WorkflowResponse(
@@ -340,7 +355,12 @@ class EnergyPlusWorkflowIP(BaseEPLaunch3Workflow):
         else:
 
             errors = "wrong version"
-            column_data = {ColumnNames.Errors: errors, ColumnNames.Warnings: '', ColumnNames.Runtime: 0, ColumnNames.Version: current_version}
+            column_data = {
+                ColumnNames.Errors: errors,
+                ColumnNames.Warnings: '',
+                ColumnNames.Runtime: 0,
+                ColumnNames.Version: current_version
+            }
 
             # now leave
             return EPLaunch3WorkflowResponse(
