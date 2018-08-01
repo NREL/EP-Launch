@@ -89,7 +89,7 @@ class EpLaunchFrame(wx.Frame):
 
         # find workflow directories
         self.locate_workflows = LocateWorkflows()
-        self.list_of_directories = self.locate_workflows.find()
+        self.workflow_directories = self.locate_workflows.find()
         self.list_of_versions = self.locate_workflows.get_energyplus_versions()
         self.update_workflow_list()
 
@@ -97,6 +97,12 @@ class EpLaunchFrame(wx.Frame):
         self.gui_build()
         self.reset_raw_list_columns()
         self.update_num_processes_status()
+#        self.update_workflow_list(self.current_selected_version)
+#        self.workflow_choice.Clear()
+#        for work_flow in self.work_flows:
+#            self.workflow_choice.Append(work_flow.description)
+#        self.refresh_workflow_selection()
+#        self.workflow_choice.SetSelection(0)
 
         # this sets up an event handler for workflow completion events
         event_result(self, self.handle_workflow_done)
