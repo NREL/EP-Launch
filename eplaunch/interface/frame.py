@@ -335,7 +335,7 @@ class EpLaunchFrame(wx.Frame):
         # build control list view (top right)
         self.control_file_list_panel = wx.Panel(self.file_lists_splitter, wx.ID_ANY)
         self.control_file_list = wx.ListCtrl(self.control_file_list_panel, wx.ID_ANY,
-                                             style=wx.LC_HRULES | wx.LC_REPORT | wx.LC_VRULES)
+                                             style=wx.LC_HRULES | wx.LC_REPORT | wx.LC_VRULES | wx.LC_SINGLE_SEL)
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.handle_list_ctrl_selection, self.control_file_list)
         control_file_list_sizer = wx.BoxSizer(wx.VERTICAL)
         control_file_list_sizer.Add(self.control_file_list, 1, wx.EXPAND, 0)
