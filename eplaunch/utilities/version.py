@@ -94,8 +94,8 @@ class Version:
     def check_json_energyplus_version(self, file_path):
         with open(file_path, "r") as readfile:
             data = json.load(readfile)
-        version_dict = data['Version']
-        if version_dict:
+        if 'Version' in data:
+            version_dict = data['Version']
             field_dict = version_dict['Version 1']
             if field_dict:
                 current_version = field_dict['version_identifier']
