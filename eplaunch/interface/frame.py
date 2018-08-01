@@ -89,6 +89,7 @@ class EpLaunchFrame(wx.Frame):
 
         # find workflow directories
         self.locate_workflows = LocateWorkflows()
+        self.list_of_directories = self.locate_workflows.find()
         self.list_of_versions = self.locate_workflows.get_energyplus_versions()
         self.update_workflow_list()
 
