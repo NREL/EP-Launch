@@ -43,7 +43,6 @@ class EpLaunchFrame(wx.Frame):
 
         # initialize these here (and early) in the constructor to hush up the compiler messages
         self.primary_toolbar = None
-        self.f = None
         self.output_toolbar = None
         self.tb_run = None
         self.menu_file_run = None
@@ -53,7 +52,6 @@ class EpLaunchFrame(wx.Frame):
         self.directory_name = None
         self.current_file_name = None
         self.menu_output_toolbar = None
-        self.menu_command_line = None
         self.status_bar = None
         self.raw_file_list = None
         self.control_file_list = None
@@ -434,7 +432,8 @@ class EpLaunchFrame(wx.Frame):
         #  - removing the call to AddControl, thus the dropdown will show up, but not be aligned properly, then
         #  -  making it really wide so that I can easily click it on the right half of the toolbar
         if 'CHOICEWORKAROUND' in os.environ:
-            self.workflow_choice.Size = (700, -1)
+            workflow_choice_size = (700, -1)
+            self.workflow_choice = wx.Choice(self.primary_toolbar, choices=choice_strings, size=workflow_choice_size)
         else:
             self.primary_toolbar.AddControl(self.workflow_choice)
 
