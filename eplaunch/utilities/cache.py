@@ -1,5 +1,6 @@
 import json
 import os
+import time
 
 from eplaunch.utilities.exceptions import EPLaunchFileException
 
@@ -9,7 +10,7 @@ except ImportError:  # pragma: no cover
     JSONDecodeError = ValueError
 
 
-cache_file_directories_currently_writing = []
+cache_files_currently_updating_or_writing = []
 
 
 class CacheFile(object):
@@ -78,10 +79,28 @@ class CacheFile(object):
             root[workflow_name] = {self.FilesKey: {file_name: {attribute: data}}}
 
     def add_config(self, workflow_name, file_name, config_data):
+        if self.file_path in cache_files_currently_updating_or_writing:
+            while True:
+                time.sleep(0.1)  # tenth of a second
+                if self.file_path not in cache_files_currently_updating_or_writing:
+                    break
+                # probably need to warn if we go too high here
+                # maybe change the `while True` into a for loop with specific # iterations and use an else: block
+        # there is an **incredibly** small chance we could have a new file pop in between the check above and this line
+        # I will have to noodle on whether we want to worry about that possibility
+        cache_files_currently_updating_or_writing.append(self.file_path)
         self._add_file_attribute(workflow_name, file_name, self.ParametersKey, config_data, False)
+        cache_files_currently_updating_or_writing.remove(self.file_path)
 
     def add_result(self, workflow_name, file_name, column_data):
+        if self.file_path in cache_files_currently_updating_or_writing:
+            while True:
+                time.sleep(0.1)  # tenth of a second
+                if self.file_path not in cache_files_currently_updating_or_writing:
+                    break
+        cache_files_currently_updating_or_writing.append(self.file_path)
         self._add_file_attribute(workflow_name, file_name, self.ResultsKey, column_data, True)
+        cache_files_currently_updating_or_writing.remove(self.file_path)
 
     def read(self):
         try:
@@ -97,6 +116,12 @@ class CacheFile(object):
     def write(self):
         if not self.dirty:
             return
+        if self.file_path in cache_files_currently_updating_or_writing:
+            while True:
+                time.sleep(0.1)  # tenth of a second
+                if self.file_path not in cache_files_currently_updating_or_writing:
+                    break
+        cache_files_currently_updating_or_writing.append(self.file_path)
         body_text = json.dumps(self.workflow_state, indent=2)
         try:
             with open(self.file_path, 'w') as f:
@@ -104,6 +129,8 @@ class CacheFile(object):
                 self.dirty = False
         except IOError:  # pragma: no cover  -- would be difficult to mock up this weird case
             raise EPLaunchFileException(self.file_path, 'Could not write cache file')
+        finally:
+            cache_files_currently_updating_or_writing.remove(self.file_path)
 
     def get_files_for_workflow(self, current_workflow_name):
         workflows = self.workflow_state[CacheFile.RootKey]
