@@ -9,6 +9,9 @@ except ImportError:  # pragma: no cover
     JSONDecodeError = ValueError
 
 
+cache_file_directories_currently_writing = []
+
+
 class CacheFile(object):
     """
     Represents the file that is kept in each folder where workflows have been started
@@ -101,3 +104,10 @@ class CacheFile(object):
                 self.dirty = False
         except IOError:  # pragma: no cover  -- would be difficult to mock up this weird case
             raise EPLaunchFileException(self.file_path, 'Could not write cache file')
+
+    def get_files_for_workflow(self, current_workflow_name):
+        workflows = self.workflow_state[CacheFile.RootKey]
+        if current_workflow_name in workflows:
+            return workflows[current_workflow_name][CacheFile.FilesKey]
+        else:
+            return {}

@@ -1,6 +1,4 @@
-import datetime
 import fnmatch
-import json
 import os
 import uuid
 from gettext import gettext as _
@@ -9,7 +7,8 @@ import wx
 
 from eplaunch.interface import workflow_directories_dialog
 from eplaunch.interface.externalprograms import EPLaunchExternalPrograms
-from eplaunch.interface.filenamemenus.base import FileNameMenus
+from eplaunch.interface.frame_support import FrameSupport
+from eplaunch.interface.filenamemenus import FileNameMenus
 from eplaunch.interface.workflow_processing import event_result, WorkflowThread
 from eplaunch.utilities.cache import CacheFile
 from eplaunch.utilities.crossplatform import Platform
@@ -32,11 +31,15 @@ class EpLaunchFrame(wx.Frame):
 
         # Set the title!
         self.SetTitle(_("EP-Launch 3"))
+
         # set the window exit
         self.Bind(wx.EVT_CLOSE, self.handle_exit_box)
 
         # Get saved settings
         self.config = wx.Config("EP-Launch3")
+
+        # Get an instance of the supporting function class
+        self.support = FrameSupport()
 
         # initialize these here (and early) in the constructor to hush up the compiler messages
         self.primary_toolbar = None
@@ -166,7 +169,6 @@ class EpLaunchFrame(wx.Frame):
         output_suffixes = self.current_workflow.workflow_instance.get_output_suffixes()
         for item in output_suffixes:
             tb_output_suffixes.append(item)
-
         for count, tb_output_suffix in enumerate(tb_output_suffixes):
             out_tb_button = self.output_toolbar.AddTool(
                 10 + count, tb_output_suffix, norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, tb_output_suffix,
@@ -197,24 +199,6 @@ class EpLaunchFrame(wx.Frame):
         self.raw_file_list.AppendColumn(_("Date Modified"), format=wx.LIST_FORMAT_LEFT, width=-1)
         self.raw_file_list.AppendColumn(_("Size"), format=wx.LIST_FORMAT_RIGHT, width=-1)
 
-    @staticmethod
-    def get_files_in_directory(directory_name):
-        file_list = []
-        if directory_name:
-            files = os.listdir(directory_name)
-            for this_file in files:
-                if this_file.startswith('.'):
-                    continue
-                file_path = os.path.join(directory_name, this_file)
-                if os.path.isdir(file_path):
-                    continue
-                file_modified_time = os.path.getmtime(file_path)
-                modified_time_string = datetime.datetime.fromtimestamp(file_modified_time).replace(microsecond=0)
-                file_size_string = '{0:12,.0f} KB'.format(os.path.getsize(file_path) / 1024)  # size
-                file_list.append({"name": this_file, "size": file_size_string, "modified": modified_time_string})
-        file_list.sort(key=lambda x: x['name'])
-        return file_list
-
     def update_file_lists(self):
 
         # if we don't have a directory name, it's probably during init, just ignore
@@ -222,32 +206,27 @@ class EpLaunchFrame(wx.Frame):
             return
 
         # get the local cache file path for this folder
-        cache_file_path = os.path.join(self.directory_name, CacheFile.FileName)
+        cache_file = CacheFile(self.directory_name)
 
         # if there is a cache file there, read the cached file data for the current workflow
-        files_in_workflow = {}
-        if os.path.exists(cache_file_path):
-            file_blob = open(cache_file_path, 'r').read()
-            content = json.loads(file_blob)
-            workflows = content[CacheFile.RootKey]
-            current_workflow_name = self.current_workflow.workflow_instance.name()
-            if current_workflow_name in workflows:
-                files_in_workflow = workflows[current_workflow_name][CacheFile.FilesKey]
+        files_in_current_workflow = cache_file.get_files_for_workflow(self.current_workflow.workflow_instance.name())
 
         # then get the entire list of files in the current directory to build up the listview items
         # if they happen to match the filename in the workflow cache, then add that info to the row structure
-        files_in_dir = self.get_files_in_directory(self.directory_name)
+        files_in_dir = self.support.get_files_in_directory(self.directory_name)
         workflow_file_patterns = self.current_workflow.workflow_instance.get_file_types()
         control_list_rows = []
         raw_list_rows = []
-        for file_struct in files_in_dir:
-            if not all([x in file_struct for x in ['name', 'size']]):
+        for file_structure in files_in_dir:
+            # verify the quality of the response from the get_files routine
+            if not all([x in file_structure for x in ['name', 'size', 'modified']]):
                 raise EPLaunchDevException('Developer issue: malformed response from get_files_in_directory')
-            file_name = file_struct['name']
-            file_size = file_struct['size']
-            file_modified = file_struct['modified']
+            # always add the columns to the raw list for all files
+            file_name = file_structure['name']
+            file_size = file_structure['size']
+            file_modified = file_structure['modified']
             raw_list_rows.append([file_name, file_modified, file_size])
-            # we only include this row if the file matches the workflow pattern
+            # but only include this row if the file matches the workflow pattern
             matched = False
             for file_type in workflow_file_patterns:
                 if fnmatch.fnmatch(file_name, file_type):
@@ -255,11 +234,11 @@ class EpLaunchFrame(wx.Frame):
                     break
             if not matched:
                 continue
-            # listview row always includes the filename itself
+            # listview row always includes the filename itself, so start the array with that
             row = [file_name]
-            # if it is also in the cache then the listview row can include additional data
-            if file_name in files_in_workflow:
-                cached_file_info = files_in_workflow[file_name]
+            # if it in the cache then the listview row can include additional data
+            if file_name in files_in_current_workflow:
+                cached_file_info = files_in_current_workflow[file_name]
                 if CacheFile.ParametersKey in cached_file_info:
                     if CacheFile.WeatherFileKey in cached_file_info[CacheFile.ParametersKey]:
                         full_weather_path = cached_file_info[CacheFile.ParametersKey][CacheFile.WeatherFileKey]
@@ -366,7 +345,7 @@ class EpLaunchFrame(wx.Frame):
         main_app_vertical_sizer.Add(main_left_right_splitter, 1, wx.EXPAND, 0)
 
         # add the status bar
-        self.gui_build_status_bar()
+        self.status_bar = self.CreateStatusBar(3)
 
         # assign the final form's sizer
         self.SetSizer(main_app_vertical_sizer)
@@ -600,9 +579,6 @@ class EpLaunchFrame(wx.Frame):
         self.menu_bar.Append(self.help_menu, "&Help")
 
         self.SetMenuBar(self.menu_bar)
-
-    def gui_build_status_bar(self):
-        self.status_bar = self.CreateStatusBar(3)
 
     def handle_list_ctrl_selection(self, event):
         self.current_file_name = event.Item.Text
