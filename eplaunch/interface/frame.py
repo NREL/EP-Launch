@@ -8,8 +8,6 @@ import uuid
 import wx
 
 from eplaunch.interface.filenamemenus.base import FileNameMenus
-# unimplemented from eplaunch.interface import command_line_dialog
-# unimplemented from eplaunch.interface import viewer_dialog
 from eplaunch.interface import workflow_directories_dialog
 from eplaunch.interface.externalprograms import EPLaunchExternalPrograms
 from eplaunch.interface.workflow_processing import event_result, WorkflowThread
@@ -84,10 +82,8 @@ class EpLaunchFrame(wx.Frame):
         # this is a map of the background workers, using a uuid as a key
         self.workflow_workers = {}
 
-        # get the saved workflow directories
+        # get the saved workflow directories and update the main workflow list
         self.retrieve_workflow_directories_config()
-
-        # find workflow directories
         self.locate_workflows = LocateWorkflows()
         self.list_of_versions = self.locate_workflows.get_energyplus_versions()
         self.update_workflow_list()
@@ -110,6 +106,7 @@ class EpLaunchFrame(wx.Frame):
 
         # create external program runner
         self.external_runner = EPLaunchExternalPrograms()
+
         # create file name manipulation object
         self.file_name_manipulator = FileNameManipulation()
 
@@ -639,11 +636,15 @@ class EpLaunchFrame(wx.Frame):
                 status_message = 'Successfully completed a workflow: ' + event.data.message
                 try:
                     data_from_workflow = event.data.column_data
-                    self.current_cache.add_result(
+                    workflow_working_directory = self.workflow_workers[event.data.id].run_directory
+                    workflow_directory_cache = CacheFile(workflow_working_directory)
+                    workflow_directory_cache.add_result(
                         self.current_workflow.workflow_instance.name(), self.current_file_name, data_from_workflow
                     )
-                    self.current_cache.write()
-                    self.update_file_lists()
+                    workflow_directory_cache.write()
+                    if self.directory_name == workflow_working_directory:
+                        # only update file lists if we are still in that directory
+                        self.update_file_lists()
                 except EPLaunchFileException:
                     pass
             else:
@@ -653,7 +654,7 @@ class EpLaunchFrame(wx.Frame):
             status_message = 'Workflow response was invalid'
         self.status_bar.SetStatusText(status_message, i=0)
         try:
-            del self.workflow_workers[event.id]
+            del self.workflow_workers[event.data.id]
         except Exception as e:
             print(e)
         self.update_num_processes_status()
