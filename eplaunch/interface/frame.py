@@ -2,27 +2,26 @@ import datetime
 import fnmatch
 import json
 import os
-from gettext import gettext as _
 import uuid
+from gettext import gettext as _
 
 import wx
 
-from eplaunch.interface.filenamemenus.base import FileNameMenus
 from eplaunch.interface import workflow_directories_dialog
 from eplaunch.interface.externalprograms import EPLaunchExternalPrograms
+from eplaunch.interface.filenamemenus.base import FileNameMenus
 from eplaunch.interface.workflow_processing import event_result, WorkflowThread
 from eplaunch.utilities.cache import CacheFile
+from eplaunch.utilities.crossplatform import Platform
 from eplaunch.utilities.exceptions import EPLaunchDevException, EPLaunchFileException
 from eplaunch.utilities.filenamemanipulation import FileNameManipulation
-from eplaunch.workflows import manager as workflow_manager
 from eplaunch.utilities.locateworkflows import LocateWorkflows
-from eplaunch.utilities.crossplatform import Platform
+from eplaunch.workflows import manager as workflow_manager
 
 
 # wx callbacks need an event argument even though we usually don't use it, so the next line disables that check
 # noinspection PyUnusedLocal
 class EpLaunchFrame(wx.Frame):
-
     DefaultSize = (800, 600)
 
     def __init__(self, *args, **kwargs):
