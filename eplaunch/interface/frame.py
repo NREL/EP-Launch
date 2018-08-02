@@ -318,7 +318,6 @@ class EpLaunchFrame(wx.Frame):
         directory_tree_panel = wx.Panel(main_left_right_splitter, wx.ID_ANY)
         self.directory_tree_control = wx.GenericDirCtrl(directory_tree_panel, -1, style=wx.DIRCTRL_DIR_ONLY)
         tree = self.directory_tree_control.GetTreeCtrl()
-        self.Bind(wx.EVT_TREE_ITEM_RIGHT_CLICK, self.handle_dir_right_click, tree)
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.handle_dir_selection_changed, tree)
         self.directory_tree_control.SelectPath("/tmp/test")
         directory_tree_sizer = wx.BoxSizer(wx.VERTICAL)
@@ -663,14 +662,6 @@ class EpLaunchFrame(wx.Frame):
         self.close_frame()
         self.status_bar.SetStatusText('Quitting Program', i=0)
 
-    def handle_dir_item_selected(self, event):
-        self.status_bar.SetStatusText("Dir-ItemSelected", i=0)
-        # event.Skip()
-
-    def handle_dir_right_click(self, event):
-        self.status_bar.SetStatusText("Dir-RightClick", i=0)
-        # event.Skip()
-
     def handle_dir_selection_changed(self, event):
         # self.status_bar.SetStatusText("Dir-SelectionChanged")
         self.directory_name = self.directory_tree_control.GetPath()
@@ -753,7 +744,7 @@ class EpLaunchFrame(wx.Frame):
         self.weather_favorites.save_config()
         self.weather_recent.save_config()
         self.save_workflow_directories_config()
-        self.save_currect_directory_config()
+        self.save_current_directory_config()
         self.save_selected_workflow_config()
         self.save_window_size()
         self.save_selected_version_config()
@@ -906,7 +897,7 @@ class EpLaunchFrame(wx.Frame):
                                                                                     menu_item.GetLabel())
         self.external_runner.run_program_by_extension(output_file_name)
 
-    def save_currect_directory_config(self):
+    def save_current_directory_config(self):
         if self.directory_name:
             self.config.Write("/ActiveWindow/CurrentDirectory", self.directory_name)
         if self.current_file_name:
