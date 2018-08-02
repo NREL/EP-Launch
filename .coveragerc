@@ -10,5 +10,12 @@ omit =
 
         setup.py
         eplaunch/runner.py
-        eplaunch/interface/*.py
+        eplaunch/interface/application.py
+        eplaunch/interface/command_line_dialog.py
+        eplaunch/interface/externalprograms.py
+        eplaunch/interface/filenamemenus.py
+        eplaunch/interface/frame.py
+        eplaunch/interface/viewer_dialog.py
+        eplaunch/interface/workflow_directories_dialog.py
+        eplaunch/interface/workflow_processing.py
         eplaunch/workflows/*

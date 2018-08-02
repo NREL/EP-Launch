@@ -919,7 +919,7 @@ class EpLaunchFrame(wx.Frame):
         else:
             pass
 
-    def handle_menu_help_about(self, evt):
+    def handle_menu_help_about(self, event):
         dlg = wx.MessageDialog(self, 'EP-Launch ' +
                                '\n\nVersion 0.9' +
                                '\nCopyright (c) 2018, Alliance for Sustainable Energy, LLC  and GARD Analytics, Inc' +
