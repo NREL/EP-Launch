@@ -25,8 +25,14 @@ class CacheFile(object):
     ResultsKey = 'result'
     WeatherFileKey = 'weather'
 
+    def _print(self, message):
+        debug = True
+        if debug:
+            print("%s: %s" % (self.file_path, message))
+
     def __init__(self, working_directory):
         self.file_path = os.path.join(working_directory, self.FileName)
+        self._print("Created cache file")
         if os.path.exists(self.file_path):
             self.workflow_state = self.read()
             self.dirty = False
@@ -54,6 +60,7 @@ class CacheFile(object):
 
         # if there is already a config for this workflow/file, update it
         # if something is missing from the structure, initialize it on each stage
+        self._print("Adding file attribute for workflow: %s, file: %s" % (workflow_name, file_name))
         self.dirty = True
         root = self.workflow_state[self.RootKey]
         if workflow_name in root:
@@ -78,29 +85,41 @@ class CacheFile(object):
         else:
             root[workflow_name] = {self.FilesKey: {file_name: {attribute: data}}}
 
-    def add_config(self, workflow_name, file_name, config_data):
-        if self.file_path in cache_files_currently_updating_or_writing:
-            while True:
-                time.sleep(0.1)  # tenth of a second
-                if self.file_path not in cache_files_currently_updating_or_writing:
-                    break
-                # probably need to warn if we go too high here
-                # maybe change the `while True` into a for loop with specific # iterations and use an else: block
-        # there is an **incredibly** small chance we could have a new file pop in between the check above and this line
+    def ok_to_continue(self):
+        self._print("Checking if its ok to continue")
+        if self.file_path not in cache_files_currently_updating_or_writing:
+            return True
+        self._print("Found this file in the writing data, trying to sleep through it")
+        for i in range(200):  # 200 total seconds
+            time.sleep(0.1)  # tenth of a second
+            if self.file_path not in cache_files_currently_updating_or_writing:
+                self._print("Managed to sleep long enough, continuing!")
+                return True
+        else:
+            self._print("Sleep didn't last long enough, aborting")
+            return False
+        # there is an **incredibly** small chance we could have a new file pop in between the check above and later code
         # I will have to noodle on whether we want to worry about that possibility
+
+    def add_config(self, workflow_name, file_name, config_data):
+        self._print("About to add a config attribute for workflow %s; file %s" % (workflow_name, file_name))
+        if not self.ok_to_continue():
+            pass  # somehow return an error...?
         cache_files_currently_updating_or_writing.append(self.file_path)
+        self._print("Cache file locked")
         self._add_file_attribute(workflow_name, file_name, self.ParametersKey, config_data, False)
         cache_files_currently_updating_or_writing.remove(self.file_path)
+        self._print("Cache file UNlocked")
 
     def add_result(self, workflow_name, file_name, column_data):
-        if self.file_path in cache_files_currently_updating_or_writing:
-            while True:
-                time.sleep(0.1)  # tenth of a second
-                if self.file_path not in cache_files_currently_updating_or_writing:
-                    break
+        self._print("About to add a result attribute for workflow %s; file %s" % (workflow_name, file_name))
+        if not self.ok_to_continue():
+            pass  # somehow return an error...?
         cache_files_currently_updating_or_writing.append(self.file_path)
+        self._print("Cache file locked")
         self._add_file_attribute(workflow_name, file_name, self.ResultsKey, column_data, True)
         cache_files_currently_updating_or_writing.remove(self.file_path)
+        self._print("Cache file UNlocked")
 
     def read(self):
         try:
@@ -116,11 +135,8 @@ class CacheFile(object):
     def write(self):
         if not self.dirty:
             return
-        if self.file_path in cache_files_currently_updating_or_writing:
-            while True:
-                time.sleep(0.1)  # tenth of a second
-                if self.file_path not in cache_files_currently_updating_or_writing:
-                    break
+        if not self.ok_to_continue():
+            pass  # somehow return an error...?
         cache_files_currently_updating_or_writing.append(self.file_path)
         body_text = json.dumps(self.workflow_state, indent=2)
         try:

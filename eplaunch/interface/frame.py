@@ -712,7 +712,9 @@ class EpLaunchFrame(wx.Frame):
                     workflow_working_directory = self.workflow_workers[event.data.id].run_directory
                     workflow_directory_cache = CacheFile(workflow_working_directory)
                     workflow_directory_cache.add_result(
-                        self.current_workflow.workflow_instance.name(), self.current_file_name, data_from_workflow
+                        self.current_workflow.workflow_instance.name(),
+                        self.workflow_workers[event.data.id].file_name,
+                        data_from_workflow
                     )
                     workflow_directory_cache.write()
                     if self.directory_name == workflow_working_directory:
