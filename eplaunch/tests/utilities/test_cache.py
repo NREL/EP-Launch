@@ -1,9 +1,11 @@
 import json
 import os
 import tempfile
+import time
+import threading
 import unittest
 
-from eplaunch.utilities.cache import CacheFile as CF
+from eplaunch.utilities.cache import CacheFile as CF, cache_files_currently_updating_or_writing
 from eplaunch.utilities.exceptions import EPLaunchFileException
 
 
@@ -243,3 +245,32 @@ class TestCacheFileUtilityFunctions(unittest.TestCase):
         files_in_workflow = c.get_files_for_workflow('workflowA')
         self.assertIsInstance(files_in_workflow, dict)
         self.assertEqual(0, len(files_in_workflow))
+
+
+class TestCacheFileOKToContinue(unittest.TestCase):
+
+    def setUp(self):
+        self.temp_dir = tempfile.mkdtemp()
+        self.test_cache_file_path = os.path.join(self.temp_dir, CF.FileName)
+
+    @staticmethod
+    def block_cache_then_release(cache_file_path):
+        cache_files_currently_updating_or_writing.append(cache_file_path)
+        time.sleep(2)
+        cache_files_currently_updating_or_writing.remove(cache_file_path)
+
+    def test_ok_to_continue(self):
+        # to do this test, I need to first add the current cache file to the array, then try to check ok to continue,
+        # but then on another thread, wait
+        download_thread = threading.Thread(
+            target=TestCacheFileOKToContinue.block_cache_then_release,
+            args=[self.test_cache_file_path]
+        )
+        c = CF(working_directory=self.temp_dir)
+        download_thread.start()
+        self.assertTrue(c.ok_to_continue())
+
+    def test_never_ok_to_continue(self):
+        c = CF(working_directory=self.temp_dir)
+        cache_files_currently_updating_or_writing.append(self.test_cache_file_path)
+        self.assertFalse(c.ok_to_continue())

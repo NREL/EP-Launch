@@ -26,8 +26,8 @@ class CacheFile(object):
     WeatherFileKey = 'weather'
 
     def _print(self, message):
-        debug = True
-        if debug:
+        debug = False
+        if debug:  # pragma: no cover
             print("%s: %s" % (self.file_path, message))
 
     def __init__(self, working_directory):
@@ -90,7 +90,7 @@ class CacheFile(object):
         if self.file_path not in cache_files_currently_updating_or_writing:
             return True
         self._print("Found this file in the writing data, trying to sleep through it")
-        for i in range(200):  # 200 total seconds
+        for i in range(50):  # 5 total seconds
             time.sleep(0.1)  # tenth of a second
             if self.file_path not in cache_files_currently_updating_or_writing:
                 self._print("Managed to sleep long enough, continuing!")
