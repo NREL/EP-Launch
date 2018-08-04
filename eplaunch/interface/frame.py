@@ -716,7 +716,6 @@ class EpLaunchFrame(wx.Frame):
                         self.workflow_workers[event.data.id].file_name,
                         data_from_workflow
                     )
-                    workflow_directory_cache.write()
                     if self.directory_name == workflow_working_directory:
                         # only update file lists if we are still in that directory
                         self.update_file_lists()
