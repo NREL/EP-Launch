@@ -94,17 +94,6 @@ class TestCacheFileAddingConfig(unittest.TestCase):
         self.assertEqual(
             'dataA', c.workflow_state[CF.RootKey]['existingWorkflow'][CF.FilesKey]['fileA'][CF.ResultsKey]['columnA']
         )
-    #
-    # def test_adding_config_to_existing_file(self):
-    #     create_workflow_file_in_dir(self.test_cache_file_path)
-    #     c = CF(working_directory=self.temp_dir)
-    #     c.add_config('existingWorkflow', 'fileA', {})
-    #     c.add_config('existingWorkflow', 'fileA', {'columnA': 'dataA'})
-    #     self.assertIn('existingWorkflow', c.workflow_state[CF.RootKey])
-    #     self.assertIn('fileA', c.workflow_state[CF.RootKey]['existingWorkflow'][CF.FilesKey])
-    #     self.assertEqual(
-    #         'dataA', c.workflow_state[CF.RootKey]['existingWorkflow'][CF.FilesKey]['fileA'][CF.ParametersKey]['columnA']
-    #     )
 
     def test_adding_config_to_existing_config(self):
         create_workflow_file_in_dir(self.test_cache_file_path)
