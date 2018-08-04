@@ -49,7 +49,7 @@ class CacheFile(object):
         :param message: The message to print
         :return: None
         """
-        debug = True
+        debug = False
         if debug:  # pragma: no cover
             print("%s: %s" % (self.file_path, message))
 
@@ -104,7 +104,8 @@ class CacheFile(object):
                             this_file[attribute] = data
                 else:
                     these_files[file_name] = {attribute: data}
-            else:
+            else:  # pragma: no cover
+                # There's really no way to get here...but I feel like I should leave this in
                 this_workflow[self.FilesKey] = {file_name: {attribute: data}}
         else:
             root[workflow_name] = {self.FilesKey: {file_name: {attribute: data}}}
@@ -121,7 +122,7 @@ class CacheFile(object):
         if self.file_path not in cache_files_currently_updating_or_writing:
             return True
         self._print("Found this file in the writing data, trying to sleep through it")
-        for i in range(int(self.QueueTotalCheckTime * self.QueueCheckInterval)):
+        for i in range(int(self.QueueTotalCheckTime / self.QueueCheckInterval)):
             time.sleep(self.QueueCheckInterval)
             if self.file_path not in cache_files_currently_updating_or_writing:
                 self._print("Managed to sleep long enough, continuing!")
