@@ -6,6 +6,7 @@ python:
 env:
 - TOX_ENV=python
 - TOX_ENV=flake8
+- TOX_ENV=package
 
 install:
 - pip install --upgrade pip
