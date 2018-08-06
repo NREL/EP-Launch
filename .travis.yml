@@ -1,18 +1,28 @@
 language: python
 
 python:
-  - 3.6
+- 3.6
 
 env:
-  - TOX_ENV=python
-  - TOX_ENV=flake8
+- TOX_ENV=python
+- TOX_ENV=flake8
 
 install:
-  - pip install --upgrade pip
-  - pip install tox coveralls
+- pip install --upgrade pip
+- pip install tox coveralls
 
 script:
-  - tox -e $TOX_ENV
+- tox -e $TOX_ENV
 
 after_success:
-  - test $TOX_ENV = "python" && coveralls
+- test $TOX_ENV = "python" && coveralls
+
+deploy:
+  skip_cleanup: true
+  provider: releases
+  api_key:
+    secure: KipbKHD5SG/+U+ABeDG0e5blcHLVDgWkJU+I6u4NJT22MYfk09qUVKUNQaruHU9wnva635AhvGrAXqpniRs6Yj1OtPIsP2W4tkEky4R2vAPUm7VW9cA0McUqh4QgJVJ9mAe5+qmbDmrxJ+H1x6/PazaSFSFeJ9ydToiIRM8rncznL0ET+hiSifWYacmmsFmy6K0JFN2eI9T1tsw7TgxJYmcuUFC7PTgQVt7Y3gRg7doKUZfv9yeIK8ZyaSuPDlV0CI2ArqBvxSXK4S9e9Jx48895rgS6V0fIj05BC7pZ1BWwthUqHomkTMdo0xtHj1fJec3v6VEHmvGz+nPmREPWzZvoAMr2Ga8dd7HXrXLgRs1ULMnLC5eIrYjp6/cLhkUmkYL2NAvqcPkg0thHUksE0lUOg8eCm+IFNE+PNCndBnIF/nADk91gj/VtlRu4YMApvcM2EdCfc4Cuig9lbdNbpt5Z/nI0Rw6q3hktedCNZsDQo3z/qvWWYIdz3wkioMCpGQeKZOHq62qsIlEzU2/CE722i+mX/h3puTGu3vX/DJYUHvBOOdlf/eRyOWq6dkPfsboylNy/FBtv4RsEj8S1iSPWvxy4SRs4gvXWl/C+JqJ9aOYtH/ahbm1gM8qUaIjYd+eqJEmKtUq2V+kLLF28dRfxcjR/xONna9e0iIUkb3M=
+  file: eplaunch.tar.gz
+  on:
+    repo: NREL/EP-Launch
+    tags: true
