@@ -46,8 +46,8 @@ class WorkflowThread(threading.Thread):
                 message='Current workflow main function did not respond properly',
                 column_data=None
             )
+        workflow_response.id = self.id
         r = ResultEvent(workflow_response)
-        r.id = self.id
         wx.PostEvent(self._notify_window, r)
 
     def abort(self):

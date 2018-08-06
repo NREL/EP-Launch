@@ -1,6 +1,7 @@
 class EPLaunch3WorkflowResponse(object):
 
     def __init__(self, success, message, column_data, **extra_data):
+        self.id = None  # assigned by workflow thread manager
         self.success = success
         self.message = message
         self.column_data = column_data
