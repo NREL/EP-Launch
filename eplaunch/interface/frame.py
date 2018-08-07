@@ -508,7 +508,8 @@ class EpLaunchFrame(wx.Frame):
         # This needs to be remedied, big time, but until then, on this branch I am:
         #  - removing the call to AddControl, thus the dropdown will show up, but not be aligned properly, then
         #  -  making it really wide so that I can easily click it on the right half of the toolbar
-        if 'CHOICEWORKAROUND' in os.environ:
+        if Platform.get_current_platform() == Platform.MAC:
+        # if 'CHOICEWORKAROUND' in os.environ:
             workflow_choice_size = (700, -1)
             self.workflow_choice = wx.Choice(self.primary_toolbar, choices=choice_strings, size=workflow_choice_size)
         else:

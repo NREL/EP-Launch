@@ -1,12 +1,25 @@
 language: python
 
-python:
-- 3.6
-
-env:
-- TOX_ENV=python
-- TOX_ENV=flake8
-- TOX_ENV=package
+matrix:
+    include:
+        - os: linux
+          dist: trusty
+          sudo: required
+          python: 3.6
+          env: TOX_ENV=python
+        - os: linux
+          dist: trusty
+          sudo: required
+          python: 3.6
+          env: TOX_ENV=flake8
+        - os: linux
+          dist: trusty
+          sudo: required
+          python: 3.6
+          env: TOX_ENV=package
+#        - os: osx
+#          language: generic
+#          env: TOX_ENV=mac
 
 install:
 - pip install --upgrade pip
