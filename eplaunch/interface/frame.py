@@ -807,7 +807,7 @@ class EpLaunchFrame(wx.Frame):
     def handle_menu_output_toolbar(self, event):
 
         if not self.current_workflow:
-            return  # TODO 
+            return  # TODO
 
         output_suffixes = self.current_workflow.get_output_suffixes()
 
