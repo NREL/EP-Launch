@@ -19,8 +19,6 @@ def get_workflows(external_workflow_directories):
         all_workflow_directories.append(built_in_workflow_directory)
 
     work_flows = []
-    print("Found workflow directories: ")
-    print(all_workflow_directories)
 
     for workflow_directory in all_workflow_directories:
         uc_directory = workflow_directory.upper().replace('-', '.').replace('\\', '/')

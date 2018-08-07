@@ -127,11 +127,12 @@ class EpLaunchFrame(wx.Frame):
             self.work_flows = [w for w in self.work_flows if w.version_id == filter_version]
 
     def update_workflow_dependent_menu_items(self):
-        if self.current_workflow:
-            current_workflow_name = self.current_workflow.workflow_instance.name()
-            self.menu_output_toolbar.SetText("%s Output Toolbar..." % current_workflow_name)
-            self.update_output_menu()
-            self.update_output_toolbar()
+        if not self.current_workflow:
+            return
+        current_workflow_name = self.current_workflow.workflow_instance.name()
+        self.menu_output_toolbar.SetText("%s Output Toolbar..." % current_workflow_name)
+        self.update_output_menu()
+        self.update_output_toolbar()
 
     def update_output_menu(self):
         # remove all the old menu items first
@@ -189,10 +190,11 @@ class EpLaunchFrame(wx.Frame):
         self.control_file_list.DeleteAllColumns()
         self.control_file_list.AppendColumn(_("File Name"), format=wx.LIST_FORMAT_LEFT, width=-1)
         self.control_file_list.AppendColumn(_("Weather File"), format=wx.LIST_FORMAT_LEFT, width=-1)
-        if self.current_workflow:
-            current_workflow_columns = self.current_workflow.workflow_instance.get_interface_columns()
-            for current_column in current_workflow_columns:
-                self.control_file_list.AppendColumn(_(current_column), format=wx.LIST_FORMAT_LEFT, width=-1)
+        if not self.current_workflow:
+            return
+        current_workflow_columns = self.current_workflow.workflow_instance.get_interface_columns()
+        for current_column in current_workflow_columns:
+            self.control_file_list.AppendColumn(_(current_column), format=wx.LIST_FORMAT_LEFT, width=-1)
 
     def reset_raw_list_columns(self):
         self.raw_file_list.AppendColumn(_("File Name"), format=wx.LIST_FORMAT_LEFT, width=-1)
@@ -727,8 +729,9 @@ class EpLaunchFrame(wx.Frame):
                     data_from_workflow = event.data.column_data
                     workflow_working_directory = self.workflow_workers[event.data.id].run_directory
                     workflow_directory_cache = CacheFile(workflow_working_directory)
+                    # TODO: What if workflows change while a workflow is running...we shouldn't allow that
                     workflow_directory_cache.add_result(
-                        self.current_workflow.workflow_instance.name(),  # NOPE BAD TODO ERROR
+                        self.workflow_workers[event.data.id].workflow_instance.name(),
                         self.workflow_workers[event.data.id].file_name,
                         data_from_workflow
                     )

@@ -1,13 +1,10 @@
-#     packages=['eplaunch', 'eplaunch.interface'],
-#     scripts='eplaunch/runner.py',
-#     test_suite="eplaunch.tests",
-
-
 import glob
 import os
 import sys
 
 from cx_Freeze import setup as cx_setup, Executable
+
+from eplaunch import NAME, VERSION
 
 include_files = []
 default_workflows = glob.glob("eplaunch/workflows/default/*.py")
@@ -28,9 +25,8 @@ if sys.platform == "win32":
     base = "Win32GUI"
 
 cx_setup(
-    name="EP-Launch",
-    version="0.1",
-    author='Jason Glazer and Edwin Lee for the United States Department of Energy',
+    name=NAME,
+    version=VERSION,
     description='Graphical Interface and Workflow Manager for EnergyPlus',
     executables=[Executable("eplaunch/runner.py", targetName="EPLaunch", base=base)],
     url='https://github.com/NREL/EP-Launch',

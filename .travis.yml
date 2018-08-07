@@ -27,3 +27,4 @@ deploy:
   on:
     repo: NREL/EP-Launch
     tags: true
+    condition: $TOX_ENV = package
