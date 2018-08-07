@@ -33,7 +33,6 @@ env:
 install:
 - pip install --upgrade pip
 - pip install tox coveralls
-- pip install -U -f https://extras.wxpython.org/wxPython4/extras/linux/gtk2/ubuntu-16.04/wxPython-4.0.0b2-cp36-cp36mu-linux_x86_64.whl wxPython
 
 script:
 - tox -e $TOX_ENV
