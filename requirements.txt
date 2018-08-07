@@ -56,4 +56,4 @@ nose==1.3.7
 tox==2.9.1
 
 # Now, I'm going to try adding the wxPython package dependency back in here for Travis' sake and see what happens
-wxpython
+# wxpython
