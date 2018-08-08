@@ -32,5 +32,4 @@ cx_setup(
     url='https://github.com/NREL/EP-Launch',
     license='ModifiedBSD',
     options={"build_exe": build_exe_options},
-    test_suite="eplaunch.tests",
 )
