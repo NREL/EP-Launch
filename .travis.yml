@@ -25,9 +25,8 @@ matrix:
 before_install: |
   if [ "$TRAVIS_OS_NAME" == "osx" ]; then
     git clone https://github.com/MacPython/terryfy.git
-    # Avoid printing the lines from the script below.
     source terryfy/travis_tools.sh
-    get_python_environment $INSTALL_TYPE $VERSION $VENV
+    get_python_environment macpython 3.6 venv
   fi
 
 install:
