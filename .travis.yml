@@ -1,3 +1,6 @@
+# Might want to convert over the xcode9.4 osx_image, which appears to have Python 3.6
+# https://blog.travis-ci.com/2018-07-19-xcode9-4-default-announce
+
 os: linux
 language: python
 
