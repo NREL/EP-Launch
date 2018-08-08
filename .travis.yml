@@ -31,15 +31,15 @@ before_install: |
 
 install:
 - pip install --upgrade pip
-- pip install tox #coveralls
+- pip install tox coveralls
 
 script:
 - tox -e $TOX_ENV
 
-#after_success: |
-#  if [ "$TOX_ENV" == "python" ]; then
-#    coveralls
-#  fi
+after_success: |
+  if [ "$TOX_ENV" == "python" ]; then
+    coveralls
+  fi
 
 deploy:
   - provider: releases
