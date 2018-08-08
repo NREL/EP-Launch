@@ -4,6 +4,7 @@ import uuid
 from gettext import gettext as _
 
 import wx
+from wx.lib.pubsub import pub
 
 from eplaunch.interface import workflow_directories_dialog
 from eplaunch.interface.externalprograms import EPLaunchExternalPrograms
@@ -95,8 +96,9 @@ class EpLaunchFrame(wx.Frame):
         self.reset_raw_list_columns()
         self.update_num_processes_status()
 
-        # this sets up an event handler for workflow completion events
+        # this sets up an event handler for workflow completion and callback events
         event_result(self, self.handle_workflow_done)
+        pub.subscribe(self.workflow_callback, "workflow_callback")
 
         # these are things that need to be done frequently
         self.update_control_list_columns()
@@ -396,9 +398,10 @@ class EpLaunchFrame(wx.Frame):
         if self.directory_name and self.current_file_name and self.current_workflow:
             new_uuid = str(uuid.uuid4())
             self.status_bar.SetStatusText('Starting workflow', i=0)
+            self.current_workflow.workflow_instance.register_standard_output_callback(self.callback_intermediary)
             self.workflow_workers[new_uuid] = WorkflowThread(
                 new_uuid, self, self.current_workflow.workflow_instance, self.directory_name, self.current_file_name,
-                {'weather': self.current_weather_file, 'workflow location': self.current_workflow_directory}
+                {'weather': self.current_weather_file, 'workflow location': self.current_workflow.workflow_directory}
             )
         else:
             self.status_bar.SetStatusText(
@@ -473,7 +476,8 @@ class EpLaunchFrame(wx.Frame):
         main_app_vertical_sizer.Add(main_left_right_splitter, 1, wx.EXPAND, 0)
 
         # add the status bar
-        self.status_bar = self.CreateStatusBar(3)
+        self.status_bar = self.CreateStatusBar(4)
+        self.status_bar.SetStatusText("-- last workflow output message appears here --", i=3)
 
         # assign the final form's sizer
         self.SetSizer(main_app_vertical_sizer)
@@ -678,13 +682,22 @@ class EpLaunchFrame(wx.Frame):
         menu_help_about = self.help_menu.Append(615, "About EP-Launch")
         self.Bind(wx.EVT_MENU, self.handle_menu_help_about, menu_help_about)
         self.current_selected_version = self.get_current_selected_version()
-        self.current_workflow_directory = self.locate_workflows.get_workflow_directory(self.current_selected_version)
+        self.current_workflow_directory = self.locate_workflows.get_workflow_directory(
+            self.current_selected_version
+        )
         self.repopulate_help_menu()
         self.menu_bar.Append(self.help_menu, "&Help")
 
         self.SetMenuBar(self.menu_bar)
 
 # Event Handling Functions
+
+    @staticmethod
+    def callback_intermediary(message):
+        wx.CallAfter(pub.sendMessage, "workflow_callback", message=message)
+
+    def workflow_callback(self, message):
+        self.status_bar.SetStatusText(str(message), i=3)
 
     def handle_exit_box(self, event):
         self.save_config()

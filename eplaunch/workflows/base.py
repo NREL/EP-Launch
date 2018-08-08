@@ -13,6 +13,9 @@ class BaseEPLaunch3Workflow(object):
     abort = False
     output_toolbar_order = None
 
+    def __init__(self):
+        self.callback = None
+
     def name(self):
         raise NotImplementedError("name function needs to be implemented in derived workflow class")
 
@@ -35,9 +38,20 @@ class BaseEPLaunch3Workflow(object):
     def get_interface_columns(self):
         """
         Returns an array of column names for the interface; defaults to empty so it is not required
-        :return:
+        :return: A list of interface column names
         """
         return []
+
+    def register_standard_output_callback(self, callback):
+        """
+        Used to register the callback function from the UI for standard output from this workflow.
+        This function is not to be inherited by derived workflows unless they are doing something really odd.
+        Workflows should simply use self.callback(message) to send messages as necessary to the GUI during a workflow.
+
+        :param callback: A function to be called with a message.  Formulation: callback = f(str: s)
+        :return: None
+        """
+        self.callback = callback
 
     def main(self, run_directory, file_name, args):
         """
