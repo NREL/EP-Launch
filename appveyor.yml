@@ -25,6 +25,10 @@ install:
   - "%CMD_IN_ENV% pip install -r requirements.txt"
   - "%CMD_IN_ENV% pip install wxpython"
 
+test_script:
+  # Run the project tests
+  - "%CMD_IN_ENV% nosetests"
+
 build_script:
   # Build the compiled extension
   - "%CMD_IN_ENV% python setup.py bdist_msi"
@@ -34,15 +38,10 @@ artifacts:
   # Archive the generated packages in the ci.appveyor.com build report.
   - path: dist\*
 
-#deploy:
-#  release: myproduct-v$(appveyor_build_version)
-#  description: 'Release description'
-#  provider: GitHub
-#  auth_token:
-#    secure: <your encrypted token> # your encrypted token from GitHub
-#  artifact: /.*\.nupkg/            # upload all NuGet packages to release assets
-#  draft: false
-#  prerelease: false
-#  on:
-#    branch: master                 # release from master branch only
-#    appveyor_repo_tag: true        # deploy on tag push only
+deploy:
+  provider: GitHub
+  auth_token:
+    secure: KipbKHD5SG/+U+ABeDG0e5blcHLVDgWkJU+I6u4NJT22MYfk09qUVKUNQaruHU9wnva635AhvGrAXqpniRs6Yj1OtPIsP2W4tkEky4R2vAPUm7VW9cA0McUqh4QgJVJ9mAe5+qmbDmrxJ+H1x6/PazaSFSFeJ9ydToiIRM8rncznL0ET+hiSifWYacmmsFmy6K0JFN2eI9T1tsw7TgxJYmcuUFC7PTgQVt7Y3gRg7doKUZfv9yeIK8ZyaSuPDlV0CI2ArqBvxSXK4S9e9Jx48895rgS6V0fIj05BC7pZ1BWwthUqHomkTMdo0xtHj1fJec3v6VEHmvGz+nPmREPWzZvoAMr2Ga8dd7HXrXLgRs1ULMnLC5eIrYjp6/cLhkUmkYL2NAvqcPkg0thHUksE0lUOg8eCm+IFNE+PNCndBnIF/nADk91gj/VtlRu4YMApvcM2EdCfc4Cuig9lbdNbpt5Z/nI0Rw6q3hktedCNZsDQo3z/qvWWYIdz3wkioMCpGQeKZOHq62qsIlEzU2/CE722i+mX/h3puTGu3vX/DJYUHvBOOdlf/eRyOWq6dkPfsboylNy/FBtv4RsEj8S1iSPWvxy4SRs4gvXWl/C+JqJ9aOYtH/ahbm1gM8qUaIjYd+eqJEmKtUq2V+kLLF28dRfxcjR/xONna9e0iIUkb3M=
+  artifact: dist\EP-Launch-0.1-amd64.msi
+  on:
+    appveyor_repo_tag: true        # deploy on tag push only
