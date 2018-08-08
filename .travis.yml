@@ -18,9 +18,14 @@ matrix:
           python: 3.6
           env: TOX_ENV=package
         - os: osx
-          language: python
-          python: 3.6
+          language: generic
           env: TOX_ENV=mac
+
+before_install:
+- if [ "$TRAVIS_OS_NAME" == "osx" ]; then
+      brew update;
+      brew upgrade python;
+  fi
 
 install:
 - pip install --upgrade pip
