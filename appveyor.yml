@@ -7,10 +7,10 @@ shallow_clone: true
 # Python 3.6 is available at  C:\Python36
 environment:
   matrix:
-    - PYTHON: "C:\\Python36"
-      PYTHON_VERSION: "3.6.0"
+    - PYTHON: "C:\\Python36-x64"
+      PYTHON_VERSION: "3.6.6"
       PYTHON_ARCH: "64"
-#
+
 #build_script:
 #  - "%PYTHON%\\python.exe -m pip install wheel"
 
@@ -31,9 +31,6 @@ environment:
 
 
 install:
-
-  - ECHO "Installed SDKs:"
-  - ps: "ls \"C:/Program Files/Microsoft SDKs/Windows\""
 
   # Install Python (from the official .msi of http://python.org) and pip when
   # not already installed.
@@ -63,6 +60,7 @@ build_script:
   # Build the compiled extension
   - "%CMD_IN_ENV% python setup.py bdist_msi"
   - ps: "ls build"
+  - ps: "ls dist"
 
 artifacts:
   # Archive the generated packages in the ci.appveyor.com build report.
