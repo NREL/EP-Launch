@@ -4,10 +4,6 @@
 os: linux
 language: python
 
-env:
-    global:
-        - VERSION: 0.5
-
 matrix:
     include:
         - os: linux
