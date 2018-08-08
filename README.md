@@ -1,5 +1,7 @@
 # EP-Launch3
 
+[![GitHub release](https://img.shields.io/github/release/nre/ep-launch.svg)](https://github.com/nrel/ep-launch/releases/latest)
+
 Cross platform replacement for EP-Launch for EnergyPlus
 
 ## Documentation
