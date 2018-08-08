@@ -4,13 +4,17 @@
 os: linux
 language: python
 
+env:
+    global:
+        - VERSION: 0.5
+
 matrix:
     include:
         - os: linux
           dist: trusty
           sudo: required
           python: 3.6
-          env: TOX_ENV=python
+          env: TOX_ENV=linuxtest
         - os: linux
           dist: trusty
           sudo: required
@@ -20,10 +24,10 @@ matrix:
           dist: trusty
           sudo: required
           python: 3.6
-          env: TOX_ENV=package
+          env: TOX_ENV=linuxpackage
         - os: osx
           language: generic
-          env: TOX_ENV=mac
+          env: TOX_ENV=macpackage
 
 before_install: |
   if [ "$TRAVIS_OS_NAME" == "osx" ]; then
@@ -40,7 +44,7 @@ script:
 - tox -e $TOX_ENV
 
 after_success: |
-  if [ "$TOX_ENV" == "python" ]; then
+  if [ "$TOX_ENV" == "linuxtest" ]; then
     coveralls
   fi
 
@@ -53,7 +57,7 @@ deploy:
     on:
       repo: NREL/EP-Launch
       tags: true
-      condition: $TOX_ENV = package
+      condition: $TOX_ENV = linuxpackage
   - provider: releases
     skip_cleanup: true
     api_key:
@@ -62,4 +66,4 @@ deploy:
     on:
       repo: NREL/EP-Launch
       tags: true
-      condition: $TOX_ENV = mac
+      condition: $TOX_ENV = macpackage
