@@ -42,6 +42,6 @@ deploy:
   provider: GitHub
   auth_token:
     secure: Cqe58u5ZlKHFk4IecrI41aPj+qCwia36/zWmCnizfCzIsPaTfBRFagC84x1S1y8G
-  artifact: dist\*.msi
+  artifact: /.*\.msi/
   on:
     appveyor_repo_tag: true
