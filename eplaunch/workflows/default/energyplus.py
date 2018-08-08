@@ -137,6 +137,7 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
         return [ColumnNames.Errors, ColumnNames.Warnings, ColumnNames.Runtime, ColumnNames.Version]
 
     def main(self, run_directory, file_name, args):
+
         full_file_path = os.path.join(run_directory, file_name)
         file_name_no_ext, extension = os.path.splitext(file_name)
         if 'workflow location' in args:
@@ -181,12 +182,19 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
                 # and at the very end, add the file to run
                 command_line_args += [file_name]
 
+                self.callback("E+ SI [%s] --- Running EnergyPlus" % file_name)
+
                 # run E+ and gather (for now fake) data
                 process = subprocess.run(
                     command_line_args,
-                    cwd=run_directory
+                    cwd=run_directory,
+                    stdout=subprocess.PIPE
                 )
+
                 time.sleep(5)
+
+                self.callback("E+ SI [%s] --- EnergyPlus Finished" % file_name)
+
                 status_code = process.returncode
 
                 if status_code != 0:

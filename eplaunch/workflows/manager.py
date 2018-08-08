@@ -4,8 +4,9 @@ import os
 
 
 class WorkflowDetail:
-    def __init__(self, workflow_instance, description, is_energyplus, version_id):
+    def __init__(self, workflow_instance, workflow_directory, description, is_energyplus, version_id):
         self.workflow_instance = workflow_instance
+        self.workflow_directory = workflow_directory
         self.description = description
         self.is_energyplus = is_energyplus
         self.version_id = version_id
@@ -81,6 +82,7 @@ def get_workflows(external_workflow_directories):
 
                     work_flows.append(WorkflowDetail(
                         workflow_instance,
+                        workflow_directory,
                         description,
                         dir_is_eplus,
                         version_id
