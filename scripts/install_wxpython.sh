@@ -1,6 +1,7 @@
 #!/bin/bash
 
 echo "|#*#| - Inside install_wxpython, TRAVIS = ${TRAVIS}; TOX_ENV = ${TOX_ENV}"
+echo "Bash version: ${BASH_VERSION}"
 
 if [[ -v TRAVIS ]]; then
     if [[ "a${TOX_ENV}" == "apackage" ]]; then
