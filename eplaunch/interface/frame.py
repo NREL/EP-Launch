@@ -425,7 +425,7 @@ class EpLaunchFrame(wx.Frame):
         max_dialog_vertical_increments = 5.0
         self.workflow_dialog_counter += 1
         if self.workflow_dialog_counter == max_dialog_vertical_increments:
-            self.workflow_dialog_counter = 0
+            self.workflow_dialog_counter = 1
 
         this_workflow = self.workflow_workers[workflow_id]
         dlg = OutputDialog(None, title=this_workflow.workflow_instance.name())
@@ -435,7 +435,6 @@ class EpLaunchFrame(wx.Frame):
         current_rectangle = self.GetRect()
         x_right_edge = current_rectangle[0] + current_rectangle[2]
         y_top = current_rectangle[1]
-        y_bottom = y_top + current_rectangle[3]
         vertical_increment = int(current_rectangle[3] / max_dialog_vertical_increments / 2.0)
         this_x = x_right_edge + 5
         this_y = y_top + vertical_increment * (self.workflow_dialog_counter - 1)
