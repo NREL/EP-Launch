@@ -90,6 +90,7 @@ class EpLaunchFrame(wx.Frame):
 
         # this is a map of workflow output dialogs, using the uuid as a key
         self.workflow_output_dialogs = {}
+        self.workflow_dialog_counter = 0  # a simple counter ultimately used to place dialogs on the screen
 
         # get the saved workflow directories and update the main workflow list
         self.retrieve_workflow_directories_config()
@@ -421,6 +422,11 @@ class EpLaunchFrame(wx.Frame):
         self.update_num_processes_status()
 
     def make_and_show_output_dialog(self, workflow_id):
+        max_dialog_vertical_increments = 5.0
+        self.workflow_dialog_counter += 1
+        if self.workflow_dialog_counter == max_dialog_vertical_increments:
+            self.workflow_dialog_counter = 0
+
         this_workflow = self.workflow_workers[workflow_id]
         dlg = OutputDialog(None, title=this_workflow.workflow_instance.name())
         dlg.set_id(workflow_id)
@@ -429,8 +435,11 @@ class EpLaunchFrame(wx.Frame):
         current_rectangle = self.GetRect()
         x_right_edge = current_rectangle[0] + current_rectangle[2]
         y_top = current_rectangle[1]
-        # y_bottom = y_top + current_rectangle[3]
-        dlg.set_x_y(x_right_edge, y_top)
+        y_bottom = y_top + current_rectangle[3]
+        vertical_increment = int(current_rectangle[3] / max_dialog_vertical_increments / 2.0)
+        this_x = x_right_edge + 5
+        this_y = y_top + vertical_increment * (self.workflow_dialog_counter - 1)
+        dlg.set_x_y(this_x, this_y)
 
         dlg.set_config(
             json.dumps(
