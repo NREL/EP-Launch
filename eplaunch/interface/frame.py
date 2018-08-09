@@ -477,7 +477,7 @@ class EpLaunchFrame(wx.Frame):
 
         # add the status bar
         self.status_bar = self.CreateStatusBar(4)
-        self.status_bar.SetStatusText("-- last workflow output message appears here --", i=3)
+        self.status_bar.SetStatusText("-- workflow output messages appear here --", i=3)
 
         # assign the final form's sizer
         self.SetSizer(main_app_vertical_sizer)
@@ -698,7 +698,6 @@ class EpLaunchFrame(wx.Frame):
 
     def workflow_callback(self, message):
         self.status_bar.SetStatusText(str(message), i=3)
-        print("MESSAGE: " + message)
 
     def handle_exit_box(self, event):
         self.save_config()
