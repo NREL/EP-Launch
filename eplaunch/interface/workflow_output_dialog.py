@@ -9,6 +9,7 @@ class Dialog(wx.Frame):
         self.txt_config = None
         self.txt_output = None
         self.btn_exit = None
+        self.workflow_id = None
 
         self.initialize_ui()
 
@@ -53,6 +54,9 @@ class Dialog(wx.Frame):
         self.Centre()
         self.Show(True)
 
+    def set_id(self, workflow_id):
+        self.workflow_id = workflow_id
+
     def set_config(self, text):
         self.txt_config.SetValue(text)
 
@@ -60,4 +64,4 @@ class Dialog(wx.Frame):
         self.txt_output.AppendText(message + '\n')
 
     def handle_close(self, e):
-        self.Destroy()
+        self.Close(True)

@@ -421,6 +421,8 @@ class EpLaunchFrame(wx.Frame):
     def make_and_show_output_dialog(self, workflow_id):
         this_workflow = self.workflow_workers[workflow_id]
         dlg = OutputDialog(None, title=this_workflow.workflow_instance.name())
+        dlg.set_id(workflow_id)
+        dlg.Bind(wx.EVT_CLOSE, self.output_dialog_closed)
         dlg.set_config(
             json.dumps(
                 {
@@ -432,6 +434,12 @@ class EpLaunchFrame(wx.Frame):
             )
         )
         return dlg
+
+    def output_dialog_closed(self, event):
+        dialog = event.EventObject
+        this_id = dialog.workflow_id
+        dialog.Destroy()
+        del self.workflow_output_dialogs[this_id]
 
     def enable_disable_idf_editor_button(self):
         file_name_no_ext, extension = os.path.splitext(self.current_file_name)
@@ -722,7 +730,8 @@ class EpLaunchFrame(wx.Frame):
 
     def workflow_callback(self, workflow_id, message):
         self.status_bar.SetStatusText(str(message), i=3)
-        self.workflow_output_dialogs[workflow_id].update_output(message)
+        if workflow_id in self.workflow_output_dialogs:
+            self.workflow_output_dialogs[workflow_id].update_output(message)
 
     def handle_exit_box(self, event):
         self.save_config()
