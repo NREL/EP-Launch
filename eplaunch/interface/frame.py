@@ -25,7 +25,7 @@ from eplaunch.workflows import manager as workflow_manager
 # wx callbacks need an event argument even though we usually don't use it, so the next line disables that check
 # noinspection PyUnusedLocal
 class EpLaunchFrame(wx.Frame):
-    DefaultSize = (800, 600)
+    DefaultSize = (650, 600)
 
     def __init__(self, *args, **kwargs):
 
@@ -427,6 +427,13 @@ class EpLaunchFrame(wx.Frame):
         dlg = OutputDialog(None, title=this_workflow.workflow_instance.name())
         dlg.set_id(workflow_id)
         dlg.Bind(wx.EVT_CLOSE, self.output_dialog_closed)
+
+        current_rectangle = self.GetRect()
+        x_right_edge = current_rectangle[0] + current_rectangle[2]
+        y_top = current_rectangle[1]
+        # y_bottom = y_top + current_rectangle[3]
+        dlg.set_x_y(x_right_edge, y_top)
+
         dlg.set_config(
             json.dumps(
                 {
@@ -512,8 +519,7 @@ class EpLaunchFrame(wx.Frame):
         main_app_vertical_sizer.Add(main_left_right_splitter, 1, wx.EXPAND, 0)
 
         # add the status bar
-        self.status_bar = self.CreateStatusBar(4)
-        self.status_bar.SetStatusText("-- workflow output messages appear here --", i=3)
+        self.status_bar = self.CreateStatusBar(3)
 
         # assign the final form's sizer
         self.SetSizer(main_app_vertical_sizer)
@@ -733,7 +739,6 @@ class EpLaunchFrame(wx.Frame):
         wx.CallAfter(publisher.sendMessage, workflow_id, workflow_id=workflow_id, message=message)
 
     def workflow_callback(self, workflow_id, message):
-        self.status_bar.SetStatusText(str(message), i=3)
         if workflow_id in self.workflow_output_dialogs:
             self.workflow_output_dialogs[workflow_id].update_output(message)
 

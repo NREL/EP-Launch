@@ -57,6 +57,9 @@ class Dialog(wx.Frame):
     def set_id(self, workflow_id):
         self.workflow_id = workflow_id
 
+    def set_x_y(self, x, y):
+        self.SetPosition((x, y))
+
     def set_config(self, text):
         self.txt_config.SetValue(text)
 
