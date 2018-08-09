@@ -421,7 +421,16 @@ class EpLaunchFrame(wx.Frame):
     def make_and_show_output_dialog(self, workflow_id):
         this_workflow = self.workflow_workers[workflow_id]
         dlg = OutputDialog(None, title=this_workflow.workflow_instance.name())
-        dlg.set_config(json.dumps({'config:': 'stuff'}, indent=2))
+        dlg.set_config(
+            json.dumps(
+                {
+                    'workflow_name:': self.workflow_workers[workflow_id].workflow_instance.name(),
+                    'file_name:': self.workflow_workers[workflow_id].file_name,
+                    'directory:': self.workflow_workers[workflow_id].run_directory,
+                },
+                indent=2
+            )
+        )
         return dlg
 
     def enable_disable_idf_editor_button(self):
