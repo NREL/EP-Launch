@@ -182,8 +182,6 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
                 # and at the very end, add the file to run
                 command_line_args += [file_name]
 
-                # self.callback("E+ SI [%s] --- Running EnergyPlus" % file_name)
-
                 # run E+ and gather data
                 try:
                     for message in BaseEPLaunch3Workflow.execute_for_callback(command_line_args, run_directory):
@@ -195,8 +193,6 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
                         message="EnergyPlus failed for file: %s!" % full_file_path,
                         column_data={}
                     )
-
-                # self.callback("E+ SI [%s] --- EnergyPlus Finished" % file_name)
 
                 end_file_name = "{0}.end".format(file_name_no_ext)
                 end_file_path = os.path.join(run_directory, end_file_name)

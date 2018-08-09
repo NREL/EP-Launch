@@ -31,7 +31,7 @@ class Dialog(wx.Frame):
 
         sizer_config = wx.BoxSizer(wx.HORIZONTAL)
         sizer_config.Add((10, 0), proportion=1)
-        sizer_config.Add(self.txt_config, proportion=10, flag=wx.EXPAND)
+        sizer_config.Add(self.txt_config, proportion=12, flag=wx.EXPAND)
         sizer_config.Add((10, 0), proportion=1)
         sizer_main.Add(sizer_config, proportion=2, flag=wx.EXPAND)
 
@@ -39,7 +39,7 @@ class Dialog(wx.Frame):
 
         sizer_output = wx.BoxSizer(wx.HORIZONTAL)
         sizer_output.Add((10, 0), proportion=1)
-        sizer_output.Add(self.txt_output, proportion=10, flag=wx.EXPAND)
+        sizer_output.Add(self.txt_output, proportion=12, flag=wx.EXPAND)
         sizer_output.Add((10, 0), proportion=1)
         sizer_main.Add(sizer_output, proportion=5, flag=wx.EXPAND)
 

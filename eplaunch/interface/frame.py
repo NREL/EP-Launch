@@ -5,7 +5,8 @@ import uuid
 from gettext import gettext as _
 
 import wx
-from wx.lib.pubsub import pub
+
+from wx.lib.pubsub.core import Publisher
 
 from eplaunch.interface import workflow_directories_dialog
 from eplaunch.interface.externalprograms import EPLaunchExternalPrograms
@@ -103,7 +104,6 @@ class EpLaunchFrame(wx.Frame):
 
         # this sets up an event handler for workflow completion and callback events
         event_result(self, self.handle_workflow_done)
-        pub.subscribe(self.workflow_callback, "workflow_callback")
 
         # these are things that need to be done frequently
         self.update_control_list_columns()
@@ -136,8 +136,7 @@ class EpLaunchFrame(wx.Frame):
     def update_workflow_dependent_menu_items(self):
         if not self.current_workflow:
             return
-        current_workflow_name = self.current_workflow.workflow_instance.name()
-        self.menu_output_toolbar.SetText("%s Output Toolbar..." % current_workflow_name)
+        self.menu_output_toolbar.SetText("%s Output Toolbar..." % self.current_workflow.name)
         self.update_output_menu()
         self.update_output_toolbar()
 
@@ -149,7 +148,7 @@ class EpLaunchFrame(wx.Frame):
             self.output_menu.Delete(old_id)
         # all all the new menu items
         if self.current_workflow:
-            output_suffixes = self.current_workflow.workflow_instance.get_output_suffixes()
+            output_suffixes = self.current_workflow.output_suffixes
         else:
             output_suffixes = []
         output_suffixes.sort()
@@ -177,7 +176,7 @@ class EpLaunchFrame(wx.Frame):
         norm_bmp = wx.ArtProvider.GetBitmap(wx.ART_NORMAL_FILE, wx.ART_TOOLBAR, self.output_toolbar_icon_size)
         tb_output_suffixes = []
         if self.current_workflow:
-            output_suffixes = self.current_workflow.workflow_instance.get_output_suffixes()
+            output_suffixes = self.current_workflow.output_suffixes
         else:
             output_suffixes = []
         for item in output_suffixes:
@@ -199,8 +198,7 @@ class EpLaunchFrame(wx.Frame):
         self.control_file_list.AppendColumn(_("Weather File"), format=wx.LIST_FORMAT_LEFT, width=-1)
         if not self.current_workflow:
             return
-        current_workflow_columns = self.current_workflow.workflow_instance.get_interface_columns()
-        for current_column in current_workflow_columns:
+        for current_column in self.current_workflow.columns:
             self.control_file_list.AppendColumn(_(current_column), format=wx.LIST_FORMAT_LEFT, width=-1)
 
     def reset_raw_list_columns(self):
@@ -219,9 +217,11 @@ class EpLaunchFrame(wx.Frame):
 
         # if there is a cache file there, read the cached file data for the current workflow
         if self.current_workflow:
-            files_in_current_workflow = cache_file.get_files_for_workflow(self.current_workflow.workflow_instance.name())
-            workflow_file_patterns = self.current_workflow.workflow_instance.get_file_types()
-            workflow_columns = self.current_workflow.workflow_instance.get_interface_columns()
+            files_in_current_workflow = cache_file.get_files_for_workflow(
+                self.current_workflow.name
+            )
+            workflow_file_patterns = self.current_workflow.file_types
+            workflow_columns = self.current_workflow.columns
         else:
             files_in_current_workflow = []
             workflow_file_patterns = []
@@ -299,7 +299,7 @@ class EpLaunchFrame(wx.Frame):
             if previous_workflow:
                 found = False
                 for workflow_index, workflow_choice in enumerate(self.work_flows):
-                    if workflow_to_match == workflow_choice.workflow_instance.name():
+                    if workflow_to_match == workflow_choice.name:
                         self.current_workflow = self.work_flows[workflow_index]
                         self.workflow_choice.SetSelection(workflow_index)
                         found = True
@@ -402,13 +402,17 @@ class EpLaunchFrame(wx.Frame):
     def run_workflow(self):
         if self.directory_name and self.current_file_name and self.current_workflow:
             new_uuid = str(uuid.uuid4())
+            new_publisher = Publisher()
+            new_publisher.subscribe(self.workflow_callback, new_uuid)
             self.status_bar.SetStatusText('Starting workflow', i=0)
-            self.current_workflow.workflow_instance.register_standard_output_callback(
+            new_instance = self.current_workflow.workflow_class()
+            new_instance.register_standard_output_callback(
                 new_uuid,
+                new_publisher,
                 self.callback_intermediary
             )
             self.workflow_workers[new_uuid] = WorkflowThread(
-                new_uuid, self, self.current_workflow.workflow_instance, self.directory_name, self.current_file_name,
+                new_uuid, self, new_instance, self.directory_name, self.current_file_name,
                 {'weather': self.current_weather_file, 'workflow location': self.current_workflow.workflow_directory}
             )
             self.workflow_output_dialogs[new_uuid] = self.make_and_show_output_dialog(new_uuid)
@@ -725,8 +729,8 @@ class EpLaunchFrame(wx.Frame):
 # Event Handling Functions
 
     @staticmethod
-    def callback_intermediary(workflow_id, message):
-        wx.CallAfter(pub.sendMessage, "workflow_callback", workflow_id=workflow_id, message=message)
+    def callback_intermediary(workflow_id, publisher, message):
+        wx.CallAfter(publisher.sendMessage, workflow_id, workflow_id=workflow_id, message=message)
 
     def workflow_callback(self, workflow_id, message):
         self.status_bar.SetStatusText(str(message), i=3)
@@ -759,7 +763,7 @@ class EpLaunchFrame(wx.Frame):
         if not self.current_weather_file:
             self.current_weather_file = ''
         self.current_cache.add_config(
-            self.current_workflow.workflow_instance.name(),
+            self.current_workflow.name,
             self.current_file_name,
             {'weather': self.current_weather_file}
         )
@@ -874,7 +878,7 @@ class EpLaunchFrame(wx.Frame):
 
         dlg = wx.RearrangeDialog(None,
                                  "Arrange the buttons on the output toolbar",
-                                 "{} Output Toolbar".format(self.current_workflow.workflow_instance.name()),
+                                 "{} Output Toolbar".format(self.current_workflow.name),
                                  order, output_suffixes)
 
         if dlg.ShowModal() == wx.ID_OK:
@@ -1087,7 +1091,7 @@ class EpLaunchFrame(wx.Frame):
 
     def save_selected_workflow_config(self):
         if self.current_workflow:
-            self.config.Write("/ActiveWindow/SelectedWorkflow", self.current_workflow.workflow_instance.name())
+            self.config.Write("/ActiveWindow/SelectedWorkflow", self.current_workflow.name)
 
     def save_window_size(self):
         current_size = self.GetSize()
