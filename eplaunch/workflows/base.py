@@ -18,6 +18,7 @@ class BaseEPLaunch3Workflow(object):
 
     def __init__(self):
         self.callback = None
+        self.my_id = None
 
     def name(self):
         raise NotImplementedError("name function needs to be implemented in derived workflow class")
@@ -45,15 +46,17 @@ class BaseEPLaunch3Workflow(object):
         """
         return []
 
-    def register_standard_output_callback(self, callback):
+    def register_standard_output_callback(self, workflow_id, callback):
         """
         Used to register the callback function from the UI for standard output from this workflow.
         This function is not to be inherited by derived workflows unless they are doing something really odd.
         Workflows should simply use self.callback(message) to send messages as necessary to the GUI during a workflow.
 
+        :param workflow_id: A unique ID assigned by the program in order to track workflows
         :param callback: A function to be called with a message.  Formulation: callback = f(str: s)
         :return: None
         """
+        self.my_id = workflow_id
         self.callback = callback
 
     def main(self, run_directory, file_name, args):

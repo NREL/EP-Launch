@@ -1,4 +1,5 @@
 import fnmatch
+import json
 import os
 import uuid
 from gettext import gettext as _
@@ -10,6 +11,7 @@ from eplaunch.interface import workflow_directories_dialog
 from eplaunch.interface.externalprograms import EPLaunchExternalPrograms
 from eplaunch.interface.frame_support import FrameSupport
 from eplaunch.interface.filenamemenus import FileNameMenus
+from eplaunch.interface.workflow_output_dialog import Dialog as OutputDialog
 from eplaunch.interface.workflow_processing import event_result, WorkflowThread
 from eplaunch.utilities.cache import CacheFile
 from eplaunch.utilities.crossplatform import Platform
@@ -84,6 +86,9 @@ class EpLaunchFrame(wx.Frame):
 
         # this is a map of the background workers, using a uuid as a key
         self.workflow_workers = {}
+
+        # this is a map of workflow output dialogs, using the uuid as a key
+        self.workflow_output_dialogs = {}
 
         # get the saved workflow directories and update the main workflow list
         self.retrieve_workflow_directories_config()
@@ -398,16 +403,26 @@ class EpLaunchFrame(wx.Frame):
         if self.directory_name and self.current_file_name and self.current_workflow:
             new_uuid = str(uuid.uuid4())
             self.status_bar.SetStatusText('Starting workflow', i=0)
-            self.current_workflow.workflow_instance.register_standard_output_callback(self.callback_intermediary)
+            self.current_workflow.workflow_instance.register_standard_output_callback(
+                new_uuid,
+                self.callback_intermediary
+            )
             self.workflow_workers[new_uuid] = WorkflowThread(
                 new_uuid, self, self.current_workflow.workflow_instance, self.directory_name, self.current_file_name,
                 {'weather': self.current_weather_file, 'workflow location': self.current_workflow.workflow_directory}
             )
+            self.workflow_output_dialogs[new_uuid] = self.make_and_show_output_dialog(new_uuid)
         else:
             self.status_bar.SetStatusText(
                 'Error: Make sure you select a workflow, directory and a file', i=0
             )
         self.update_num_processes_status()
+
+    def make_and_show_output_dialog(self, workflow_id):
+        this_workflow = self.workflow_workers[workflow_id]
+        dlg = OutputDialog(None, title=this_workflow.workflow_instance.name())
+        dlg.set_config(json.dumps({'config:': 'stuff'}, indent=2))
+        return dlg
 
     def enable_disable_idf_editor_button(self):
         file_name_no_ext, extension = os.path.splitext(self.current_file_name)
@@ -428,7 +443,7 @@ class EpLaunchFrame(wx.Frame):
         self.directory_tree_control = wx.GenericDirCtrl(directory_tree_panel, -1, style=wx.DIRCTRL_DIR_ONLY)
         tree = self.directory_tree_control.GetTreeCtrl()
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.handle_dir_selection_changed, tree)
-        self.directory_tree_control.SelectPath("/tmp/test")
+
         directory_tree_sizer = wx.BoxSizer(wx.VERTICAL)
         directory_tree_sizer.Add(self.directory_tree_control, 1, wx.EXPAND, 0)
         directory_tree_panel.SetSizer(directory_tree_sizer)
@@ -693,11 +708,12 @@ class EpLaunchFrame(wx.Frame):
 # Event Handling Functions
 
     @staticmethod
-    def callback_intermediary(message):
-        wx.CallAfter(pub.sendMessage, "workflow_callback", message=message)
+    def callback_intermediary(workflow_id, message):
+        wx.CallAfter(pub.sendMessage, "workflow_callback", workflow_id=workflow_id, message=message)
 
-    def workflow_callback(self, message):
+    def workflow_callback(self, workflow_id, message):
         self.status_bar.SetStatusText(str(message), i=3)
+        self.workflow_output_dialogs[workflow_id].update_output(message)
 
     def handle_exit_box(self, event):
         self.save_config()
