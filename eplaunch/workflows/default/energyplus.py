@@ -184,25 +184,19 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
 
                 self.callback("E+ SI [%s] --- Running EnergyPlus" % file_name)
 
-                # run E+ and gather (for now fake) data
-                process = subprocess.run(
-                    command_line_args,
-                    cwd=run_directory,
-                    stdout=subprocess.PIPE
-                )
-
-                time.sleep(5)
-
-                self.callback("E+ SI [%s] --- EnergyPlus Finished" % file_name)
-
-                status_code = process.returncode
-
-                if status_code != 0:
+                # run E+ and gather data
+                try:
+                    for message in BaseEPLaunch3Workflow.execute_for_callback(command_line_args, run_directory):
+                        self.callback(message)
+                except subprocess.CalledProcessError:
+                    self.callback("E+ FAILED")
                     return EPLaunch3WorkflowResponse(
                         success=False,
                         message="EnergyPlus failed for file: %s!" % full_file_path,
                         column_data={}
                     )
+
+                self.callback("E+ SI [%s] --- EnergyPlus Finished" % file_name)
 
                 end_file_name = "{0}.end".format(file_name_no_ext)
                 end_file_path = os.path.join(run_directory, end_file_name)

@@ -1,3 +1,6 @@
+import subprocess
+
+
 class EPLaunch3WorkflowResponse(object):
 
     def __init__(self, success, message, column_data, **extra_data):
@@ -59,3 +62,13 @@ class BaseEPLaunch3Workflow(object):
         :return: Should return an EPLaunch3WorkflowResponse instance
         """
         raise NotImplementedError("main function needs to be implemented in derived workflow class")
+
+    @staticmethod
+    def execute_for_callback(cmd, cwd):
+        popen = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, universal_newlines=True)
+        for stdout_line in iter(popen.stdout.readline, ""):
+            yield stdout_line.strip()
+        popen.stdout.close()
+        return_code = popen.wait()
+        if return_code:
+            raise subprocess.CalledProcessError(return_code, cmd)

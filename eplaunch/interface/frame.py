@@ -698,6 +698,7 @@ class EpLaunchFrame(wx.Frame):
 
     def workflow_callback(self, message):
         self.status_bar.SetStatusText(str(message), i=3)
+        print("MESSAGE: " + message)
 
     def handle_exit_box(self, event):
         self.save_config()
