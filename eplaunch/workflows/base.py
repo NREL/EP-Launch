@@ -18,7 +18,6 @@ class BaseEPLaunch3Workflow(object):
 
     def __init__(self):
         self._callback = None
-        self.publisher = None
         self.my_id = None
 
     def name(self):
@@ -47,19 +46,17 @@ class BaseEPLaunch3Workflow(object):
         """
         return []
 
-    def register_standard_output_callback(self, workflow_id, publisher, callback):
+    def register_standard_output_callback(self, workflow_id, callback):
         """
         Used to register the callback function from the UI for standard output from this workflow.
         This function is not to be inherited by derived workflows unless they are doing something really odd.
         Workflows should simply use self.callback(message) to send messages as necessary to the GUI during a workflow.
 
         :param workflow_id: A unique ID assigned by the program in order to track workflows
-        :param publisher: A publisher instance for message brokering to the GUI
         :param callback: The GUI function to be called with message updates
         :return: None
         """
         self.my_id = workflow_id
-        self.publisher = publisher
         self._callback = callback
 
     def callback(self, message):
@@ -71,7 +68,7 @@ class BaseEPLaunch3Workflow(object):
         :param message: A message to be sent to the GUI from the workflow
         :return: None
         """
-        self._callback(self.my_id, self.publisher, message)
+        self._callback(self.my_id, message)
 
     def main(self, run_directory, file_name, args):
         """

@@ -6,7 +6,7 @@ from gettext import gettext as _
 
 import wx
 
-from wx.lib.pubsub.core import Publisher
+from wx.lib.pubsub import pub
 
 from eplaunch.interface import workflow_directories_dialog
 from eplaunch.interface.externalprograms import EPLaunchExternalPrograms
@@ -104,6 +104,7 @@ class EpLaunchFrame(wx.Frame):
 
         # this sets up an event handler for workflow completion and callback events
         event_result(self, self.handle_workflow_done)
+        pub.subscribe(self.workflow_callback, "workflow_callback")
 
         # these are things that need to be done frequently
         self.update_control_list_columns()
@@ -402,13 +403,10 @@ class EpLaunchFrame(wx.Frame):
     def run_workflow(self):
         if self.directory_name and self.current_file_name and self.current_workflow:
             new_uuid = str(uuid.uuid4())
-            new_publisher = Publisher()
-            new_publisher.subscribe(self.workflow_callback, new_uuid)
             self.status_bar.SetStatusText('Starting workflow', i=0)
             new_instance = self.current_workflow.workflow_class()
             new_instance.register_standard_output_callback(
                 new_uuid,
-                new_publisher,
                 self.callback_intermediary
             )
             self.workflow_workers[new_uuid] = WorkflowThread(
@@ -735,8 +733,8 @@ class EpLaunchFrame(wx.Frame):
 # Event Handling Functions
 
     @staticmethod
-    def callback_intermediary(workflow_id, publisher, message):
-        wx.CallAfter(publisher.sendMessage, workflow_id, workflow_id=workflow_id, message=message)
+    def callback_intermediary(workflow_id, message):
+        wx.CallAfter(pub.sendMessage, "workflow_callback", workflow_id=workflow_id, message=message)
 
     def workflow_callback(self, workflow_id, message):
         if workflow_id in self.workflow_output_dialogs:
