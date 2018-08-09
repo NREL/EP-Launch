@@ -13,11 +13,16 @@ class Dialog(wx.Frame):
         self.initialize_ui()
 
     def initialize_ui(self):
+        monospace_text = wx.TextAttr()
+        monospace_text.SetFontFamily(wx.FONTFAMILY_TELETYPE)
+
         panel_main = wx.Panel(self, style=wx.BORDER_RAISED)
         sizer_main = wx.BoxSizer(wx.VERTICAL)
 
         self.txt_config = wx.TextCtrl(panel_main, -1, style=wx.TE_READONLY | wx.TE_MULTILINE | wx.HSCROLL)
+        self.txt_config.SetDefaultStyle(monospace_text)
         self.txt_output = wx.TextCtrl(panel_main, -1, style=wx.TE_READONLY | wx.TE_MULTILINE | wx.HSCROLL)
+        self.txt_output.SetDefaultStyle(monospace_text)
         self.btn_exit = wx.Button(panel_main, label="Close Dialog")
         self.Bind(wx.EVT_BUTTON, self.handle_close, self.btn_exit)
 
@@ -44,7 +49,7 @@ class Dialog(wx.Frame):
         sizer_main.Add((0, 10))
 
         panel_main.SetSizer(sizer_main)
-        self.SetSize((400, 500))
+        self.SetSize((500, 500))
         self.Centre()
         self.Show(True)
 
