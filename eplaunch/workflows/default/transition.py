@@ -2,11 +2,11 @@ import os
 import subprocess
 import shutil
 
-from eplaunch.workflows.base import BaseEPLaunch3Workflow, EPLaunch3WorkflowResponse
+from eplaunch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1
 from eplaunch.utilities.version import Version
 
 
-class TransitionWorkflow(BaseEPLaunch3Workflow):
+class TransitionWorkflow(BaseEPLaunchWorkflow1):
 
     def name(self):
         return "Transition"
@@ -33,25 +33,25 @@ class TransitionWorkflow(BaseEPLaunch3Workflow):
                 full_file_path = os.path.join(run_directory, file_name)
                 if os.path.exists(full_file_path):
                     returned_success, returned_message = self.perform_transition(full_file_path)
-                    return EPLaunch3WorkflowResponse(
+                    return EPLaunchWorkflowResponse1(
                         success=returned_success,
                         message=returned_message,
                         column_data=[]
                     )
                 else:
-                    return EPLaunch3WorkflowResponse(
+                    return EPLaunchWorkflowResponse1(
                         success=False,
                         message="Transition file not found: {}!".format(''),
                         column_data=[]
                     )
             else:
-                return EPLaunch3WorkflowResponse(
+                return EPLaunchWorkflowResponse1(
                     success=False,
                     message="Transition exefile not found: {}!".format(''),
                     column_data=[]
                 )
         else:
-            return EPLaunch3WorkflowResponse(
+            return EPLaunchWorkflowResponse1(
                 success=False,
                 message="Workflow location missing: {}!".format(args['worflow location']),
                 column_data=[]

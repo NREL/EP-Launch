@@ -3,10 +3,10 @@ import shutil
 import subprocess
 import platform
 
-from eplaunch.workflows.base import BaseEPLaunch3Workflow, EPLaunch3WorkflowResponse
+from eplaunch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1
 
 
-class CoeffConvWorkflow(BaseEPLaunch3Workflow):
+class CoeffConvWorkflow(BaseEPLaunchWorkflow1):
 
     def name(self):
         return "CoeffConv"
@@ -36,13 +36,13 @@ class CoeffConvWorkflow(BaseEPLaunch3Workflow):
             else:
                 coeffconv_binary = os.path.join(coeffconv_folder, 'CoeffConv')
             if not os.path.exists(coeffconv_binary):
-                return EPLaunch3WorkflowResponse(
+                return EPLaunchWorkflowResponse1(
                     success=False,
                     message="CoeffConv binary not found: {}!".format(coeffconv_binary),
                     column_data=[]
                 )
         else:
-            return EPLaunch3WorkflowResponse(
+            return EPLaunchWorkflowResponse1(
                 success=False,
                 message="Workflow location missing: {}!".format(args['worflow location']),
                 column_data=[]
@@ -85,19 +85,19 @@ class CoeffConvWorkflow(BaseEPLaunch3Workflow):
                 if os.path.exists(cc_output_txt_file):
                     os.remove(cc_output_txt_file)
 
-                return EPLaunch3WorkflowResponse(
+                return EPLaunchWorkflowResponse1(
                     success=True,
                     message="Ran CoeffConv OK for file: {}!".format(coi_file_with_path),
                     column_data=[]
                 )
             else:
-                return EPLaunch3WorkflowResponse(
+                return EPLaunchWorkflowResponse1(
                     success=False,
                     message="CoeffConv failed for file: {}!".format(coi_file_with_path),
                     column_data=[]
                 )
         else:
-            return EPLaunch3WorkflowResponse(
+            return EPLaunchWorkflowResponse1(
                 success=False,
                 message="CoeffConv file not found: {}!".format(coi_file_with_path),
                 column_data=[]

@@ -1,14 +1,14 @@
 import os
 import time
 
-from eplaunch.workflows.base import BaseEPLaunch3Workflow, EPLaunch3WorkflowResponse
+from eplaunch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1
 
 
 class ColumnNames:
     Location = 'Site:Location []'
 
 
-class SiteLocationWorkflow(BaseEPLaunch3Workflow):
+class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
 
     def name(self):
         return "Get Site:Location"
@@ -56,7 +56,7 @@ class SiteLocationWorkflow(BaseEPLaunch3Workflow):
         else:
             location_name = 'Unknown'
         self.callback("Completed SiteLocationWorkflow.main()")
-        return EPLaunch3WorkflowResponse(
+        return EPLaunchWorkflowResponse1(
             success=True,
             message='Parsed Location object successfully',
             column_data={ColumnNames.Location: location_name}

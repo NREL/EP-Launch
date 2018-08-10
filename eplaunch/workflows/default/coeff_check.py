@@ -3,10 +3,10 @@ import shutil
 import subprocess
 import platform
 
-from eplaunch.workflows.base import BaseEPLaunch3Workflow, EPLaunch3WorkflowResponse
+from eplaunch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1
 
 
-class CoeffCheckWorkflow(BaseEPLaunch3Workflow):
+class CoeffCheckWorkflow(BaseEPLaunchWorkflow1):
 
     def name(self):
         return "CoeffCheck"
@@ -37,13 +37,13 @@ class CoeffCheckWorkflow(BaseEPLaunch3Workflow):
             else:
                 coeffcheck_binary = os.path.join(coeffconv_folder, 'CoeffCheck')
             if not os.path.exists(coeffcheck_binary):
-                return EPLaunch3WorkflowResponse(
+                return EPLaunchWorkflowResponse1(
                     success=False,
                     message="CoeffCheck binary not found: {}!".format(coeffcheck_binary),
                     column_data=[]
                 )
         else:
-            return EPLaunch3WorkflowResponse(
+            return EPLaunchWorkflowResponse1(
                 success=False,
                 message="Workflow location missing: {}!".format(args['worflow location']),
                 column_data=[]
@@ -86,19 +86,19 @@ class CoeffCheckWorkflow(BaseEPLaunch3Workflow):
                 if os.path.exists(cc_output_txt_file):
                     os.remove(cc_output_txt_file)
 
-                return EPLaunch3WorkflowResponse(
+                return EPLaunchWorkflowResponse1(
                     success=True,
                     message="Ran CoeffCheck OK for file: {}!".format(cci_file_with_path),
                     column_data=[]
                 )
             else:
-                return EPLaunch3WorkflowResponse(
+                return EPLaunchWorkflowResponse1(
                     success=False,
                     message="CoeffCheck failed for file: {}!".format(cci_file_with_path),
                     column_data=[]
                 )
         else:
-            return EPLaunch3WorkflowResponse(
+            return EPLaunchWorkflowResponse1(
                 success=False,
                 message="CoeffCheck file not found: {}!".format(cci_file_with_path),
                 column_data=[]

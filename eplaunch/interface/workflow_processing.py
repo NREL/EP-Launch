@@ -2,7 +2,7 @@ import threading
 
 import wx
 
-from eplaunch.workflows.base import EPLaunch3WorkflowResponse
+from eplaunch.workflows.base import EPLaunchWorkflowResponse1
 
 EVT_RESULT_ID = wx.NewId()
 
@@ -42,8 +42,8 @@ class WorkflowThread(threading.Thread):
     def run(self):
         """Run Workflow Thread."""
         workflow_response = self.workflow_instance.main(self.run_directory, self.file_name, self.workflow_main_args)
-        if type(workflow_response) is not EPLaunch3WorkflowResponse:
-            workflow_response = EPLaunch3WorkflowResponse(
+        if type(workflow_response) is not EPLaunchWorkflowResponse1:
+            workflow_response = EPLaunchWorkflowResponse1(
                 success=False,
                 message='Current workflow main function did not respond properly',
                 column_data=None

@@ -1,7 +1,7 @@
 import subprocess
 
 
-class EPLaunch3WorkflowResponse(object):
+class EPLaunchWorkflowResponse1(object):
 
     def __init__(self, success, message, column_data, **extra_data):
         self.id = None  # assigned by workflow thread manager
@@ -11,7 +11,7 @@ class EPLaunch3WorkflowResponse(object):
         self.extra_data = extra_data
 
 
-class BaseEPLaunch3Workflow(object):
+class BaseEPLaunchWorkflow1(object):
 
     def __init__(self):
         self._callback = None
@@ -72,7 +72,7 @@ class BaseEPLaunch3Workflow(object):
     def main(self, run_directory, file_name, args):
         """
         The actual running operation for the workflow, should check self.abort periodically to allow exiting
-        :return: Should return an EPLaunch3WorkflowResponse instance
+        :return: Should return an EPLaunchWorkflowResponse1 instance
         """
         raise NotImplementedError("main function needs to be implemented in derived workflow class")
 
