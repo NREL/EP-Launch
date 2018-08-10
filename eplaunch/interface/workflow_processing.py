@@ -53,7 +53,8 @@ class WorkflowThread(threading.Thread):
         try:
             wx.PostEvent(self._notify_window, r)
         except RuntimeError:
-            print("Could not post finished event to the GUI, did the GUI get force closed?")
+            pass
+            # print("Could not post finished event to the GUI, did the GUI get force closed?")
 
     def abort(self):
         """abort worker thread."""

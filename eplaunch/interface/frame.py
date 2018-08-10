@@ -765,12 +765,11 @@ class EpLaunchFrame(wx.Frame):
                 for thread_id in self.workflow_threads:
                     try:
                         self.workflow_threads[thread_id].abort()
-                        # thread = self.workflow_threads[thread_id]._Thread_stop()
-                        window = self.workflow_output_dialogs[thread_id].Close()
-                        # del self.workflow_threads[thread_id]
+                        self.workflow_output_dialogs[thread_id].Close()
                     except Exception as e:
                         print("Tried to abort thread, but something went awry: " + str(e))
             elif response == wx.NO:
+                event.Veto()
                 return
         self.save_config()
         self.Destroy()
