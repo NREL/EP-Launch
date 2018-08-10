@@ -50,9 +50,12 @@ class WorkflowThread(threading.Thread):
             )
         workflow_response.id = self.id
         r = ResultEvent(workflow_response)
-        wx.PostEvent(self._notify_window, r)
+        try:
+            wx.PostEvent(self._notify_window, r)
+        except RuntimeError:
+            print("Could not post finished event to the GUI, did the GUI get force closed?")
 
     def abort(self):
         """abort worker thread."""
         # Method for use by main thread to signal an abort
-        self.workflow_instance.abort = True
+        self.workflow_instance.abort()

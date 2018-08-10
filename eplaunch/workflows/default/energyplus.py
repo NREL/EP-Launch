@@ -184,7 +184,7 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
 
                 # run E+ and gather data
                 try:
-                    for message in BaseEPLaunch3Workflow.execute_for_callback(command_line_args, run_directory):
+                    for message in self.execute_for_callback(command_line_args, run_directory):
                         self.callback(message)
                 except subprocess.CalledProcessError:
                     self.callback("E+ FAILED")

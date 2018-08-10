@@ -464,7 +464,13 @@ class EpLaunchFrame(wx.Frame):
         self.output_toolbar.Realize()
 
     def show_error_message(self, message):
-        return wx.MessageBox(message, self.GetTitle() + 'Error', wx.OK | wx.ICON_ERROR)
+        return wx.MessageBox(message, self.GetTitle() + ' Error', wx.OK | wx.ICON_ERROR)
+
+    def show_yes_no_question(self, message):
+        return wx.MessageBox(message, self.GetTitle() + ' Question', wx.YES_NO | wx.ICON_QUESTION)
+
+    def any_threads_running(self):
+        return len(self.workflow_threads) > 0
 
 # GUI Building Functions
 
@@ -752,6 +758,20 @@ class EpLaunchFrame(wx.Frame):
             self.workflow_output_dialogs[workflow_id].update_output(message)
 
     def handle_frame_close(self, event):
+        if self.any_threads_running():
+            msg = 'Program closing, but there are threads running; would you like to kill the threads and close?'
+            response = self.show_yes_no_question(msg)
+            if response == wx.YES:
+                for thread_id in self.workflow_threads:
+                    try:
+                        self.workflow_threads[thread_id].abort()
+                        # thread = self.workflow_threads[thread_id]._Thread_stop()
+                        window = self.workflow_output_dialogs[thread_id].Close()
+                        # del self.workflow_threads[thread_id]
+                    except Exception as e:
+                        print("Tried to abort thread, but something went awry: " + str(e))
+            elif response == wx.NO:
+                return
         self.save_config()
         self.Destroy()
 
