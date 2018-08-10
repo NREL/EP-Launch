@@ -403,6 +403,10 @@ class EpLaunchFrame(wx.Frame):
 
     def run_workflow(self):
         if self.directory_name and self.current_file_name and self.current_workflow:
+            for _, thread in self.workflow_threads.items():
+                if thread.file_name == self.current_file_name and thread.run_directory == self.directory_name and thread.workflow_instance.name() == self.current_workflow.name:
+                    self.show_error_message('ERROR: This workflow/dir/file combination is already running')
+                    return
             new_uuid = str(uuid.uuid4())
             self.status_bar.SetStatusText('Starting workflow', i=0)
             new_instance = self.current_workflow.workflow_class()
@@ -417,9 +421,7 @@ class EpLaunchFrame(wx.Frame):
             self.workflow_output_dialogs[new_uuid] = self.make_and_show_output_dialog(new_uuid)
             self.workflow_output_dialogs[new_uuid].update_output("*** STARTING WORKFLOW ***")
         else:
-            self.status_bar.SetStatusText(
-                'Error: Make sure you select a workflow, directory and a file', i=0
-            )
+            self.show_error_message('ERROR: Make sure you select a workflow, directory and a file')
         self.update_num_processes_status()
 
     def make_and_show_output_dialog(self, workflow_id):
@@ -464,6 +466,9 @@ class EpLaunchFrame(wx.Frame):
         file_name_no_ext, extension = os.path.splitext(self.current_file_name)
         self.primary_toolbar.EnableTool(self.tb_idf_editor_id, extension.upper() == ".IDF")
         self.output_toolbar.Realize()
+
+    def show_error_message(self, message):
+        return wx.MessageBox(message, self.GetTitle() + 'Error', wx.OK | wx.ICON_ERROR)
 
 # GUI Building Functions
 
@@ -822,10 +827,8 @@ class EpLaunchFrame(wx.Frame):
 
     def handle_menu_file_quit(self, event):
         self.close_frame()
-        self.status_bar.SetStatusText('Quitting Program', i=0)
 
     def handle_dir_selection_changed(self, event):
-        # self.status_bar.SetStatusText("Dir-SelectionChanged")
         self.directory_name = self.directory_tree_control.GetPath()
         # manage the check marks when changing directories
         self.folder_recent.uncheck_all()
@@ -834,7 +837,7 @@ class EpLaunchFrame(wx.Frame):
         self.folder_favorites.put_checkmark_on_item(self.directory_name)
         self.current_cache = CacheFile(self.directory_name)
         try:
-            self.status_bar.SetStatusText(self.directory_name, i=0)
+            self.status_bar.SetStatusText('Selected directory: ' + self.directory_name, i=0)
             self.update_file_lists()
         except Exception as e:  # noqa -- status_bar and things may not exist during initialization, just ignore
             print(e)
