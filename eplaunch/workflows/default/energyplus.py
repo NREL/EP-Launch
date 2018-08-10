@@ -143,13 +143,13 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
         if 'workflow location' in args:
             energyplus_root_folder, _ = os.path.split(args['workflow location'])
             if platform.system() == 'Windows':
-                self.EnergyPlusBinary = os.path.join(energyplus_root_folder, 'energyplus.exe')
+                energyplus_binary = os.path.join(energyplus_root_folder, 'energyplus.exe')
             else:
-                self.EnergyPlusBinary = os.path.join(energyplus_root_folder, 'energyplus')
-            if not os.path.exists(self.EnergyPlusBinary):
+                energyplus_binary = os.path.join(energyplus_root_folder, 'energyplus')
+            if not os.path.exists(energyplus_binary):
                 return EPLaunch3WorkflowResponse(
                     success=False,
-                    message="EnergyPlus binary not found: {}!".format(self.EnergyPlusBinary),
+                    message="EnergyPlus binary not found: {}!".format(energyplus_binary),
                     column_data=[]
                 )
         else:
@@ -165,7 +165,7 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
             if numeric_version >= 80900:
 
                 # start with the binary name, obviously
-                command_line_args = [self.EnergyPlusBinary]
+                command_line_args = [energyplus_binary]
 
                 # need to run readvars
                 command_line_args += ['--readvars']
@@ -182,22 +182,12 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
                 # and at the very end, add the file to run
                 command_line_args += [file_name]
 
-                self.callback("E+ SI [%s] --- Running EnergyPlus" % file_name)
-
-                # run E+ and gather (for now fake) data
-                process = subprocess.run(
-                    command_line_args,
-                    cwd=run_directory,
-                    stdout=subprocess.PIPE
-                )
-
-                time.sleep(5)
-
-                self.callback("E+ SI [%s] --- EnergyPlus Finished" % file_name)
-
-                status_code = process.returncode
-
-                if status_code != 0:
+                # run E+ and gather data
+                try:
+                    for message in BaseEPLaunch3Workflow.execute_for_callback(command_line_args, run_directory):
+                        self.callback(message)
+                except subprocess.CalledProcessError:
+                    self.callback("E+ FAILED")
                     return EPLaunch3WorkflowResponse(
                         success=False,
                         message="EnergyPlus failed for file: %s!" % full_file_path,
@@ -278,13 +268,13 @@ class EnergyPlusWorkflowIP(BaseEPLaunch3Workflow):
         if 'workflow location' in args:
             energyplus_root_folder, _ = os.path.split(args['workflow location'])
             if platform.system() == 'Windows':
-                self.EnergyPlusBinary = os.path.join(energyplus_root_folder, 'energyplus.exe')
+                energyplus_binary = os.path.join(energyplus_root_folder, 'energyplus.exe')
             else:
-                self.EnergyPlusBinary = os.path.join(energyplus_root_folder, 'energyplus')
-            if not os.path.exists(self.EnergyPlusBinary):
+                energyplus_binary = os.path.join(energyplus_root_folder, 'energyplus')
+            if not os.path.exists(energyplus_binary):
                 return EPLaunch3WorkflowResponse(
                     success=False,
-                    message="EnergyPlus binary not found: {}!".format(self.EnergyPlusBinary),
+                    message="EnergyPlus binary not found: {}!".format(energyplus_binary),
                     column_data=[]
                 )
         else:
@@ -300,7 +290,7 @@ class EnergyPlusWorkflowIP(BaseEPLaunch3Workflow):
             if numeric_version >= 80900:
 
                 # start with the binary name, obviously
-                command_line_args = [self.EnergyPlusBinary]
+                command_line_args = [energyplus_binary]
 
                 # need to run readvars
                 command_line_args += ['--readvars']

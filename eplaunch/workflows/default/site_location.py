@@ -1,4 +1,5 @@
 import os
+import time
 
 from eplaunch.workflows.base import BaseEPLaunch3Workflow, EPLaunch3WorkflowResponse
 
@@ -25,8 +26,14 @@ class SiteLocationWorkflow(BaseEPLaunch3Workflow):
         return [ColumnNames.Location]
 
     def main(self, run_directory, file_name, args):
-        if self.callback:
-            self.callback("In SiteLocationWorkflow.main(), about to process file")
+        self.callback("In SiteLocationWorkflow.main(), about to process file")
+        self.callback("About to start the soothing breathing phase")
+        for i in range(7):
+            time.sleep(1)
+            self.callback("Inhale")
+            time.sleep(1)
+            self.callback("Exhale")
+        self.callback("Done breathing")
         file_path = os.path.join(run_directory, file_name)
         content = open(file_path).read()
         new_lines = []
@@ -48,8 +55,7 @@ class SiteLocationWorkflow(BaseEPLaunch3Workflow):
                 break
         else:
             location_name = 'Unknown'
-        if self.callback:
-            self.callback("Completed SiteLocationWorkflow.main()")
+        self.callback("Completed SiteLocationWorkflow.main()")
         return EPLaunch3WorkflowResponse(
             success=True,
             message='Parsed Location object successfully',

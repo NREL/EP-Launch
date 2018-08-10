@@ -1,12 +1,17 @@
-from importlib import util as import_util
 import inspect
 import os
+from importlib import util as import_util
 
 
 class WorkflowDetail:
-    def __init__(self, workflow_instance, workflow_directory, description, is_energyplus, version_id):
-        self.workflow_instance = workflow_instance
-        self.workflow_directory = workflow_directory
+    def __init__(self, workflow_class, name, output_suffixes, file_types, columns,
+                 directory, description, is_energyplus, version_id):
+        self.workflow_class = workflow_class
+        self.name = name
+        self.output_suffixes = output_suffixes
+        self.file_types = file_types
+        self.columns = columns
+        self.workflow_directory = directory
         self.description = description
         self.is_energyplus = is_energyplus
         self.version_id = version_id
@@ -62,6 +67,8 @@ def get_workflows(external_workflow_directories):
                     workflow_instance = this_class_type()
                     workflow_name = workflow_instance.name()
                     workflow_file_types = workflow_instance.get_file_types()
+                    workflow_output_suffixes = workflow_instance.get_output_suffixes()
+                    workflow_columns = workflow_instance.get_interface_columns()
 
                     file_type_string = "("
                     first = True
@@ -80,13 +87,19 @@ def get_workflows(external_workflow_directories):
                     elif built_in_workflow_directory == workflow_directory:
                         description += ' (builtin)'
 
-                    work_flows.append(WorkflowDetail(
-                        workflow_instance,
-                        workflow_directory,
-                        description,
-                        dir_is_eplus,
-                        version_id
-                    ))
+                    work_flows.append(
+                        WorkflowDetail(
+                            this_class_type,
+                            workflow_name,
+                            workflow_output_suffixes,
+                            workflow_file_types,
+                            workflow_columns,
+                            workflow_directory,
+                            description,
+                            dir_is_eplus,
+                            version_id
+                        )
+                    )
 
     work_flows.sort(key=lambda w: w.description)
     return work_flows

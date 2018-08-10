@@ -1,3 +1,6 @@
+import subprocess
+
+
 class EPLaunch3WorkflowResponse(object):
 
     def __init__(self, success, message, column_data, **extra_data):
@@ -14,7 +17,8 @@ class BaseEPLaunch3Workflow(object):
     output_toolbar_order = None
 
     def __init__(self):
-        self.callback = None
+        self._callback = None
+        self.my_id = None
 
     def name(self):
         raise NotImplementedError("name function needs to be implemented in derived workflow class")
@@ -42,16 +46,29 @@ class BaseEPLaunch3Workflow(object):
         """
         return []
 
-    def register_standard_output_callback(self, callback):
+    def register_standard_output_callback(self, workflow_id, callback):
         """
         Used to register the callback function from the UI for standard output from this workflow.
         This function is not to be inherited by derived workflows unless they are doing something really odd.
         Workflows should simply use self.callback(message) to send messages as necessary to the GUI during a workflow.
 
-        :param callback: A function to be called with a message.  Formulation: callback = f(str: s)
+        :param workflow_id: A unique ID assigned by the program in order to track workflows
+        :param callback: The GUI function to be called with message updates
         :return: None
         """
-        self.callback = callback
+        self.my_id = workflow_id
+        self._callback = callback
+
+    def callback(self, message):
+        """
+        This is the actual callback function that workflows can call when they have an update.
+        Internally here there are some other parameters passed up, but that is just to further isolate the users
+        from having to pass extra data during their own calls
+
+        :param message: A message to be sent to the GUI from the workflow
+        :return: None
+        """
+        self._callback(self.my_id, message)
 
     def main(self, run_directory, file_name, args):
         """
@@ -59,3 +76,13 @@ class BaseEPLaunch3Workflow(object):
         :return: Should return an EPLaunch3WorkflowResponse instance
         """
         raise NotImplementedError("main function needs to be implemented in derived workflow class")
+
+    @staticmethod
+    def execute_for_callback(cmd, cwd):
+        popen = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, universal_newlines=True)
+        for stdout_line in iter(popen.stdout.readline, ""):
+            yield stdout_line.strip()
+        popen.stdout.close()
+        return_code = popen.wait()
+        if return_code:
+            raise subprocess.CalledProcessError(return_code, cmd)
