@@ -26,12 +26,14 @@ class ResultEvent(wx.PyEvent):
 class WorkflowThread(threading.Thread):
     """Worker Thread Class."""
 
-    def __init__(self, identifier, notify_window, workflow_instance, run_directory, file_name, main_args):
+    def __init__(self, identifier, notify_window, workflow_instance,
+                 run_directory, file_name, main_args):
         super().__init__()
         self._notify_window = notify_window
         self._want_abort = 0
         self.id = identifier
         self.workflow_instance = workflow_instance
+        self.workflow_directory = main_args['workflow location']
         self.run_directory = run_directory
         self.file_name = file_name
         self.workflow_main_args = main_args
