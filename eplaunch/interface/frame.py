@@ -37,7 +37,7 @@ class EpLaunchFrame(wx.Frame):
         self.SetTitle(_("EP-Launch 3"))
 
         # set the window exit
-        self.Bind(wx.EVT_CLOSE, self.handle_exit_box)
+        self.Bind(wx.EVT_CLOSE, self.handle_frame_close)
 
         # Get saved settings
         self.config = wx.Config("EP-Launch3")
@@ -122,10 +122,6 @@ class EpLaunchFrame(wx.Frame):
         self.file_name_manipulator = FileNameManipulation()
 
 # Frame Object Manipulation
-
-    def close_frame(self):
-        self.save_config()
-        self.Close()
 
     def update_workflow_list(self, filter_version=None):
         self.energyplus_workflow_directories = self.locate_workflows.find()
@@ -755,7 +751,7 @@ class EpLaunchFrame(wx.Frame):
         if workflow_id in self.workflow_output_dialogs:
             self.workflow_output_dialogs[workflow_id].update_output(message)
 
-    def handle_exit_box(self, event):
+    def handle_frame_close(self, event):
         self.save_config()
         self.Destroy()
 
@@ -773,6 +769,9 @@ class EpLaunchFrame(wx.Frame):
     def handle_menu_file_run(self, event):
         self.folder_recent.add_recent(self.directory_tree_control.GetPath())
         self.run_workflow()
+
+    def handle_menu_file_quit(self, event):
+        self.Close()
 
     def handle_tb_run(self, event):
         if not self.current_workflow or not self.selected_file or not self.selected_directory:
@@ -824,9 +823,6 @@ class EpLaunchFrame(wx.Frame):
         except Exception as e:
             print(e)
         self.update_num_processes_status()
-
-    def handle_menu_file_quit(self, event):
-        self.close_frame()
 
     def handle_dir_selection_changed(self, event):
         self.selected_directory = self.directory_tree_control.GetPath()
@@ -1014,42 +1010,42 @@ class EpLaunchFrame(wx.Frame):
             pass
 
     def handle_menu_help_about(self, event):
-        dlg = wx.MessageDialog(self, 'EP-Launch ' +
-                               '\n\nVersion 0.9' +
-                               '\nCopyright (c) 2018, Alliance for Sustainable Energy, LLC  and GARD Analytics, Inc' +
-                               '\n' +
-                               '\nRedistribution and use in source and binary forms, with or without' +
-                               '\nmodification, are permitted provided that the following conditions are met:' +
-                               '\n' +
-                               '\n* Redistributions of source code must retain the above copyright notice, this' +
-                               '\n  list of conditions and the following disclaimer.' +
-                               '\n' +
-                               '\n* Redistributions in binary form must reproduce the above copyright notice,' +
-                               '\nthis list of conditions and the following disclaimer in the documentation' +
-                               '\nand/or other materials provided with the distribution.' +
-                               '\n' +
-                               '\n* The name of the copyright holder(s), any contributors, the United States' +
-                               '\nGovernment, the United States Department of Energy, or any of their employees' +
-                               '\nmay not be used to endorse or promote products derived from this software' +
-                               '\nwithout specific prior written permission from the respective party.' +
-                               '\n' +
-                               '\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER(S) AND ANY CONTRIBUTORS' +
-                               '\n"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,' +
-                               '\nTHE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR ' +
-                               '\nPURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER(S), ANY , ' +
-                               '\nCONTRIBUTORS THE UNITED STATES GOVERNMENT, OR THE UNITED STATES DEPARTMENT  ' +
-                               '\nOF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, ' +
-                               '\nINCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT  ' +
-                               '\nNOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, ' +
-                               '\nDATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY ' +
-                               '\nOF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING ' +
-                               '\nNEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,' +
-                               '\nEVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.',
-                               'About EP-Launch',
-                               wx.OK | wx.ICON_INFORMATION
-                               )
-        dlg.ShowModal()
-        dlg.Destroy()
+        text = """
+EP-Launch
+               
+Version 0.9
+Copyright (c) 2018, Alliance for Sustainable Energy, LLC  and GARD Analytics, Inc
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+ list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation
+and/or other materials provided with the distribution.
+
+* The name of the copyright holder(s), any contributors, the United States
+Government, the United States Department of Energy, or any of their employees
+may not be used to endorse or promote products derived from this software
+without specific prior written permission from the respective party.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER(S) AND ANY CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
+PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER(S), ANY , 
+CONTRIBUTORS THE UNITED STATES GOVERNMENT, OR THE UNITED STATES DEPARTMENT  
+OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, 
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT  
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY 
+OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+"""
+        with wx.MessageDialog(self, text, 'About EP-Launch', wx.OK | wx.ICON_INFORMATION) as dlg:
+            dlg.ShowModal()
 
 # Retrieve Config Functions
 
