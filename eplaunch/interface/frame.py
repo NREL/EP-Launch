@@ -53,8 +53,8 @@ class EpLaunchFrame(wx.Frame):
         self.menu_bar = None
         self.current_workflow = None
         self.work_flows = None
-        self.directory_name = None
-        self.current_file_name = None
+        self.selected_directory = None
+        self.selected_file = None
         self.menu_output_toolbar = None
         self.status_bar = None
         self.raw_file_list = None
@@ -211,11 +211,11 @@ class EpLaunchFrame(wx.Frame):
     def update_file_lists(self):
 
         # if we don't have a directory name, it's probably during init, just ignore
-        if not self.directory_name:
+        if not self.selected_directory:
             return
 
         # get the local cache file path for this folder
-        cache_file = CacheFile(self.directory_name)
+        cache_file = CacheFile(self.selected_directory)
 
         # if there is a cache file there, read the cached file data for the current workflow
         if self.current_workflow:
@@ -231,7 +231,7 @@ class EpLaunchFrame(wx.Frame):
 
         # then get the entire list of files in the current directory to build up the listview items
         # if they happen to match the filename in the workflow cache, then add that info to the row structure
-        files_in_dir = self.support.get_files_in_directory(self.directory_name)
+        files_in_dir = self.support.get_files_in_directory(self.selected_directory)
         control_list_rows = []
         raw_list_rows = []
         for file_structure in files_in_dir:
@@ -314,8 +314,8 @@ class EpLaunchFrame(wx.Frame):
                 self.workflow_choice.SetSelection(0)
 
     def update_output_file_status(self):
-        file_name_no_ext, extension = os.path.splitext(self.current_file_name)
-        full_path_name_no_ext = os.path.join(self.directory_name, file_name_no_ext)
+        file_name_no_ext, extension = os.path.splitext(self.selected_file)
+        full_path_name_no_ext = os.path.join(self.selected_directory, file_name_no_ext)
         self.disable_output_menu_items()
         self.enable_existing_menu_items(full_path_name_no_ext)
         self.disable_output_toolbar_buttons()
@@ -402,9 +402,9 @@ class EpLaunchFrame(wx.Frame):
             self.Bind(wx.EVT_MENU, self.handle_specific_documentation_menu, specific_documentation_menu)
 
     def run_workflow(self):
-        if self.directory_name and self.current_file_name and self.current_workflow:
+        if self.selected_directory and self.selected_file and self.current_workflow:
             for _, thread in self.workflow_threads.items():
-                if thread.file_name == self.current_file_name and thread.run_directory == self.directory_name and thread.workflow_instance.name() == self.current_workflow.name:
+                if thread.file_name == self.selected_file and thread.run_directory == self.selected_directory and thread.workflow_instance.name() == self.current_workflow.name:
                     self.show_error_message('ERROR: This workflow/dir/file combination is already running')
                     return
             new_uuid = str(uuid.uuid4())
@@ -415,7 +415,7 @@ class EpLaunchFrame(wx.Frame):
                 self.callback_intermediary
             )
             self.workflow_threads[new_uuid] = WorkflowThread(
-                new_uuid, self, new_instance, self.directory_name, self.current_file_name,
+                new_uuid, self, new_instance, self.selected_directory, self.selected_file,
                 {'weather': self.current_weather_file, 'workflow location': self.current_workflow.workflow_directory}
             )
             self.workflow_output_dialogs[new_uuid] = self.make_and_show_output_dialog(new_uuid)
@@ -463,7 +463,7 @@ class EpLaunchFrame(wx.Frame):
         del self.workflow_output_dialogs[this_id]
 
     def enable_disable_idf_editor_button(self):
-        file_name_no_ext, extension = os.path.splitext(self.current_file_name)
+        file_name_no_ext, extension = os.path.splitext(self.selected_file)
         self.primary_toolbar.EnableTool(self.tb_idf_editor_id, extension.upper() == ".IDF")
         self.output_toolbar.Realize()
 
@@ -760,13 +760,13 @@ class EpLaunchFrame(wx.Frame):
         self.Destroy()
 
     def handle_out_tb_button(self, event):
-        full_path_name = os.path.join(self.directory_name, self.current_file_name)
+        full_path_name = os.path.join(self.selected_directory, self.selected_file)
         tb_button = self.output_toolbar.FindById(event.GetId())
         output_file_name = self.file_name_manipulator.replace_extension_with_suffix(full_path_name, tb_button.Label)
         self.external_runner.run_program_by_extension(output_file_name)
 
     def handle_list_ctrl_selection(self, event):
-        self.current_file_name = event.Item.Text
+        self.selected_file = event.Item.Text
         self.update_output_file_status()
         self.enable_disable_idf_editor_button()
 
@@ -775,14 +775,14 @@ class EpLaunchFrame(wx.Frame):
         self.run_workflow()
 
     def handle_tb_run(self, event):
-        if not self.current_workflow or not self.current_file_name or not self.directory_name:
+        if not self.current_workflow or not self.selected_file or not self.selected_directory:
             return  # error
         self.folder_recent.add_recent(self.directory_tree_control.GetPath())
         if not self.current_weather_file:
             self.current_weather_file = ''
         self.current_cache.add_config(
             self.current_workflow.name,
-            self.current_file_name,
+            self.selected_file,
             {'weather': self.current_weather_file}
         )
         self.current_cache.write()
@@ -805,7 +805,7 @@ class EpLaunchFrame(wx.Frame):
                         self.workflow_threads[event.data.id].file_name,
                         data_from_workflow
                     )
-                    if self.directory_name == workflow_working_directory:
+                    if self.selected_directory == workflow_working_directory:
                         # only update file lists if we are still in that directory
                         self.update_file_lists()
                 except EPLaunchFileException:
@@ -829,15 +829,15 @@ class EpLaunchFrame(wx.Frame):
         self.close_frame()
 
     def handle_dir_selection_changed(self, event):
-        self.directory_name = self.directory_tree_control.GetPath()
+        self.selected_directory = self.directory_tree_control.GetPath()
         # manage the check marks when changing directories
         self.folder_recent.uncheck_all()
-        self.folder_recent.put_checkmark_on_item(self.directory_name)
+        self.folder_recent.put_checkmark_on_item(self.selected_directory)
         self.folder_favorites.uncheck_all()
-        self.folder_favorites.put_checkmark_on_item(self.directory_name)
-        self.current_cache = CacheFile(self.directory_name)
+        self.folder_favorites.put_checkmark_on_item(self.selected_directory)
+        self.current_cache = CacheFile(self.selected_directory)
         try:
-            self.status_bar.SetStatusText('Selected directory: ' + self.directory_name, i=0)
+            self.status_bar.SetStatusText('Selected directory: ' + self.selected_directory, i=0)
             self.update_file_lists()
         except Exception as e:  # noqa -- status_bar and things may not exist during initialization, just ignore
             print(e)
@@ -963,22 +963,22 @@ class EpLaunchFrame(wx.Frame):
         self.weather_favorites.remove_favorite(self.current_weather_file)
 
     def handle_tb_idf_editor(self, event):
-        full_path_name = os.path.join(self.directory_name, self.current_file_name)
+        full_path_name = os.path.join(self.selected_directory, self.selected_file)
         self.external_runner.run_idf_editor(full_path_name)
 
     def handle_tb_text_editor(self, event):
-        full_path_name = os.path.join(self.directory_name, self.current_file_name)
+        full_path_name = os.path.join(self.selected_directory, self.selected_file)
         self.external_runner.run_text_editor(full_path_name)
 
     def handle_output_menu_item(self, event):
-        full_path_name = os.path.join(self.directory_name, self.current_file_name)
+        full_path_name = os.path.join(self.selected_directory, self.selected_file)
         menu_item = self.output_menu.FindItemById(event.GetId())
         output_file_name = self.file_name_manipulator.replace_extension_with_suffix(full_path_name,
                                                                                     menu_item.GetLabel())
         self.external_runner.run_program_by_extension(output_file_name)
 
     def handle_extra_output_menu_item(self, event):
-        full_path_name = os.path.join(self.directory_name, self.current_file_name)
+        full_path_name = os.path.join(self.selected_directory, self.selected_file)
         menu_item = self.extra_output_menu.FindItemById(event.GetId())
         output_file_name = self.file_name_manipulator.replace_extension_with_suffix(full_path_name,
                                                                                     menu_item.GetLabel())
@@ -1005,11 +1005,11 @@ class EpLaunchFrame(wx.Frame):
     def handle_tb_explorer(self, event):
         current_platform = Platform.get_current_platform()
         if current_platform == Platform.WINDOWS:  # pragma: no cover
-            os.system('start {}'.format(self.directory_name))
+            os.system('start {}'.format(self.selected_directory))
         elif current_platform == Platform.LINUX:
-            os.system('xdg-open "{}"'.format(self.directory_name))
+            os.system('xdg-open "{}"'.format(self.selected_directory))
         elif current_platform == Platform.MAC:  # pragma: no cover
-            os.system('open "{}"'.format(self.directory_name))
+            os.system('open "{}"'.format(self.selected_directory))
         else:
             pass
 
@@ -1084,8 +1084,8 @@ class EpLaunchFrame(wx.Frame):
             current_energyplus_directory, _ = os.path.split(self.current_workflow_directory)
             possible_directory_name = os.path.join(current_energyplus_directory, 'ExampleFiles')
         if possible_directory_name:
-            self.directory_name = possible_directory_name
-            real_path = os.path.abspath(self.directory_name)
+            self.selected_directory = possible_directory_name
+            real_path = os.path.abspath(self.selected_directory)
             self.directory_tree_control.SelectPath(real_path, True)
             self.directory_tree_control.ExpandPath(real_path)
 
@@ -1103,10 +1103,10 @@ class EpLaunchFrame(wx.Frame):
         self.save_selected_version_config()
 
     def save_current_directory_config(self):
-        if self.directory_name:
-            self.config.Write("/ActiveWindow/CurrentDirectory", self.directory_name)
-        if self.current_file_name:
-            self.config.Write("/ActiveWindow/CurrentFileName", self.current_file_name)
+        if self.selected_directory:
+            self.config.Write("/ActiveWindow/CurrentDirectory", self.selected_directory)
+        if self.selected_file:
+            self.config.Write("/ActiveWindow/CurrentFileName", self.selected_file)
 
     def save_selected_workflow_config(self):
         if self.current_workflow:
