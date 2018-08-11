@@ -108,6 +108,7 @@ class EpLaunchFrame(wx.Frame):
 
         # these are things that need to be done frequently
         self.update_control_list_columns()
+        self.previous_selected_directory = None
         self.update_file_lists()
         self.update_workflow_dependent_menu_items()
 
@@ -209,6 +210,11 @@ class EpLaunchFrame(wx.Frame):
         if not self.selected_directory:
             return
 
+        if self.previous_selected_directory == self.selected_directory:
+            previous_selected_file = self.selected_file
+        else:
+            previous_selected_file = None
+
         # get the local cache file path for this folder
         cache_file = CacheFile(self.selected_directory)
 
@@ -269,8 +275,11 @@ class EpLaunchFrame(wx.Frame):
 
         # clear all items from the listview and then add them back in
         self.control_file_list.DeleteAllItems()
-        for row in control_list_rows:
+        for i, row in enumerate(control_list_rows):
             self.control_file_list.Append(row)
+            if row[0] == previous_selected_file:
+                self.control_file_list.Focus(i)
+                self.control_file_list.Select(i)
         self.control_file_list.SetColumnWidth(0, -1)  # autosize column width
 
         # clear all the items from the raw list as well and add all of them back
@@ -279,6 +288,8 @@ class EpLaunchFrame(wx.Frame):
             self.raw_file_list.Append(row)
         self.raw_file_list.SetColumnWidth(0, -1)
         self.raw_file_list.SetColumnWidth(1, -1)
+
+        self.previous_selected_directory = self.selected_directory
 
     def update_num_processes_status(self):
         self.status_bar.SetStatusText("Currently %s processes running" % len(self.workflow_threads), i=2)
