@@ -894,6 +894,9 @@ class EpLaunchFrame(wx.Frame):
             self.file_lists_splitter.SplitHorizontally(self.control_file_list_panel, self.raw_file_list_panel)
 
     def handle_menu_option_workflow_directories(self, event):
+        if self.any_threads_running():
+            self.show_error_message('Cannot update workflow directories, etc., while workflows are running.')
+            return
         workflow_dir_dialog = workflow_directories_dialog.WorkflowDirectoriesDialog(None, title='Workflow Directories')
         workflow_dir_dialog.set_listbox(self.workflow_directories)
         return_value = workflow_dir_dialog.ShowModal()
@@ -1010,6 +1013,9 @@ class EpLaunchFrame(wx.Frame):
         self.external_runner.run_program_by_extension(output_file_name)
 
     def handle_specific_version_menu(self, event):
+        if self.any_threads_running():
+            self.show_error_message('Cannot update workflow directories, etc., while workflows are running.')
+            return
         self.current_selected_version = self.get_current_selected_version()
         for eplus_dir in self.energyplus_workflow_directories:
             formatted_dir = eplus_dir.upper().replace('-', '.')
