@@ -1,9 +1,10 @@
-import unittest
 import os
 import shutil
+import unittest
 
-from eplaunch.utilities.locateworkflows import LocateWorkflows
 from eplaunch.utilities.crossplatform import Platform
+from eplaunch.utilities.locateworkflows import LocateWorkflows
+
 
 # Lots of pragma: no cover tags in here.  We won't be able to provide test coverage of all the platforms in one build
 # environment, so there's no point counting that against us in coverage measurement.  In the same way, there is a lot of
@@ -43,7 +44,8 @@ class TestLocateWorkflows(unittest.TestCase):
         tests_utilities_directory, energyplus_folder = os.path.split(tests_utilities_energyplus_directory)
         self.assertEqual(energyplus_folder, "EnergyPlusV5-9-0")
 
-    @unittest.skipUnless(Platform.get_current_platform() == Platform.LINUX, "Only run test_getting_energyplus_versions_from_binary on Linux")
+    @unittest.skipUnless(Platform.get_current_platform() == Platform.LINUX,
+                         "Only run test_getting_energyplus_versions_from_binary on Linux")
     def test_getting_energyplus_versions_from_binary(self):
 
         loc_wf = LocateWorkflows()

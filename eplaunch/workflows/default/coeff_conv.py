@@ -1,7 +1,7 @@
 import os
+import platform
 import shutil
 import subprocess
-import platform
 
 from eplaunch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1
 

@@ -1,8 +1,8 @@
 import json
 import os
 import tempfile
-import time
 import threading
+import time
 import unittest
 
 from eplaunch.utilities.cache import CacheFile as CF, cache_files_currently_updating_or_writing

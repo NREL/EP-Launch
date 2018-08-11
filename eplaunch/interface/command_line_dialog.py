@@ -2,7 +2,6 @@ import wx
 
 
 class CommandLineDialog(wx.Dialog):
-
     CLOSE_SIGNAL_OK = 0
     CLOSE_SIGNAL_CANCEL = 1
 

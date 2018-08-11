@@ -1,5 +1,5 @@
-import unittest
 import os
+import unittest
 
 from eplaunch.utilities.version import Version
 

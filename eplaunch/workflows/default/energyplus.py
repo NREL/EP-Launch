@@ -1,10 +1,10 @@
 import os
-import subprocess
 import platform
+import subprocess
 import time
 
-from eplaunch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1
 from eplaunch.utilities.version import Version
+from eplaunch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1
 
 
 class ColumnNames(object):

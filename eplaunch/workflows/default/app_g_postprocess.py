@@ -1,6 +1,6 @@
 import os
-import subprocess
 import platform
+import subprocess
 
 from eplaunch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1
 
@@ -56,10 +56,10 @@ class AppGPostProcessWorkflow(BaseEPLaunchWorkflow1):
                 column_data=[]
             )
         # else:
-            # out_file_root = html_in_file_no_ext[:-10] + '-GAVG'
-            # html_out_file = out_file_root + 'Table.html'
-            # csv_out_file = out_file_root + '.csv'
-            # csvmeter_out_file = out_file_root + 'Meter.csv'
+        # out_file_root = html_in_file_no_ext[:-10] + '-GAVG'
+        # html_out_file = out_file_root + 'Table.html'
+        # csv_out_file = out_file_root + '.csv'
+        # csvmeter_out_file = out_file_root + 'Meter.csv'
 
         # copy input data file to working directory
         if os.path.exists(html_in_file_with_path) and os.path.exists(appgpp_binary) and os.path.exists(run_directory):

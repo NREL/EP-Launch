@@ -1,7 +1,6 @@
 import os
-import shutil
 import platform
-
+import shutil
 from subprocess import Popen, PIPE
 
 from eplaunch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1

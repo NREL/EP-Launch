@@ -5,13 +5,12 @@ import uuid
 from gettext import gettext as _
 
 import wx
-
 from wx.lib.pubsub import pub
 
 from eplaunch.interface import workflow_directories_dialog
 from eplaunch.interface.externalprograms import EPLaunchExternalPrograms
-from eplaunch.interface.frame_support import FrameSupport
 from eplaunch.interface.filenamemenus import FileNameMenus
+from eplaunch.interface.frame_support import FrameSupport
 from eplaunch.interface.workflow_output_dialog import Dialog as OutputDialog
 from eplaunch.interface.workflow_processing import event_result, WorkflowThread
 from eplaunch.utilities.cache import CacheFile
@@ -121,7 +120,7 @@ class EpLaunchFrame(wx.Frame):
         # create file name manipulation object
         self.file_name_manipulator = FileNameManipulation()
 
-# Frame Object Manipulation
+    # Frame Object Manipulation
 
     def update_workflow_list(self, filter_version=None):
         self.energyplus_workflow_directories = self.locate_workflows.find()
@@ -399,7 +398,7 @@ class EpLaunchFrame(wx.Frame):
 
     def run_workflow(self):
         if self.selected_directory and self.selected_file and self.current_workflow:
-            for _, thread in self.workflow_threads.items():
+            for thread_id, thread in self.workflow_threads.items():
                 if thread.file_name == self.selected_file and thread.run_directory == self.selected_directory and thread.workflow_instance.name() == self.current_workflow.name:
                     self.show_error_message('ERROR: This workflow/dir/file combination is already running')
                     return
@@ -472,7 +471,7 @@ class EpLaunchFrame(wx.Frame):
     def any_threads_running(self):
         return len(self.workflow_threads) > 0
 
-# GUI Building Functions
+    # GUI Building Functions
 
     def gui_build(self):
 
@@ -747,7 +746,7 @@ class EpLaunchFrame(wx.Frame):
 
         self.SetMenuBar(self.menu_bar)
 
-# Event Handling Functions
+    # Event Handling Functions
 
     @staticmethod
     def callback_intermediary(workflow_id, message):
@@ -1031,7 +1030,7 @@ class EpLaunchFrame(wx.Frame):
     def handle_menu_help_about(self, event):
         text = """
 EP-Launch
-               
+
 Version 0.9
 Copyright (c) 2018, Alliance for Sustainable Energy, LLC  and GARD Analytics, Inc
 
@@ -1052,21 +1051,21 @@ without specific prior written permission from the respective party.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER(S) AND ANY CONTRIBUTORS
 "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
-PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER(S), ANY , 
-CONTRIBUTORS THE UNITED STATES GOVERNMENT, OR THE UNITED STATES DEPARTMENT  
-OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, 
-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT  
-NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY 
-OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER(S), ANY ,
+CONTRIBUTORS THE UNITED STATES GOVERNMENT, OR THE UNITED STATES DEPARTMENT
+OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
         with wx.MessageDialog(self, text, 'About EP-Launch', wx.OK | wx.ICON_INFORMATION) as dlg:
             dlg.ShowModal()
 
-# Retrieve Config Functions
+    # Retrieve Config Functions
 
     def retrieve_workflow_directories_config(self):
         count_directories = self.config.ReadInt("/WorkflowDirectories/Count", 0)
@@ -1104,7 +1103,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             self.directory_tree_control.SelectPath(real_path, True)
             self.directory_tree_control.ExpandPath(real_path)
 
-# Save Config Functions
+    # Save Config Functions
 
     def save_config(self):
         self.folder_favorites.save_config()

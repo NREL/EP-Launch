@@ -1,7 +1,8 @@
-import subprocess
-import platform
-import wx
 import os
+import platform
+import subprocess
+
+import wx
 
 from eplaunch.utilities.filenamemanipulation import FileNameManipulation
 
