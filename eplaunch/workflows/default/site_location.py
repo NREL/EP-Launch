@@ -28,12 +28,6 @@ class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
     def main(self, run_directory, file_name, args):
         self.callback("In SiteLocationWorkflow.main(), about to process file")
         self.callback("About to start the soothing breathing phase")
-        for i in range(7):
-            time.sleep(1)
-            self.callback("Inhale")
-            time.sleep(1)
-            self.callback("Exhale")
-        self.callback("Done breathing")
         file_path = os.path.join(run_directory, file_name)
         content = open(file_path).read()
         new_lines = []

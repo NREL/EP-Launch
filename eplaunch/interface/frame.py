@@ -300,10 +300,10 @@ class EpLaunchFrame(wx.Frame):
         else:
             previous_workflow = self.config.Read('/ActiveWindow/SelectedWorkflow')
             # if blank try to set the workflow to something with the word EnergyPlus in it
-            if not previous_workflow:
-                energyplus_workflows = [x for x in self.work_flows if 'ENERGYPLUS' in x.name().upper()]
-                if energyplus_workflows:
-                    previous_workflow = energyplus_workflows[0]
+            # if not previous_workflow:
+            #     energyplus_workflows = [x for x in self.work_flows if 'ENERGYPLUS' in x.name().upper()]
+            #     if energyplus_workflows:
+            #         previous_workflow = energyplus_workflows[0]
             if previous_workflow:
                 found = False
                 for workflow_index, workflow_choice in enumerate(self.work_flows):
