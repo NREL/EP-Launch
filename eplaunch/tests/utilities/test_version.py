@@ -1,6 +1,7 @@
-import unittest
 import os
+import unittest
 
+from eplaunch.utilities.crossplatform import Platform
 from eplaunch.utilities.version import Version
 
 
@@ -63,6 +64,15 @@ class TestVersion(unittest.TestCase):
         self.assertFalse(is_version_found)
         self.assertEqual('', version_string)
         self.assertEqual(0, version_number)
+
+    @unittest.skipUnless(Platform.get_current_platform() == Platform.LINUX,
+                         "Test badly encoded file on Linux systems, test fails on Windows")
+    def test_check_energyplus_version_bad_file(self):
+        file_path = os.path.join(os.path.dirname(__file__), "Minimal_820.idf")
+        is_version_found, version_string, version_number = self.v.check_energyplus_version(file_path)
+        self.assertFalse(is_version_found)
+        self.assertEqual('', version_string)
+        self.assertEqual('', version_number)
 
     def test_numeric_version_from_dash_string(self):
         dash_string = 'V0-2'

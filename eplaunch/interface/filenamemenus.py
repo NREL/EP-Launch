@@ -1,5 +1,6 @@
-import wx
 import os
+
+import wx
 
 
 class FileNameMenus(object):

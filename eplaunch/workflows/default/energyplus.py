@@ -1,10 +1,10 @@
 import os
-import subprocess
 import platform
+import subprocess
 import time
 
-from eplaunch.workflows.base import BaseEPLaunch3Workflow, EPLaunch3WorkflowResponse
 from eplaunch.utilities.version import Version
+from eplaunch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1
 
 
 class ColumnNames(object):
@@ -116,7 +116,7 @@ class EPlusRunManager(object):
         return suffixes
 
 
-class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
+class EnergyPlusWorkflowSI(BaseEPLaunchWorkflow1):
 
     def name(self):
         return "EnergyPlus 8.9 SI"
@@ -147,13 +147,13 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
             else:
                 energyplus_binary = os.path.join(energyplus_root_folder, 'energyplus')
             if not os.path.exists(energyplus_binary):
-                return EPLaunch3WorkflowResponse(
+                return EPLaunchWorkflowResponse1(
                     success=False,
                     message="EnergyPlus binary not found: {}!".format(energyplus_binary),
                     column_data=[]
                 )
         else:
-            return EPLaunch3WorkflowResponse(
+            return EPLaunchWorkflowResponse1(
                 success=False,
                 message="Workflow location missing: {}!".format(args['worflow location']),
                 column_data=[]
@@ -184,11 +184,11 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
 
                 # run E+ and gather data
                 try:
-                    for message in BaseEPLaunch3Workflow.execute_for_callback(command_line_args, run_directory):
+                    for message in self.execute_for_callback(command_line_args, run_directory):
                         self.callback(message)
                 except subprocess.CalledProcessError:
                     self.callback("E+ FAILED")
-                    return EPLaunch3WorkflowResponse(
+                    return EPLaunchWorkflowResponse1(
                         success=False,
                         message="EnergyPlus failed for file: %s!" % full_file_path,
                         column_data={}
@@ -206,7 +206,7 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
                 }
 
                 # now leave
-                return EPLaunch3WorkflowResponse(
+                return EPLaunchWorkflowResponse1(
                     success=True,
                     message="Ran EnergyPlus OK for file: %s!" % file_name,
                     column_data=column_data
@@ -217,7 +217,7 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
                                ColumnNames.Version: current_version}
 
                 # now leave
-                return EPLaunch3WorkflowResponse(
+                return EPLaunchWorkflowResponse1(
                     success=False,
                     message="Incorrect Version found {}: {}!".format(current_version, file_name),
                     column_data=column_data
@@ -234,14 +234,14 @@ class EnergyPlusWorkflowSI(BaseEPLaunch3Workflow):
             }
 
             # now leave
-            return EPLaunch3WorkflowResponse(
+            return EPLaunchWorkflowResponse1(
                 success=False,
                 message="Incorrect Version found {}: {}!".format(current_version, file_name),
                 column_data=column_data
             )
 
 
-class EnergyPlusWorkflowIP(BaseEPLaunch3Workflow):
+class EnergyPlusWorkflowIP(BaseEPLaunchWorkflow1):
 
     def name(self):
         return "EnergyPlus 8.9 IP"
@@ -272,13 +272,13 @@ class EnergyPlusWorkflowIP(BaseEPLaunch3Workflow):
             else:
                 energyplus_binary = os.path.join(energyplus_root_folder, 'energyplus')
             if not os.path.exists(energyplus_binary):
-                return EPLaunch3WorkflowResponse(
+                return EPLaunchWorkflowResponse1(
                     success=False,
                     message="EnergyPlus binary not found: {}!".format(energyplus_binary),
                     column_data=[]
                 )
         else:
-            return EPLaunch3WorkflowResponse(
+            return EPLaunchWorkflowResponse1(
                 success=False,
                 message="Workflow location missing: {}!".format(args['worflow location']),
                 column_data=[]
@@ -316,7 +316,7 @@ class EnergyPlusWorkflowIP(BaseEPLaunch3Workflow):
                 status_code = process.returncode
 
                 if status_code != 0:
-                    return EPLaunch3WorkflowResponse(
+                    return EPLaunchWorkflowResponse1(
                         success=False,
                         message="EnergyPlus failed for file: %s!" % full_file_path,
                         column_data={}
@@ -334,7 +334,7 @@ class EnergyPlusWorkflowIP(BaseEPLaunch3Workflow):
                 }
 
                 # now leave
-                return EPLaunch3WorkflowResponse(
+                return EPLaunchWorkflowResponse1(
                     success=True,
                     message="Ran EnergyPlus OK for file: %s!" % file_name,
                     column_data=column_data
@@ -345,7 +345,7 @@ class EnergyPlusWorkflowIP(BaseEPLaunch3Workflow):
                                ColumnNames.Version: current_version}
 
                 # now leave
-                return EPLaunch3WorkflowResponse(
+                return EPLaunchWorkflowResponse1(
                     success=False,
                     message="Incorrect Version found {}: {}!".format(current_version, file_name),
                     column_data=column_data
@@ -361,7 +361,7 @@ class EnergyPlusWorkflowIP(BaseEPLaunch3Workflow):
             }
 
             # now leave
-            return EPLaunch3WorkflowResponse(
+            return EPLaunchWorkflowResponse1(
                 success=False,
                 message="Incorrect Version found {}: {}!".format(current_version, file_name),
                 column_data=column_data

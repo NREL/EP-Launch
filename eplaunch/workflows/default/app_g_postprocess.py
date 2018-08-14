@@ -1,11 +1,11 @@
 import os
-import subprocess
 import platform
+import subprocess
 
-from eplaunch.workflows.base import BaseEPLaunch3Workflow, EPLaunch3WorkflowResponse
+from eplaunch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1
 
 
-class AppGPostProcessWorkflow(BaseEPLaunch3Workflow):
+class AppGPostProcessWorkflow(BaseEPLaunchWorkflow1):
 
     def name(self):
         return "AppGPostProcess"
@@ -35,13 +35,13 @@ class AppGPostProcessWorkflow(BaseEPLaunch3Workflow):
             else:
                 appgpp_binary = os.path.join(appgpp_folder, 'appgpostprocess')
             if not os.path.exists(appgpp_binary):
-                return EPLaunch3WorkflowResponse(
+                return EPLaunchWorkflowResponse1(
                     success=False,
                     message="AppGPostProcess binary not found: {}!".format(appgpp_binary),
                     column_data=[]
                 )
         else:
-            return EPLaunch3WorkflowResponse(
+            return EPLaunchWorkflowResponse1(
                 success=False,
                 message="Workflow location missing: {}!".format(args['worflow location']),
                 column_data=[]
@@ -50,16 +50,16 @@ class AppGPostProcessWorkflow(BaseEPLaunch3Workflow):
         html_in_file_with_path = os.path.join(run_directory, file_name)
         html_in_file_no_ext, _ = os.path.splitext(html_in_file_with_path)
         if html_in_file_no_ext[-10:] != '-G000Table':
-            return EPLaunch3WorkflowResponse(
+            return EPLaunchWorkflowResponse1(
                 success=False,
                 message='A file ending in -G000Table.html must be selected',
                 column_data=[]
             )
         # else:
-            # out_file_root = html_in_file_no_ext[:-10] + '-GAVG'
-            # html_out_file = out_file_root + 'Table.html'
-            # csv_out_file = out_file_root + '.csv'
-            # csvmeter_out_file = out_file_root + 'Meter.csv'
+        # out_file_root = html_in_file_no_ext[:-10] + '-GAVG'
+        # html_out_file = out_file_root + 'Table.html'
+        # csv_out_file = out_file_root + '.csv'
+        # csvmeter_out_file = out_file_root + 'Meter.csv'
 
         # copy input data file to working directory
         if os.path.exists(html_in_file_with_path) and os.path.exists(appgpp_binary) and os.path.exists(run_directory):
@@ -72,19 +72,19 @@ class AppGPostProcessWorkflow(BaseEPLaunch3Workflow):
                 cwd=run_directory
             )
             if process.returncode == 0:
-                return EPLaunch3WorkflowResponse(
+                return EPLaunchWorkflowResponse1(
                     success=True,
                     message="Ran AppendixGPostProcess OK for file: {}!".format(html_in_file_with_path),
                     column_data=[]
                 )
             else:
-                return EPLaunch3WorkflowResponse(
+                return EPLaunchWorkflowResponse1(
                     success=False,
                     message="AppendixGPostProcess failed for file: {}!".format(html_in_file_with_path),
                     column_data=[]
                 )
         else:
-            return EPLaunch3WorkflowResponse(
+            return EPLaunchWorkflowResponse1(
                 success=False,
                 message="AppendixGPostProcess files not found",
                 column_data=[]

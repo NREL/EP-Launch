@@ -7,7 +7,7 @@ from cx_Freeze import setup as cx_setup, Executable
 from eplaunch import NAME, VERSION
 
 include_files = []
-default_workflows = glob.glob("eplaunch/workflows/default/*.py")
+default_workflows = glob.glob("eplaunch/workflows/default/site_location.py")
 workflow_tuples = [(x, os.path.join('lib', x)) for x in default_workflows]
 include_files.extend(workflow_tuples)
 

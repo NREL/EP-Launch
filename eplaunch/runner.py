@@ -1,4 +1,5 @@
 import gettext
+
 from eplaunch.interface.application import EpLaunchApplication
 
 gettext.install("app")  # replace with the appropriate catalog name

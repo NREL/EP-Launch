@@ -1,4 +1,5 @@
 import unittest
+
 from eplaunch.utilities.crossplatform import Platform
 
 

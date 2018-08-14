@@ -1,7 +1,7 @@
 import subprocess
 
 
-class EPLaunch3WorkflowResponse(object):
+class EPLaunchWorkflowResponse1(object):
 
     def __init__(self, success, message, column_data, **extra_data):
         self.id = None  # assigned by workflow thread manager
@@ -11,14 +11,13 @@ class EPLaunch3WorkflowResponse(object):
         self.extra_data = extra_data
 
 
-class BaseEPLaunch3Workflow(object):
-
-    abort = False
-    output_toolbar_order = None
+class BaseEPLaunchWorkflow1(object):
 
     def __init__(self):
         self._callback = None
         self.my_id = None
+        self._process = None
+        self.output_toolbar_order = None
 
     def name(self):
         raise NotImplementedError("name function needs to be implemented in derived workflow class")
@@ -73,16 +72,19 @@ class BaseEPLaunch3Workflow(object):
     def main(self, run_directory, file_name, args):
         """
         The actual running operation for the workflow, should check self.abort periodically to allow exiting
-        :return: Should return an EPLaunch3WorkflowResponse instance
+        :return: Should return an EPLaunchWorkflowResponse1 instance
         """
         raise NotImplementedError("main function needs to be implemented in derived workflow class")
 
-    @staticmethod
-    def execute_for_callback(cmd, cwd):
-        popen = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, universal_newlines=True)
-        for stdout_line in iter(popen.stdout.readline, ""):
+    def abort(self):
+        if self._process:
+            self._process.kill()
+
+    def execute_for_callback(self, cmd, cwd):
+        self._process = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, universal_newlines=True)
+        for stdout_line in iter(self._process.stdout.readline, ""):
             yield stdout_line.strip()
-        popen.stdout.close()
-        return_code = popen.wait()
+        self._process.stdout.close()
+        return_code = self._process.wait()
         if return_code:
             raise subprocess.CalledProcessError(return_code, cmd)

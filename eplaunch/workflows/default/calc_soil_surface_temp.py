@@ -1,10 +1,9 @@
 import os
-import shutil
 import platform
-
+import shutil
 from subprocess import Popen, PIPE
 
-from eplaunch.workflows.base import BaseEPLaunch3Workflow, EPLaunch3WorkflowResponse
+from eplaunch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1
 
 
 class ColumnNames(object):
@@ -13,7 +12,7 @@ class ColumnNames(object):
     PhaseConstant = 'Phase Constant [days]'
 
 
-class CalcSoilSurfTempWorkflow(BaseEPLaunch3Workflow):
+class CalcSoilSurfTempWorkflow(BaseEPLaunchWorkflow1):
 
     def name(self):
         return "CalcSoilSurfTemp"
@@ -43,13 +42,13 @@ class CalcSoilSurfTempWorkflow(BaseEPLaunch3Workflow):
             else:
                 calc_soil_surf_temp_binary = os.path.join(calc_soil_surf_temp_folder, 'CalcSoilSurfTemp')
             if not os.path.exists(calc_soil_surf_temp_binary):
-                return EPLaunch3WorkflowResponse(
+                return EPLaunchWorkflowResponse1(
                     success=False,
                     message="CalcSoilSurfTemp binary not found: {}!".format(calc_soil_surf_temp_binary),
                     column_data=[]
                 )
         else:
-            return EPLaunch3WorkflowResponse(
+            return EPLaunchWorkflowResponse1(
                 success=False,
                 message="Workflow location missing: {}!".format(args['worflow location']),
                 column_data=[]
@@ -67,7 +66,7 @@ class CalcSoilSurfTempWorkflow(BaseEPLaunch3Workflow):
             try:
                 os.remove(out_file_path)
             except OSError:
-                return EPLaunch3WorkflowResponse(
+                return EPLaunchWorkflowResponse1(
                     success=False,
                     message="Could not delete prior CalcSoilSurfTemp results file: %s!" % out_file_path,
                     column_data={}
@@ -78,7 +77,7 @@ class CalcSoilSurfTempWorkflow(BaseEPLaunch3Workflow):
         p1.communicate(input=b'1\n1\n')
 
         if not os.path.exists(csst_out):
-            return EPLaunch3WorkflowResponse(
+            return EPLaunchWorkflowResponse1(
                 success=False,
                 message="CalcSoilSurfTemp failed for file: %s!" % full_file_path,
                 column_data={}
@@ -105,13 +104,13 @@ class CalcSoilSurfTempWorkflow(BaseEPLaunch3Workflow):
                     ColumnNames.AmplitudeSurfTemp: amp_temp,
                     ColumnNames.PhaseConstant: phase_constant
                 }
-                return EPLaunch3WorkflowResponse(
+                return EPLaunchWorkflowResponse1(
                     success=True,
                     message="Ran EnergyPlus OK for file: %s!" % file_name,
                     column_data=column_data
                 )
         except Exception:  # noqa -- there could be lots of issues here, file existence, file contents, float conversion
-            return EPLaunch3WorkflowResponse(
+            return EPLaunchWorkflowResponse1(
                 success=False,
                 message="CalcSoilSurfTemp seemed to run, but post processing failed for file: %s!" % full_file_path,
                 column_data={}
