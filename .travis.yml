@@ -22,6 +22,12 @@ matrix:
           dist: trusty
           sudo: required
           python: 3.6
+          services: docker
+          env: TOX_ENV=linux1804
+        - os: linux
+          dist: trusty
+          sudo: required
+          python: 3.6
           env: TOX_ENV=flake8
         - os: linux
           dist: trusty
@@ -37,6 +43,10 @@ before_install: |
     git clone https://github.com/MacPython/terryfy.git
     source terryfy/travis_tools.sh
     get_python_environment macpython 3.6 venv
+  fi
+  if [ "$TOX_ENV" == "linux1804" ]; then
+    docker run -d --name ubuntu-test -v $(pwd):/travis ubuntu:latest tail -f /dev/null
+    docker ps
   fi
 
 install:
