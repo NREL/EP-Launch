@@ -64,6 +64,13 @@ class TestVersion(unittest.TestCase):
         self.assertEqual('', version_string)
         self.assertEqual(0, version_number)
 
+    def test_check_energyplus_version_bad_file(self):
+        file_path = os.path.join(os.path.dirname(__file__), "Minimal_820.idf")
+        is_version_found, version_string, version_number = self.v.check_energyplus_version(file_path)
+        self.assertFalse(is_version_found)
+        self.assertEqual('', version_string)
+        self.assertEqual('', version_number)
+
     def test_numeric_version_from_dash_string(self):
         dash_string = 'V0-2'
         numeric = self.v.numeric_version_from_dash_string(dash_string)
