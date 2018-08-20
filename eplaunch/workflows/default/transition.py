@@ -1,12 +1,12 @@
 import os
-import subprocess
 import shutil
+import subprocess
 
-from eplaunch.workflows.base import BaseEPLaunch3Workflow, EPLaunch3WorkflowResponse
 from eplaunch.utilities.version import Version
+from eplaunch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1
 
 
-class TransitionWorkflow(BaseEPLaunch3Workflow):
+class TransitionWorkflow(BaseEPLaunchWorkflow1):
 
     def name(self):
         return "Transition"
@@ -33,25 +33,25 @@ class TransitionWorkflow(BaseEPLaunch3Workflow):
                 full_file_path = os.path.join(run_directory, file_name)
                 if os.path.exists(full_file_path):
                     returned_success, returned_message = self.perform_transition(full_file_path)
-                    return EPLaunch3WorkflowResponse(
+                    return EPLaunchWorkflowResponse1(
                         success=returned_success,
                         message=returned_message,
                         column_data=[]
                     )
                 else:
-                    return EPLaunch3WorkflowResponse(
+                    return EPLaunchWorkflowResponse1(
                         success=False,
                         message="Transition file not found: {}!".format(''),
                         column_data=[]
                     )
             else:
-                return EPLaunch3WorkflowResponse(
+                return EPLaunchWorkflowResponse1(
                     success=False,
                     message="Transition exefile not found: {}!".format(''),
                     column_data=[]
                 )
         else:
-            return EPLaunch3WorkflowResponse(
+            return EPLaunchWorkflowResponse1(
                 success=False,
                 message="Workflow location missing: {}!".format(args['worflow location']),
                 column_data=[]
@@ -61,7 +61,8 @@ class TransitionWorkflow(BaseEPLaunch3Workflow):
         energyplus_root_folder, _ = os.path.split(worflow_location)
         preprocess_folder = os.path.join(energyplus_root_folder, 'PreProcess')
         idfversionupdateer_folder = os.path.join(preprocess_folder, 'IDFVersionUpdater')
-        transition_exes = [os.path.join(idfversionupdateer_folder, f) for f in os.listdir(idfversionupdateer_folder) if 'Transition-V' in f]
+        transition_exes = [os.path.join(idfversionupdateer_folder, f) for f in os.listdir(idfversionupdateer_folder) if
+                           'Transition-V' in f]
         transition_exes.sort()
         transition_dict = {}
         for transition_exe in transition_exes:
@@ -89,7 +90,8 @@ class TransitionWorkflow(BaseEPLaunch3Workflow):
 
     def perform_transition(self, path_to_old_file):
         v = Version()
-        is_version_found, original_version_string, original_version_number = v.check_energyplus_version(path_to_old_file)
+        is_version_found, original_version_string, original_version_number = v.check_energyplus_version(
+            path_to_old_file)
         print(is_version_found, original_version_string, original_version_number)
         if original_version_number in self.transition_executable_files:
             current_version_number = original_version_number
@@ -99,9 +101,11 @@ class TransitionWorkflow(BaseEPLaunch3Workflow):
                 self.run_single_transition(specific_transition_exe, path_to_old_file, current_version_string)
                 current_version_number = next_version_number
             final_version_string = v.string_version_from_number(current_version_number)
-            return True, 'Version update successful for IDF file {} originally version {} and now version {}'.format(path_to_old_file, original_version_string, final_version_string)
+            return True, 'Version update successful for IDF file {} originally version {} and now version {}'.format(
+                path_to_old_file, original_version_string, final_version_string)
         else:
-            return False, 'Updating the IDF file {} that is from version {} is not supported.'.format(path_to_old_file, original_version_string)
+            return False, 'Updating the IDF file {} that is from version {} is not supported.'.format(path_to_old_file,
+                                                                                                      original_version_string)
 
     def run_single_transition(self, transition_exe_path, file_to_update, old_verson_string):
         file_no_extension, _ = os.path.splitext(file_to_update)

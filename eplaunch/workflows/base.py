@@ -1,4 +1,7 @@
-class EPLaunch3WorkflowResponse(object):
+import subprocess
+
+
+class EPLaunchWorkflowResponse1(object):
 
     def __init__(self, success, message, column_data, **extra_data):
         self.id = None  # assigned by workflow thread manager
@@ -8,10 +11,13 @@ class EPLaunch3WorkflowResponse(object):
         self.extra_data = extra_data
 
 
-class BaseEPLaunch3Workflow(object):
+class BaseEPLaunchWorkflow1(object):
 
-    abort = False
-    output_toolbar_order = None
+    def __init__(self):
+        self._callback = None
+        self.my_id = None
+        self._process = None
+        self.output_toolbar_order = None
 
     def name(self):
         raise NotImplementedError("name function needs to be implemented in derived workflow class")
@@ -35,13 +41,50 @@ class BaseEPLaunch3Workflow(object):
     def get_interface_columns(self):
         """
         Returns an array of column names for the interface; defaults to empty so it is not required
-        :return:
+        :return: A list of interface column names
         """
         return []
+
+    def register_standard_output_callback(self, workflow_id, callback):
+        """
+        Used to register the callback function from the UI for standard output from this workflow.
+        This function is not to be inherited by derived workflows unless they are doing something really odd.
+        Workflows should simply use self.callback(message) to send messages as necessary to the GUI during a workflow.
+
+        :param workflow_id: A unique ID assigned by the program in order to track workflows
+        :param callback: The GUI function to be called with message updates
+        :return: None
+        """
+        self.my_id = workflow_id
+        self._callback = callback
+
+    def callback(self, message):
+        """
+        This is the actual callback function that workflows can call when they have an update.
+        Internally here there are some other parameters passed up, but that is just to further isolate the users
+        from having to pass extra data during their own calls
+
+        :param message: A message to be sent to the GUI from the workflow
+        :return: None
+        """
+        self._callback(self.my_id, message)
 
     def main(self, run_directory, file_name, args):
         """
         The actual running operation for the workflow, should check self.abort periodically to allow exiting
-        :return: Should return an EPLaunch3WorkflowResponse instance
+        :return: Should return an EPLaunchWorkflowResponse1 instance
         """
         raise NotImplementedError("main function needs to be implemented in derived workflow class")
+
+    def abort(self):
+        if self._process:
+            self._process.kill()
+
+    def execute_for_callback(self, cmd, cwd):
+        self._process = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, universal_newlines=True)
+        for stdout_line in iter(self._process.stdout.readline, ""):
+            yield stdout_line.strip()
+        self._process.stdout.close()
+        return_code = self._process.wait()
+        if return_code:
+            raise subprocess.CalledProcessError(return_code, cmd)

@@ -2,7 +2,7 @@ import threading
 
 import wx
 
-from eplaunch.workflows.base import EPLaunch3WorkflowResponse
+from eplaunch.workflows.base import EPLaunchWorkflowResponse1
 
 EVT_RESULT_ID = wx.NewId()
 
@@ -26,12 +26,14 @@ class ResultEvent(wx.PyEvent):
 class WorkflowThread(threading.Thread):
     """Worker Thread Class."""
 
-    def __init__(self, identifier, notify_window, workflow_instance, run_directory, file_name, main_args):
+    def __init__(self, identifier, notify_window, workflow_instance,
+                 run_directory, file_name, main_args):
         super().__init__()
         self._notify_window = notify_window
         self._want_abort = 0
         self.id = identifier
         self.workflow_instance = workflow_instance
+        self.workflow_directory = main_args['workflow location']
         self.run_directory = run_directory
         self.file_name = file_name
         self.workflow_main_args = main_args
@@ -40,17 +42,21 @@ class WorkflowThread(threading.Thread):
     def run(self):
         """Run Workflow Thread."""
         workflow_response = self.workflow_instance.main(self.run_directory, self.file_name, self.workflow_main_args)
-        if type(workflow_response) is not EPLaunch3WorkflowResponse:
-            workflow_response = EPLaunch3WorkflowResponse(
+        if type(workflow_response) is not EPLaunchWorkflowResponse1:
+            workflow_response = EPLaunchWorkflowResponse1(
                 success=False,
                 message='Current workflow main function did not respond properly',
                 column_data=None
             )
         workflow_response.id = self.id
         r = ResultEvent(workflow_response)
-        wx.PostEvent(self._notify_window, r)
+        try:
+            wx.PostEvent(self._notify_window, r)
+        except RuntimeError:
+            pass
+            # print("Could not post finished event to the GUI, did the GUI get force closed?")
 
     def abort(self):
         """abort worker thread."""
         # Method for use by main thread to signal an abort
-        self.workflow_instance.abort = True
+        self.workflow_instance.abort()

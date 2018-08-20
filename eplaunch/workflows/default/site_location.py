@@ -1,13 +1,13 @@
 import os
 
-from eplaunch.workflows.base import BaseEPLaunch3Workflow, EPLaunch3WorkflowResponse
+from eplaunch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1
 
 
 class ColumnNames:
     Location = 'Site:Location []'
 
 
-class SiteLocationWorkflow(BaseEPLaunch3Workflow):
+class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
 
     def name(self):
         return "Get Site:Location"
@@ -25,6 +25,8 @@ class SiteLocationWorkflow(BaseEPLaunch3Workflow):
         return [ColumnNames.Location]
 
     def main(self, run_directory, file_name, args):
+        self.callback("In SiteLocationWorkflow.main(), about to process file")
+        self.callback("About to start the soothing breathing phase")
         file_path = os.path.join(run_directory, file_name)
         content = open(file_path).read()
         new_lines = []
@@ -46,7 +48,8 @@ class SiteLocationWorkflow(BaseEPLaunch3Workflow):
                 break
         else:
             location_name = 'Unknown'
-        return EPLaunch3WorkflowResponse(
+        self.callback("Completed SiteLocationWorkflow.main()")
+        return EPLaunchWorkflowResponse1(
             success=True,
             message='Parsed Location object successfully',
             column_data={ColumnNames.Location: location_name}

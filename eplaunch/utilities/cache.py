@@ -10,7 +10,6 @@ try:
 except ImportError:  # pragma: no cover
     JSONDecodeError = ValueError
 
-
 #: This is used as the mutex queue, the list of unique directories being altered at a given time
 cache_files_currently_updating_or_writing = []
 
