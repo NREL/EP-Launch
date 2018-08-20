@@ -2,6 +2,8 @@ import inspect
 import os
 import platform
 
+from importlib import util as import_util
+
 
 class WorkflowDetail:
     def __init__(self, workflow_class, name, output_suffixes, file_types, columns,
