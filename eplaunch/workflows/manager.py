@@ -19,6 +19,7 @@ class WorkflowDetail:
         self.version_id = version_id
         self.output_toolbar_order = None
 
+
 def get_workflows(external_workflow_directories):
     this_file_directory_path = os.path.dirname(os.path.realpath(__file__))
     built_in_workflow_directory = os.path.join(this_file_directory_path, 'default')
