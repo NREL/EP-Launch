@@ -151,7 +151,7 @@ class EpLaunchFrame(wx.Frame):
             output_suffixes = self.current_workflow.output_suffixes
         else:
             output_suffixes = []
-        output_suffixes.sort()
+        # output_suffixes.sort()
         number_of_items_in_main = 30
         if len(output_suffixes) < number_of_items_in_main:
             for count, suffix in enumerate(output_suffixes):
@@ -179,8 +179,13 @@ class EpLaunchFrame(wx.Frame):
             output_suffixes = self.current_workflow.output_suffixes
         else:
             output_suffixes = []
-        for item in output_suffixes:
-            tb_output_suffixes.append(item)
+        if self.current_workflow.output_toolbar_order is None:
+            tb_output_suffixes = output_suffixes[:15]
+        else:
+            for item in self.current_workflow.output_toolbar_order:
+                if item >= 0:
+                    tb_output_suffixes.append(output_suffixes[item])
+
         for count, tb_output_suffix in enumerate(tb_output_suffixes):
             out_tb_button = self.output_toolbar.AddTool(
                 10 + count, tb_output_suffix, norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, tb_output_suffix,
@@ -920,7 +925,7 @@ class EpLaunchFrame(wx.Frame):
         if not self.current_workflow:
             return
 
-        output_suffixes = self.current_workflow.get_output_suffixes()
+        output_suffixes = self.current_workflow.output_suffixes
 
         if self.current_workflow.output_toolbar_order is None:
             order = []

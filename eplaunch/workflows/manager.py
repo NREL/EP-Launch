@@ -17,7 +17,7 @@ class WorkflowDetail:
         self.description = description
         self.is_energyplus = is_energyplus
         self.version_id = version_id
-
+        self.output_toolbar_order = None
 
 def get_workflows(external_workflow_directories):
     this_file_directory_path = os.path.dirname(os.path.realpath(__file__))
