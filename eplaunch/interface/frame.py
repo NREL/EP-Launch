@@ -96,18 +96,13 @@ class EpLaunchFrame(wx.Frame):
         self.locate_workflows = LocateWorkflows()
         self.workflow_directories = self.locate_workflows.find()
         self.list_of_versions = self.locate_workflows.get_energyplus_versions()
-        self.update_workflow_list()
+        self.update_workflow_list(self.current_selected_version)
 
         # build out the whole GUI and do other one-time init here
         self.gui_build()
         self.reset_raw_list_columns()
         self.update_num_processes_status()
-#        self.update_workflow_list(self.current_selected_version)
-#        self.workflow_choice.Clear()
-#        for work_flow in self.work_flows:
-#            self.workflow_choice.Append(work_flow.description)
-#        self.refresh_workflow_selection()
-#        self.workflow_choice.SetSelection(0)
+        self.workflow_choice.SetSelection(0)
 
         # this sets up an event handler for workflow completion and callback events
         event_result(self, self.handle_workflow_done)
@@ -567,6 +562,13 @@ class EpLaunchFrame(wx.Frame):
         previous_y = self.config.ReadInt("/ActiveWindow/y")
         previous_y = max(previous_y, 128)
         self.SetSize(previous_x, previous_y, previous_width, previous_height)
+
+        self.get_current_selected_version()
+        self.update_workflow_list(self.current_selected_version)
+        self.workflow_choice.Clear()
+        for work_flow in self.work_flows:
+            self.workflow_choice.Append(work_flow.description)
+        self.refresh_workflow_selection(self.current_workflow.name)
 
         # call this to finalize
         self.Layout()
@@ -1033,6 +1035,7 @@ class EpLaunchFrame(wx.Frame):
         self.workflow_choice.Clear()
         for work_flow in self.work_flows:
             self.workflow_choice.Append(work_flow.description)
+        self.refresh_workflow_selection(self.current_workflow.name)
         self.repopulate_help_menu()
 
     def handle_specific_documentation_menu(self, event):
