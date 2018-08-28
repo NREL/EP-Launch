@@ -1,5 +1,7 @@
 import inspect
 import os
+import platform
+
 from importlib import util as import_util
 
 
@@ -15,6 +17,7 @@ class WorkflowDetail:
         self.description = description
         self.is_energyplus = is_energyplus
         self.version_id = version_id
+        self.output_toolbar_order = None
 
 
 def get_workflows(external_workflow_directories):
@@ -33,9 +36,13 @@ def get_workflows(external_workflow_directories):
         # I tried regexes and they worked using online Python regex testers, but using the same (copy/pasted) patterns
         # and strings in here resulting in false responses...bogus.  So here I go, manually chopping up a string
         # re_dots = re.compile('(?P<version>(\d.\d.\d))')
-        if 'ENERGYPLUS.' in uc_directory:
+        if platform.system() == 'Windows':
+            energyplus_uc_search_string = 'ENERGYPLUSV'
+        else:
+            energyplus_uc_search_string = 'ENERGYPLUS.'
+        if energyplus_uc_search_string in uc_directory:
             dir_is_eplus = True
-            trailing_string = uc_directory[uc_directory.index('ENERGYPLUS.') + 11:]
+            trailing_string = uc_directory[uc_directory.index(energyplus_uc_search_string) + 11:]
             if '/' in trailing_string:
                 version_id = trailing_string[:trailing_string.index('/')]
 

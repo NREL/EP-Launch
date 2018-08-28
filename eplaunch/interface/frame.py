@@ -94,13 +94,15 @@ class EpLaunchFrame(wx.Frame):
         # get the saved workflow directories and update the main workflow list
         self.retrieve_workflow_directories_config()
         self.locate_workflows = LocateWorkflows()
+        self.workflow_directories = self.locate_workflows.find()
         self.list_of_versions = self.locate_workflows.get_energyplus_versions()
-        self.update_workflow_list()
+        self.update_workflow_list(self.current_selected_version)
 
         # build out the whole GUI and do other one-time init here
         self.gui_build()
         self.reset_raw_list_columns()
         self.update_num_processes_status()
+        self.workflow_choice.SetSelection(0)
 
         # this sets up an event handler for workflow completion and callback events
         event_result(self, self.handle_workflow_done)
@@ -149,7 +151,7 @@ class EpLaunchFrame(wx.Frame):
             output_suffixes = self.current_workflow.output_suffixes
         else:
             output_suffixes = []
-        output_suffixes.sort()
+        # output_suffixes.sort()
         number_of_items_in_main = 30
         if len(output_suffixes) < number_of_items_in_main:
             for count, suffix in enumerate(output_suffixes):
@@ -177,8 +179,13 @@ class EpLaunchFrame(wx.Frame):
             output_suffixes = self.current_workflow.output_suffixes
         else:
             output_suffixes = []
-        for item in output_suffixes:
-            tb_output_suffixes.append(item)
+        if self.current_workflow.output_toolbar_order is None:
+            tb_output_suffixes = output_suffixes[:15]
+        else:
+            for item in self.current_workflow.output_toolbar_order:
+                if item >= 0:
+                    tb_output_suffixes.append(output_suffixes[item])
+
         for count, tb_output_suffix in enumerate(tb_output_suffixes):
             out_tb_button = self.output_toolbar.AddTool(
                 10 + count, tb_output_suffix, norm_bmp, wx.NullBitmap, wx.ITEM_NORMAL, tb_output_suffix,
@@ -561,6 +568,13 @@ class EpLaunchFrame(wx.Frame):
         previous_y = max(previous_y, 128)
         self.SetSize(previous_x, previous_y, previous_width, previous_height)
 
+        self.get_current_selected_version()
+        self.update_workflow_list(self.current_selected_version)
+        self.workflow_choice.Clear()
+        for work_flow in self.work_flows:
+            self.workflow_choice.Append(work_flow.description)
+        self.refresh_workflow_selection(self.current_workflow.name)
+
         # call this to finalize
         self.Layout()
 
@@ -911,7 +925,7 @@ class EpLaunchFrame(wx.Frame):
         if not self.current_workflow:
             return
 
-        output_suffixes = self.current_workflow.get_output_suffixes()
+        output_suffixes = self.current_workflow.output_suffixes
 
         if self.current_workflow.output_toolbar_order is None:
             order = []
@@ -1026,6 +1040,7 @@ class EpLaunchFrame(wx.Frame):
         self.workflow_choice.Clear()
         for work_flow in self.work_flows:
             self.workflow_choice.Append(work_flow.description)
+        self.refresh_workflow_selection(self.current_workflow.name)
         self.repopulate_help_menu()
 
     def handle_specific_documentation_menu(self, event):
