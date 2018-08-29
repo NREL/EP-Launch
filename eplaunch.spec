@@ -49,3 +49,10 @@ coll = COLLECT(
     upx=False,
     name='EPLaunch'
 )
+
+app = BUNDLE(
+    coll,
+    name='eplaunch.app',
+    icon=None,
+    bundle_identifier=None
+)
