@@ -33,7 +33,7 @@ build_script:
   # Build the compiled extension
   - "%CMD_IN_ENV% pyinstaller eplaunch.spec"
   - ps: "ls dist"
-  - "%CMD_IN_ENV% 7z a eplaunch.zip dist\*"
+  - "7z a eplaunch.zip dist"
 
 artifacts:
   # Archive the generated packages in the ci.appveyor.com build report.
