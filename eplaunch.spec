@@ -6,13 +6,9 @@ added_files = [
     ('eplaunch', 'eplaunch'),
 ]
 
-added_python_paths = [
-    '/home/edwin/Projects/EP-Launch3'
-]
-
 a = Analysis(
     root_files,
-    pathex=added_python_paths,
+    pathex=[],
     binaries=[],
     datas=added_files,
     hiddenimports=[],
@@ -33,7 +29,7 @@ exe = EXE(
     pyz,
     a.scripts,
     exclude_binaries=True,
-    name='runner',
+    name='EPLaunch',
     debug=False,
     strip=False,
     upx=True,
