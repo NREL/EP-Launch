@@ -45,7 +45,6 @@ artifacts:
   # Archive the generated packages in the ci.appveyor.com build report.
   - path: "EP-Launch-%EPLAUNCH_VERSION%-%SHA%-windows.zip"
   - path: "EP-Launch-%EPLAUNCH_VERSION%-%SHA%-windows-installer.exe"
-  - path: "EPLaunchInstall.exe"
 
 deploy:
   provider: GitHub
