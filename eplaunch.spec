@@ -29,7 +29,7 @@ exe = EXE(
     pyz,
     a.scripts,
     exclude_binaries=True,
-    name='EPLaunch',
+    name='EP_Launch',
     debug=True,
     strip=False,
     upx=True,
