@@ -10,6 +10,7 @@ environment:
     - PYTHON: "C:\\Python36-x64"
       PYTHON_VERSION: "3.6.6"
       PYTHON_ARCH: "64"
+      EPLAUNCH_VERSION: "0.5"  # need to read from from eplaunch/__init__.py eventually
 
 install:
   # Install Python (from the official .msi of http://python.org) and pip when not already installed.
@@ -33,16 +34,16 @@ build_script:
   # Build the compiled extension
   - "%CMD_IN_ENV% pyinstaller --windowed eplaunch.spec"
   - ps: "ls dist"
-  - "7z a eplaunch.zip dist"
+  - "7z a EP-Launch-%PYTHON%-windows.zip dist"
 
 artifacts:
   # Archive the generated packages in the ci.appveyor.com build report.
-  - path: eplaunch.zip
+  - path: "EP-Launch-%PYTHON%-windows.zip"
 
 deploy:
   provider: GitHub
   auth_token:
     secure: Cqe58u5ZlKHFk4IecrI41aPj+qCwia36/zWmCnizfCzIsPaTfBRFagC84x1S1y8G
-  artifact: eplaunch.zip
+  artifact: "EP-Launch-%PYTHON%-windows.zip"
   on:
     appveyor_repo_tag: true
