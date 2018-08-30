@@ -35,13 +35,15 @@ test_script:
 
 build_script:
   # Build the compiled extension
-  - "%CMD_IN_ENV% pyinstaller --windowed --onefile eplaunch.spec"
+  - "%CMD_IN_ENV% pyinstaller --windowed eplaunch.spec"
   - ps: "ls dist"
+  - "makensis.exe scripts\eplaunch.nsi"
   - "7z a EP-Launch-%EPLAUNCH_VERSION%-%SHA%-windows.zip dist"
 
 artifacts:
   # Archive the generated packages in the ci.appveyor.com build report.
   - path: "EP-Launch-%EPLAUNCH_VERSION%-%SHA%-windows.zip"
+  - path: "EPLaunchInstall.exe"
 
 deploy:
   provider: GitHub
