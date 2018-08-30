@@ -53,6 +53,6 @@ deploy:
   provider: GitHub
   auth_token:
     secure: Cqe58u5ZlKHFk4IecrI41aPj+qCwia36/zWmCnizfCzIsPaTfBRFagC84x1S1y8G
-  artifact: "*"
+  artifact: "EPLaunch-%EPLAUNCH_VERSION%-%SHA%-windows-installer.exe,EPLaunch-%EPLAUNCH_VERSION%-%SHA%-windows7special-installer.exe""
   on:
     appveyor_repo_tag: true
