@@ -10,7 +10,7 @@ environment:
     - PYTHON: "C:\\Python36-x64"
       PYTHON_VERSION: "3.6.6"
       PYTHON_ARCH: "64"
-      EPLAUNCH_VERSION: "0.5"  # need to read from from eplaunch/__init__.py eventually
+      #EPLAUNCH_VERSION: "0.5"  # need to read from from eplaunch/__init__.py eventually
 
 install:
   # Install Python (from the official .msi of http://python.org) and pip when not already installed.
@@ -21,6 +21,7 @@ install:
   - "python --version"
   - "python -c \"import struct; print(struct.calcsize('P') * 8)\""
   # Get the current version data
+  - "for /f \"delims=\" %%A in (\'python -c \"from eplaunch import VERSION; print(VERSION)\"\') do set \"EPLAUNCH_VERSION=%%A"
   - "SET SHA=%APPVEYOR_REPO_COMMIT:~0,6%"
   # Upgrade to the latest version of pip
   - "python -m pip install --upgrade pip"
