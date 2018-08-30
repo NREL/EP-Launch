@@ -30,7 +30,7 @@ exe = EXE(
     a.scripts,
     exclude_binaries=True,
     name='EPLaunch',
-    debug=False,
+    debug=True,
     strip=False,
     upx=True,
     console=True
