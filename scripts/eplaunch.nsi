@@ -12,6 +12,6 @@ Section
 SetOutPath $INSTDIR
 
 # define what to install and place it in the output path
-File /r dist\EPLaunch
+File /r dist
 
 SectionEnd
