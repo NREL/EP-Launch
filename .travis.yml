@@ -4,13 +4,6 @@
 os: linux
 language: python
 
-#addons:
-#  apt:
-#    packages:
-#    - zlib1g
-#    - zlib1g-dev
-#    - zlibc
-
 matrix:
     include:
         - os: linux
