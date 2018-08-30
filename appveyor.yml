@@ -37,11 +37,10 @@ build_script:
   # Build the compiled extension
   - "%CMD_IN_ENV% pyinstaller --windowed eplaunch.spec"
   - "makensis.exe eplaunch.nsi"
-  - "COPY EPLaunchInstall.exe EP-Launch-%EPLAUNCH_VERSION%-%SHA%-windows-installer.exe"
-  - "DIR"
+  - "COPY EPLaunchInstall.exe EPLaunch-%EPLAUNCH_VERSION%-%SHA%-windows-installer.exe"
   - "DEL dist\\EPLaunch\\api-ms-win-core-synch-l1-2-0.dll"
   - "makensis.exe eplaunch.nsi"
-  - "COPY EPLaunchInstall.exe EP-Launch-%EPLAUNCH_VERSION%-%SHA%-windows7special-installer.exe"
+  - "COPY EPLaunchInstall.exe EPLaunch-%EPLAUNCH_VERSION%-%SHA%-windows7special-installer.exe"
   - "7z a EPLaunch-%EPLAUNCH_VERSION%-%SHA%-windows.zip dist"
 
 artifacts:
