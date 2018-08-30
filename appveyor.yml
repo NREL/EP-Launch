@@ -37,16 +37,16 @@ build_script:
   # Build the compiled extension
   - "%CMD_IN_ENV% pyinstaller --windowed eplaunch.spec"
   - ps: "ls dist"
-  - "7z a EP-Launch-windows-%EPLAUNCH_VERSION%-%SHA%.zip dist"
+  - "7z a EP-Launch-%EPLAUNCH_VERSION%-%SHA%-windows.zip dist"
 
 artifacts:
   # Archive the generated packages in the ci.appveyor.com build report.
-  - path: "EP-Launch-windows-%EPLAUNCH_VERSION%-%SHA%.zip"
+  - path: "EP-Launch-%EPLAUNCH_VERSION%-%SHA%-windows.zip"
 
 deploy:
   provider: GitHub
   auth_token:
     secure: Cqe58u5ZlKHFk4IecrI41aPj+qCwia36/zWmCnizfCzIsPaTfBRFagC84x1S1y8G
-  artifact: "EP-Launch-windows-%EPLAUNCH_VERSION%-%SHA%.zip"
+  artifact: "EP-Launch-%EPLAUNCH_VERSION%-%SHA%-windows.zip"
   on:
     appveyor_repo_tag: true

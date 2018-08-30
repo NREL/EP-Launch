@@ -5,6 +5,6 @@ SHA=`echo ${TRAVIS_COMMIT} | cut -c 1-6`
 pip install wxpython
 pyinstaller --onefile --windowed eplaunch.spec
 ls dist/*
-tar -zcf EP-Launch-mac-${VERSION}-${SHA}.tar.gz dist/eplaunch.app
+tar -zcf EP-Launch-${VERSION}-${SHA}-mac.tar.gz dist/eplaunch.app
 mkdir tmp_build
-cp EP-Launch-mac-${VERSION}-${SHA}.tar.gz tmp_build
+cp EP-Launch-${VERSION}-${SHA}-mac.tar.gz tmp_build
