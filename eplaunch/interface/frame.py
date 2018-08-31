@@ -5,7 +5,7 @@ import uuid
 from gettext import gettext as _
 
 import wx
-from wx.lib.pubsub import pub
+from pubsub import pub
 
 from eplaunch.interface import workflow_directories_dialog
 from eplaunch.interface.externalprograms import EPLaunchExternalPrograms

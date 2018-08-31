@@ -24,9 +24,9 @@ class EPLaunchExternalPrograms:
         ft = wx.TheMimeTypesManager.GetFileTypeFromExtension(extension_string)
         if not ft:
             return not_found_application_path
-        extList = ft.GetExtensions()
-        if extList:
-            ext = self.fnm.remove_leading_period(extList[0])
+        ext_list = ft.GetExtensions()
+        if ext_list:
+            ext = self.fnm.remove_leading_period(ext_list[0])
         else:
             ext = ""
         filename = "SPAM" + "." + ext  # create a dummy file name
@@ -35,7 +35,10 @@ class EPLaunchExternalPrograms:
         cmd = ft.GetOpenCommand(params)
         if cmd:
             if platform.system() == 'Windows':
-                application_path = cmd.split('"')[1]
+                if "\"" in cmd:
+                    application_path = cmd.split('"')[1]
+                else:
+                    application_path = cmd.replace(filename, '').strip()
             else:  # for linux just remove the file name used as a dummy
                 application_path = cmd.replace(filename, '')
             return application_path

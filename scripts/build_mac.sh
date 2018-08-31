@@ -1,8 +1,10 @@
 #!/bin/bash
 
 VERSION=`grep VERSION eplaunch/__init__.py | cut -d= -f2 | cut -d\" -f2`
+SHA=`echo ${TRAVIS_COMMIT} | cut -c 1-8`
 pip install wxpython
-python setup.py bdist_mac
-tar -zcf EP-Launch-${VERSION}-mac.tar.gz build/EP-Launch-0.1.app
+pyinstaller --onefile --windowed eplaunch.spec
+ls dist/*
+tar -C dist -zcf EPLaunch-${VERSION}-${SHA}-mac.tar.gz eplaunch.app
 mkdir tmp_build
-cp EP-Launch-${VERSION}-mac.tar.gz tmp_build
+cp EPLaunch-${VERSION}-${SHA}-mac.tar.gz tmp_build

@@ -1,6 +1,7 @@
 .DS_Store
 .idea
 tmp_build
+EPLaunchInstall.exe
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
