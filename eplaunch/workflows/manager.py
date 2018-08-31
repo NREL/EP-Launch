@@ -20,11 +20,15 @@ class WorkflowDetail:
         self.output_toolbar_order = None
 
 
-def get_workflows(external_workflow_directories):
+def get_workflows(external_workflow_directories, disable_builtins=False):
     this_file_directory_path = os.path.dirname(os.path.realpath(__file__))
     built_in_workflow_directory = os.path.join(this_file_directory_path, 'default')
     all_workflow_directories = external_workflow_directories
-    if built_in_workflow_directory not in all_workflow_directories:
+    if disable_builtins:
+        # don't add built-in default workflows
+        pass
+    elif built_in_workflow_directory not in all_workflow_directories and os.path.exists(built_in_workflow_directory):
+        # add the built-in directory if it exists
         all_workflow_directories.append(built_in_workflow_directory)
 
     work_flows = []
