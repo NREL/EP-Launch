@@ -127,7 +127,10 @@ class EpLaunchFrame(wx.Frame):
 
     def update_workflow_list(self, filter_version=None):
         self.energyplus_workflow_directories = self.locate_workflows.find()
-        self.work_flows = workflow_manager.get_workflows(
+        # get_workflows now returns a second argument that is a list of workflow.manager.FailedWorkflowDetails
+        # each of these instances is related to a failed workflow import
+        # the GUI can then show the warnings if desired, for now just ignore them...?
+        self.work_flows, _ = workflow_manager.get_workflows(
             external_workflow_directories=self.energyplus_workflow_directories
         )
         if filter_version:

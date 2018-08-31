@@ -11,12 +11,14 @@ class TestGetWorkflows(unittest.TestCase):
         self.extra_workflow_dir = tempfile.mkdtemp()
 
     def test_default_behavior_with_builtins(self):
-        workflows = get_workflows([], disable_builtins=False)
+        workflows, warnings = get_workflows([], disable_builtins=False)
         self.assertTrue(len(workflows) > 0)
+        self.assertEqual(0, len(warnings))
 
     def test_empty_workflow_response(self):
-        workflows = get_workflows([], disable_builtins=True)
+        workflows, warnings = get_workflows([], disable_builtins=True)
         self.assertEqual(len(workflows), 0)
+        self.assertEqual(0, len(warnings))
 
     def test_valid_external_workflow(self):
         file_contents = """
@@ -32,8 +34,9 @@ class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
         """
         with open(os.path.join(self.extra_workflow_dir, 'valid_workflow.py'), 'w') as f:
             f.write(file_contents)
-        external_only_workflows = get_workflows([self.extra_workflow_dir], disable_builtins=True)
+        external_only_workflows, warnings = get_workflows([self.extra_workflow_dir], disable_builtins=True)
         self.assertEqual(len(external_only_workflows), 1)
+        self.assertEqual(0, len(warnings))
 
     def test_invalid_workflow_bad_syntax(self):
         # note that the name function has a syntax error with a missing trailing quote on the dummy string literal
@@ -50,8 +53,9 @@ class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
         """
         with open(os.path.join(self.extra_workflow_dir, 'bad_syntax_workflow.py'), 'w') as f:
             f.write(file_contents)
-        external_only_workflows = get_workflows([self.extra_workflow_dir], disable_builtins=True)
+        external_only_workflows, warnings = get_workflows([self.extra_workflow_dir], disable_builtins=True)
         self.assertEqual(len(external_only_workflows), 0)
+        self.assertEqual(1, len(warnings))
 
     def test_invalid_workflow_bad_workflow(self):
         # note that the name function has a syntax error with a missing trailing quote on the dummy string literal
@@ -68,5 +72,6 @@ class SiteLocationWorkflow(UnknownWorkflowClass):
         """
         with open(os.path.join(self.extra_workflow_dir, 'bad_syntax_workflow.py'), 'w') as f:
             f.write(file_contents)
-        external_only_workflows = get_workflows([self.extra_workflow_dir], disable_builtins=True)
+        external_only_workflows, warnings = get_workflows([self.extra_workflow_dir], disable_builtins=True)
         self.assertEqual(len(external_only_workflows), 0)
+        self.assertEqual(1, len(warnings))
