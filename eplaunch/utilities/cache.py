@@ -32,7 +32,7 @@ class CacheFile(object):
     - The worker must then release the mutex by removing the current directory from the list
     """
 
-    FileName = '.eplaunch3'
+    FileName = '.eplaunch'
     RootKey = 'workflows'
     FilesKey = 'files'
     ParametersKey = 'config'
