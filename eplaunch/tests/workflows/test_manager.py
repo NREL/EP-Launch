@@ -30,7 +30,7 @@ class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
     def get_output_suffixes(self): return []
     def get_interface_columns(self): return ['dummy']
     def main(self, run_directory, file_name, args):
-        return EPLaunchWorkflowResponse1(success=True, message='Hello', column_data={'dummy': location_name})      
+        return EPLaunchWorkflowResponse1(success=True, message='Hello', column_data={'dummy': location_name})
         """
         with open(os.path.join(self.extra_workflow_dir, 'valid_workflow.py'), 'w') as f:
             f.write(file_contents)
@@ -49,7 +49,7 @@ class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
     def get_output_suffixes(self): return []
     def get_interface_columns(self): return ['dummy']
     def main(self, run_directory, file_name, args):
-        return EPLaunchWorkflowResponse1(success=True, message='Hello', column_data={'dummy': location_name})      
+        return EPLaunchWorkflowResponse1(success=True, message='Hello', column_data={'dummy': location_name})
         """
         with open(os.path.join(self.extra_workflow_dir, 'bad_syntax_workflow.py'), 'w') as f:
             f.write(file_contents)
@@ -68,7 +68,7 @@ class SiteLocationWorkflow(UnknownWorkflowClass):
     def get_output_suffixes(self): return []
     def get_interface_columns(self): return ['dummy']
     def main(self, run_directory, file_name, args):
-        return EPLaunchWorkflowResponse1(success=True, message='Hello', column_data={'dummy': location_name})      
+        return EPLaunchWorkflowResponse1(success=True, message='Hello', column_data={'dummy': location_name})
         """
         with open(os.path.join(self.extra_workflow_dir, 'bad_syntax_workflow.py'), 'w') as f:
             f.write(file_contents)
