@@ -41,11 +41,19 @@ class WorkflowThread(threading.Thread):
 
     def run(self):
         """Run Workflow Thread."""
-        workflow_response = self.workflow_instance.main(self.run_directory, self.file_name, self.workflow_main_args)
-        if type(workflow_response) is not EPLaunchWorkflowResponse1:
+        try:
+            workflow_response = self.workflow_instance.main(self.run_directory, self.file_name, self.workflow_main_args)
+            if type(workflow_response) is not EPLaunchWorkflowResponse1:
+                workflow_response = EPLaunchWorkflowResponse1(
+                    success=False,
+                    message='Current workflow main function did not respond properly',
+                    column_data=None
+                )
+        except Exception as e:
+            # here is another location where we simply don't know what types of errors could occur in user defined files
             workflow_response = EPLaunchWorkflowResponse1(
                 success=False,
-                message='Current workflow main function did not respond properly',
+                message='Current workflow main function failed unexpectedly:' + str(e),
                 column_data=None
             )
         workflow_response.id = self.id

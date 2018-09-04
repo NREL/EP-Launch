@@ -322,7 +322,7 @@ class EnergyPlusWorkflowIP(BaseEPLaunchWorkflow1):
                         column_data={}
                     )
 
-                end_file_name = "{0}out.end".format(file_name_no_ext)
+                end_file_name = "{0}.end".format(file_name_no_ext)
                 end_file_path = os.path.join(run_directory, end_file_name)
                 success, errors, warnings, runtime = EPlusRunManager.get_end_summary(end_file_path)
 
