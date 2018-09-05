@@ -356,6 +356,59 @@ class EnergyPlusWorkflowIP(BaseEPLaunchWorkflow1):
                         column_data={}
                     )
 
+                # run the ConvertESOMTR program to create IP versions of the timestep based output files
+                if platform.system() == 'Windows':
+                    convertESOMTR_binary = os.path.join(energyplus_root_folder, 'PostProcess\\convertESOMTRpgm\\convertESOMTR.exe')
+                else:
+                    convertESOMTR_binary = os.path.join(energyplus_root_folder, 'PostProcess\\convertESOMTRpgm\\convertESOMTR')
+                if os.path.exists(convertESOMTR_binary):
+                    converttxt_orig_path = os.path.join(energyplus_root_folder, 'PostProcess\\convertESOMTRpgm\\convert.txt')
+                    converttxt_run_path = os.path.join(run_directory, 'convert.txt')
+                    shutil.copy(converttxt_orig_path,converttxt_run_path)
+                    # *.eso back to eplusout.eso
+                    eso_path = os.path.join(run_directory, file_name_no_ext + '.eso')
+                    eplusouteso_path = os.path.join(run_directory, 'eplusout.eso')
+                    shutil.copy(eso_path,eplusouteso_path)
+                    # *.mtr back to eplusout.mtr
+                    mtr_path = os.path.join(run_directory, file_name_no_ext + '.mtr')
+                    eplusoutmtr_path = os.path.join(run_directory, 'eplusout.mtr')
+                    shutil.copy(mtr_path,eplusoutmtr_path)
+
+                    command_line_args = [convertESOMTR_binary]
+                    try:
+                        for message in self.execute_for_callback(command_line_args, run_directory):
+                            self.callback(message)
+                    except subprocess.CalledProcessError:
+                        self.callback("ConvertESOMTR FAILED")
+                        return EPLaunchWorkflowResponse1(
+                            success=False,
+                            message="ConvertESOMTR failed for file: %s!" % full_file_path,
+                            column_data={}
+                        )
+                    # copy converted IP version of ESO file to users *.eso file
+                    ipeso_path = os.path.join(run_directory, 'ip.eso')
+                    if os.path.exists(ipeso_path):
+                        os.remove(eplusouteso_path)
+                        os.rename(ipeso_path,eso_path)
+                    # copy converted IP version of MTR file to users *.mtr file
+                    ipmtr_path = os.path.join(run_directory, 'ip.mtr')
+                    if os.path.exists(ipmtr_path):
+                        os.remove(eplusoutmtr_path)
+                        os.rename(ipmtr_path,mtr_path)
+
+                # run ReadVarsESO to convert the timestep based output files to CSV files
+                if platform.system() == 'Windows':
+                    readvarseso_binary = os.path.join(energyplus_root_folder, 'PostProcess\\ReadVarsESO.exe')
+                else:
+                    readvarseso_binary = os.path.join(energyplus_root_folder, 'PostProcess\\ReadVarsESO')
+                if os.path.exists(readvarseso_binary):
+
+                    rvi_path = os.path.join(run_directory, file_name_no_ext + '.rvi')
+                    if os.path.exists(rvi_path):
+
+                    mvi_path = os.path.join(run_directory, file_name_no_ext + '.mvi')
+
+                # check on .end file and finish up
                 end_file_name = "{0}.end".format(file_name_no_ext)
                 end_file_path = os.path.join(run_directory, end_file_name)
                 success, errors, warnings, runtime = EPlusRunManager.get_end_summary(end_file_path)
