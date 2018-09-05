@@ -4,6 +4,7 @@ source =
 
 omit =
         /usr/*
+        /tmp/*
         .tox/*
         *.pyenv*
         *.venv*
