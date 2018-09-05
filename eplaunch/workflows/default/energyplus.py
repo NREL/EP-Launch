@@ -265,18 +265,40 @@ class EnergyPlusWorkflowIP(BaseEPLaunchWorkflow1):
     def main(self, run_directory, file_name, args):
         full_file_path = os.path.join(run_directory, file_name)
         file_name_no_ext, extension = os.path.splitext(file_name)
+        # the following is the same when .idf is used
 
         if 'workflow location' in args:
             energyplus_root_folder, _ = os.path.split(args['workflow location'])
 
             # Run EPMacro if an .imf file
-            if extension == 'imf':
+            if extension == '.imf':
                 if platform.system() == 'Windows':
                     epmacro_binary = os.path.join(energyplus_root_folder, 'EPMacro.exe')
                 else:
                     epmacro_binary = os.path.join(energyplus_root_folder, 'EPMacro')
-            inimf_file = os.path.join(run_directory, 'in.imf')
-            shutil.copy(full_file_path, inimf_file)
+                command_line_args = [epmacro_binary]
+                inimf_file = os.path.join(run_directory, 'in.imf')
+                shutil.copy(full_file_path, inimf_file)
+                try:
+                    for message in self.execute_for_callback(command_line_args, run_directory):
+                        self.callback(message)
+                except subprocess.CalledProcessError:
+                    self.callback("EPMacro FAILED")
+                    return EPLaunchWorkflowResponse1(
+                        success=False,
+                        message="EPMacro failed for file: %s!" % full_file_path,
+                        column_data={}
+                    )
+                outidf_file = os.path.join(run_directory, 'out.idf')
+                epmidf_file = os.path.join(run_directory, file_name_no_ext + '.epmidf')
+                shutil.copy(outidf_file,epmidf_file)
+                # remember the user selected a file with an extension of .imf
+                file_name_with_idf_ext = os.path.join(run_directory, file_name_no_ext + '.idf')
+                os.rename(outidf_file,file_name_with_idf_ext)
+                audit_file = os.path.join(run_directory, 'audit.out')
+                epmdet_file = os.path.join(run_directory, file_name_no_ext + '.epmdet')
+                os.rename(audit_file,epmdet_file)
+                os.remove(inimf_file)
 
             # Run EnergyPlus binary
             if platform.system() == 'Windows':
@@ -317,7 +339,10 @@ class EnergyPlusWorkflowIP(BaseEPLaunchWorkflow1):
                     command_line_args += ['--design-day']
 
                 # and at the very end, add the file to run
-                command_line_args += [file_name]
+                if extension == '.imf':
+                    command_line_args += [file_name_with_idf_ext]
+                else:
+                    command_line_args += [file_name]
 
                 # run E+ and gather (for now fake) data
                 try:
@@ -334,6 +359,9 @@ class EnergyPlusWorkflowIP(BaseEPLaunchWorkflow1):
                 end_file_name = "{0}.end".format(file_name_no_ext)
                 end_file_path = os.path.join(run_directory, end_file_name)
                 success, errors, warnings, runtime = EPlusRunManager.get_end_summary(end_file_path)
+
+                if extension == '.imf':
+                    os.remove(file_name_with_idf_ext)
 
                 column_data = {
                     ColumnNames.Errors: errors,
