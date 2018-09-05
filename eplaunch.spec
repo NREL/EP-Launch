@@ -33,7 +33,7 @@ exe = EXE(
     debug=True,
     strip=False,
     upx=True,
-    console=True
+    console=False
 )
 
 coll = COLLECT(
