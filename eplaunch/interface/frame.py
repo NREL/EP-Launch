@@ -7,6 +7,7 @@ from gettext import gettext as _
 import wx
 from pubsub import pub
 
+from eplaunch import VERSION
 from eplaunch.interface import workflow_directories_dialog
 from eplaunch.interface.externalprograms import EPLaunchExternalPrograms
 from eplaunch.interface.filenamemenus import FileNameMenus
@@ -33,13 +34,13 @@ class EpLaunchFrame(wx.Frame):
         wx.Frame.__init__(self, *args, **kwargs)
 
         # Set the title!
-        self.SetTitle(_("EP-Launch 3"))
+        self.SetTitle(_("EP-Launch"))
 
         # set the window exit
         self.Bind(wx.EVT_CLOSE, self.handle_frame_close)
 
         # Get saved settings
-        self.config = wx.Config("EP-Launch3")
+        self.config = wx.Config("EP-Launch")
 
         # Get an instance of the supporting function class
         self.support = FrameSupport()
@@ -127,7 +128,10 @@ class EpLaunchFrame(wx.Frame):
 
     def update_workflow_list(self, filter_version=None):
         self.energyplus_workflow_directories = self.locate_workflows.find()
-        self.work_flows = workflow_manager.get_workflows(
+        # get_workflows now returns a second argument that is a list of workflow.manager.FailedWorkflowDetails
+        # each of these instances is related to a failed workflow import
+        # the GUI can then show the warnings if desired, for now just ignore them...?
+        self.work_flows, _ = workflow_manager.get_workflows(
             external_workflow_directories=self.energyplus_workflow_directories
         )
         if filter_version:
@@ -1063,7 +1067,7 @@ class EpLaunchFrame(wx.Frame):
         text = """
 EP-Launch
 
-Version 0.9
+Version %s
 Copyright (c) 2018, Alliance for Sustainable Energy, LLC  and GARD Analytics, Inc
 
 Redistribution and use in source and binary forms, with or without
@@ -1093,7 +1097,7 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
 OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-"""
+""" % VERSION
         with wx.MessageDialog(self, text, 'About EP-Launch', wx.OK | wx.ICON_INFORMATION) as dlg:
             dlg.ShowModal()
 

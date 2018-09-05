@@ -5,6 +5,12 @@ import platform
 from importlib import util as import_util
 
 
+class FailedWorkflowDetails:
+    def __init__(self, workflow_file_path, message):
+        self.workflow_file_path = workflow_file_path
+        self.message = message
+
+
 class WorkflowDetail:
     def __init__(self, workflow_class, name, output_suffixes, file_types, columns,
                  directory, description, is_energyplus, version_id):
@@ -20,15 +26,19 @@ class WorkflowDetail:
         self.output_toolbar_order = None
 
 
-def get_workflows(external_workflow_directories):
+def get_workflows(external_workflow_directories, disable_builtins=False):
     this_file_directory_path = os.path.dirname(os.path.realpath(__file__))
     built_in_workflow_directory = os.path.join(this_file_directory_path, 'default')
     all_workflow_directories = external_workflow_directories
-    if built_in_workflow_directory not in all_workflow_directories:
+    if disable_builtins:
+        # don't add built-in default workflows
+        pass
+    elif built_in_workflow_directory not in all_workflow_directories and os.path.exists(built_in_workflow_directory):
+        # add the built-in directory if it exists
         all_workflow_directories.append(built_in_workflow_directory)
 
     work_flows = []
-
+    warnings = []
     for workflow_directory in all_workflow_directories:
         uc_directory = workflow_directory.upper().replace('-', '.').replace('\\', '/')
         version_id = None
@@ -55,8 +65,27 @@ def get_workflows(external_workflow_directories):
             this_file_path = os.path.join(workflow_directory, this_file)
             module_spec = import_util.spec_from_file_location('workflow_module', this_file_path)
             this_module = import_util.module_from_spec(module_spec)
-            modules.append(this_module)
-            module_spec.loader.exec_module(this_module)
+            try:
+                modules.append(this_module)
+                module_spec.loader.exec_module(this_module)
+            except ImportError as ie:
+                # this error generally means they have a bad workflow class or something
+                warnings.append(
+                    "Import error occurred on workflow file %s: %s" % (this_file_path, ie.msg)
+                )
+                continue
+            except SyntaxError as se:
+                # syntax errors are, well, syntax errors in the Python code itself
+                warnings.append(
+                    "Syntax error occurred on workflow file %s, line %s: %s" % (this_file_path, se.lineno, se.msg)
+                )
+                continue
+            except Exception as e:
+                # there's always the potential of some other unforeseen thing going on when a workflow is executed
+                warnings.append(
+                    "Unexpected error occurred trying to import workflow: %s" % this_file_path
+                )
+                continue
 
         for this_module in modules:
             class_members = inspect.getmembers(this_module, inspect.isclass)
@@ -109,4 +138,4 @@ def get_workflows(external_workflow_directories):
                     )
 
     work_flows.sort(key=lambda w: w.description)
-    return work_flows
+    return work_flows, warnings
