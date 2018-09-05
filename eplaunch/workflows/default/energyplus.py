@@ -2,6 +2,7 @@ import os
 import platform
 import subprocess
 import time
+import shutil
 
 from eplaunch.utilities.version import Version
 from eplaunch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1
@@ -267,6 +268,17 @@ class EnergyPlusWorkflowIP(BaseEPLaunchWorkflow1):
 
         if 'workflow location' in args:
             energyplus_root_folder, _ = os.path.split(args['workflow location'])
+
+            # Run EPMacro if an .imf file
+            if extension == 'imf':
+                if platform.system() == 'Windows':
+                    epmacro_binary = os.path.join(energyplus_root_folder, 'EPMacro.exe')
+                else:
+                    epmacro_binary = os.path.join(energyplus_root_folder, 'EPMacro')
+            inimf_file = os.path.join(run_directory, 'in.imf')
+            shutil.copy(full_file_path, inimf_file)
+
+            # Run EnergyPlus binary
             if platform.system() == 'Windows':
                 energyplus_binary = os.path.join(energyplus_root_folder, 'energyplus.exe')
             else:
@@ -308,21 +320,18 @@ class EnergyPlusWorkflowIP(BaseEPLaunchWorkflow1):
                 command_line_args += [file_name]
 
                 # run E+ and gather (for now fake) data
-                process = subprocess.run(
-                    command_line_args,
-                    cwd=run_directory
-                )
-                time.sleep(5)
-                status_code = process.returncode
-
-                if status_code != 0:
+                try:
+                    for message in self.execute_for_callback(command_line_args, run_directory):
+                        self.callback(message)
+                except subprocess.CalledProcessError:
+                    self.callback("E+ FAILED")
                     return EPLaunchWorkflowResponse1(
                         success=False,
                         message="EnergyPlus failed for file: %s!" % full_file_path,
                         column_data={}
                     )
 
-                end_file_name = "{0}out.end".format(file_name_no_ext)
+                end_file_name = "{0}.end".format(file_name_no_ext)
                 end_file_path = os.path.join(run_directory, end_file_name)
                 success, errors, warnings, runtime = EPlusRunManager.get_end_summary(end_file_path)
 
