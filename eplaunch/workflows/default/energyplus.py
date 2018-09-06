@@ -473,6 +473,34 @@ class EnergyPlusWorkflowIP(BaseEPLaunchWorkflow1):
                     if os.path.exists(eplusout_mvi_path):
                         os.remove(eplusout_mvi_path)
 
+                # run HVAC-Diagram
+                if platform.system() == 'Windows':
+                    hvac_diagram_binary = os.path.join(energyplus_root_folder, 'PostProcess\\HVAC-Diagram.exe')
+                else:
+                    hvac_diagram_binary = os.path.join(energyplus_root_folder, 'PostProcess\\HVAC-Diagram')
+                if os.path.exists(hvac_diagram_binary):
+                    bnd_path = os.path.join(run_directory, file_name_no_ext + '.bnd')
+                    eplusout_bnd_path = os.path.join(run_directory, 'eplusout.bnd')
+                    if os.path.exists(bnd_path):
+                        shutil.copy(bnd_path, eplusout_bnd_path)
+                        command_line_args = [hvac_diagram_binary]
+                    try:
+                        for message in self.execute_for_callback(command_line_args, run_directory):
+                            self.callback(message)
+                    except subprocess.CalledProcessError:
+                        self.callback("HVAC-Diagram FAILED on BND file")
+                        return EPLaunchWorkflowResponse1(
+                            success=False,
+                            message="HVAC-Diagram failed for BND file: %s!" % full_file_path,
+                            column_data={}
+                        )
+                    svg_path = os.path.join(run_directory, file_name_no_ext + '.svg')
+                    eplusout_svg_path = os.path.join(run_directory, 'eplusout.svg')
+                    if os.path.exists(eplusout_svg_path):
+                        os.replace(eplusout_svg_path, svg_path)
+                    if os.path.exists(eplusout_bnd_path):
+                        os.remove(eplusout_bnd_path)
+
                 # check on .end file and finish up
                 end_file_name = "{0}.end".format(file_name_no_ext)
                 end_file_path = os.path.join(run_directory, end_file_name)
