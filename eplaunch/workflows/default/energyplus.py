@@ -309,6 +309,10 @@ class EnergyPlusWorkflowIP(BaseEPLaunchWorkflow1):
                 if os.path.exists(expandobjects_binary) and os.path.exists(file_name_with_idf_ext):
                     inidf_path = os.path.join(run_directory, 'in.idf')
                     shutil.copy(file_name_with_idf_ext, inidf_path)
+                    idd_orig_path = os.path.join(energyplus_root_folder, 'Energy+.idd')
+                    idd_local_path = os.path.join(run_directory, 'Energy+.idd')
+                    if os.path.exists(idd_orig_path):
+                        shutil.copy(idd_orig_path, idd_local_path)
                     command_line_args = [expandobjects_binary]
                     try:
                         for message in self.execute_for_callback(command_line_args, run_directory):
@@ -323,6 +327,10 @@ class EnergyPlusWorkflowIP(BaseEPLaunchWorkflow1):
                     expanded_idf_file = os.path.join(run_directory, 'expanded.idf')
                     if os.path.exists(expanded_idf_file):
                         os.replace(expanded_idf_file, expidf_file)
+                    if os.path.exists(inidf_path):
+                        os.remove(inidf_path)
+                    if os.path.exists(idd_local_path):
+                        os.remove(idd_local_path)
 
             # Run EnergyPlus binary
             if platform.system() == 'Windows':
