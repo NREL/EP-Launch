@@ -332,6 +332,58 @@ class EnergyPlusWorkflowIP(BaseEPLaunchWorkflow1):
                     if os.path.exists(idd_local_path):
                         os.remove(idd_local_path)
 
+                    if platform.system() == 'Windows':
+                        basement_binary = os.path.join(energyplus_root_folder, 'PreProcess\\GrndTempCalc\\Basement.exe')
+                    else:
+                        basement_binary = os.path.join(energyplus_root_folder, 'PreProcess\\GrndTempCalc\\Basement')
+                    basement_ght_in_idf_path = os.path.join(run_directory, 'BasementGHTIn.idf')
+                    basement_idd_orig_path = os.path.join(energyplus_root_folder, 'PreProcess\\GrndTempCalc\\BasementGHT.idd')
+                    basement_idd_local = os.path.join(run_directory, 'BasementGHT.idd')
+                    if os.path.exists(basement_binary) and os.path.exists(basement_ght_in_idf_path) and os.path.exists(basement_idd_orig_path):
+                        if 'weather' in args and args['weather']:
+                            local_in_epw = os.path.join(run_directory, 'in.epw')
+                            shutil.copy(args['weather'], local_in_epw)
+                            shutil.copy(basement_idd_orig_path, basement_idd_local)
+                            command_line_args = [basement_binary]
+                            try:
+                                for message in self.execute_for_callback(command_line_args, run_directory):
+                                    self.callback(message)
+                            except subprocess.CalledProcessError:
+                                self.callback("Basement FAILED")
+                                return EPLaunchWorkflowResponse1(
+                                    success=False,
+                                    message="Basement failed for file: %s!" % full_file_path,
+                                    column_data={}
+                                )
+                            monthlyresults_csv_path = os.path.join(run_directory, 'MonthlyResults.csv')
+                            bsmt_csv_path = os.path.join(run_directory, file_name_no_ext + '_bsmt.csv')
+                            os.rename(monthlyresults_csv_path, bsmt_csv_path)
+                            runinput_txt_path = os.path.join(run_directory, 'RunINPUT.TXT')
+                            bsmt_out_path = os.path.join(run_directory, file_name_no_ext + '_bsmt.out')
+                            os.rename(runinput_txt_path, bsmt_out_path)
+                            audit_out_path = os.path.join(run_directory, 'audit.out')
+                            bsmt_audit_path = os.path.join(run_directory, file_name_no_ext + '_bsmt.audit')
+                            os.rename(audit_out_path, bsmt_audit_path)
+                            # append the objects to the end of the expidf file
+                            epobjects_txt_path = os.path.join(run_directory, 'EPObjects.txt')
+                            file_bsmt_objs = open(epobjects_txt_path, 'r')
+                            bsmt_objs = file_bsmt_objs.read()
+                            file_bsmt_objs.close()
+                            file_expidf_file = open(expidf_file, 'a')
+                            file_expidf_file.write(bsmt_objs)
+                            file_expidf_file.close()
+                            # clean up files
+                            os.remove(local_in_epw)
+                            os.remove(basement_idd_local)
+                            os.remove(epobjects_txt_path)
+                            os.remove(basement_ght_in_idf_path)
+                        else:
+                            return EPLaunchWorkflowResponse1(
+                                success=False,
+                                message="A weather file must be specified when ground heat transfer objects are included: {}!".format(full_file_path),
+                                column_data=[]
+                            )
+
             # Run EnergyPlus binary
             if platform.system() == 'Windows':
                 energyplus_binary = os.path.join(energyplus_root_folder, 'energyplus.exe')
