@@ -268,121 +268,6 @@ class EnergyPlusWorkflowIP(BaseEPLaunchWorkflow1):
 
         if 'workflow location' in args:
             energyplus_root_folder, _ = os.path.split(args['workflow location'])
-            file_name_with_idf_ext = os.path.join(run_directory, file_name_no_ext + '.idf')
-            expidf_file = os.path.join(run_directory, file_name_no_ext + '.expidf')
-
-            # Run EPMacro if an .imf file
-            if extension == '.imf':
-                if platform.system() == 'Windows':
-                    epmacro_binary = os.path.join(energyplus_root_folder, 'EPMacro.exe')
-                else:
-                    epmacro_binary = os.path.join(energyplus_root_folder, 'EPMacro')
-                command_line_args = [epmacro_binary]
-                inimf_file = os.path.join(run_directory, 'in.imf')
-                shutil.copy(full_file_path, inimf_file)
-                try:
-                    for message in self.execute_for_callback(command_line_args, run_directory):
-                        self.callback(message)
-                except subprocess.CalledProcessError:
-                    self.callback("EPMacro FAILED")
-                    return EPLaunchWorkflowResponse1(
-                        success=False,
-                        message="EPMacro failed for file: %s!" % full_file_path,
-                        column_data={}
-                    )
-                outidf_file = os.path.join(run_directory, 'out.idf')
-                epmidf_file = os.path.join(run_directory, file_name_no_ext + '.epmidf')
-                shutil.copy(outidf_file, epmidf_file)
-                # remember the user selected a file with an extension of .imf
-                os.rename(outidf_file, file_name_with_idf_ext)
-                audit_file = os.path.join(run_directory, 'audit.out')
-                epmdet_file = os.path.join(run_directory, file_name_no_ext + '.epmdet')
-                os.rename(audit_file, epmdet_file)
-                os.remove(inimf_file)
-
-            # run the ExpandObjects application. Must run manually since Slab and Basement need to be run prior to EnergyPlus
-            if extension == '.imf' or extension == '.idf':
-                if platform.system() == 'Windows':
-                    expandobjects_binary = os.path.join(energyplus_root_folder, 'ExpandObjects.exe')
-                else:
-                    expandobjects_binary = os.path.join(energyplus_root_folder, 'ExpandObjects')
-                if os.path.exists(expandobjects_binary) and os.path.exists(file_name_with_idf_ext):
-                    inidf_path = os.path.join(run_directory, 'in.idf')
-                    shutil.copy(file_name_with_idf_ext, inidf_path)
-                    idd_orig_path = os.path.join(energyplus_root_folder, 'Energy+.idd')
-                    idd_local_path = os.path.join(run_directory, 'Energy+.idd')
-                    if os.path.exists(idd_orig_path):
-                        shutil.copy(idd_orig_path, idd_local_path)
-                    command_line_args = [expandobjects_binary]
-                    try:
-                        for message in self.execute_for_callback(command_line_args, run_directory):
-                            self.callback(message)
-                    except subprocess.CalledProcessError:
-                        self.callback("ExpandObjects FAILED")
-                        return EPLaunchWorkflowResponse1(
-                            success=False,
-                            message="ExpandObjects failed for file: %s!" % full_file_path,
-                            column_data={}
-                        )
-                    expanded_idf_file = os.path.join(run_directory, 'expanded.idf')
-                    if os.path.exists(expanded_idf_file):
-                        os.replace(expanded_idf_file, expidf_file)
-                    if os.path.exists(inidf_path):
-                        os.remove(inidf_path)
-                    if os.path.exists(idd_local_path):
-                        os.remove(idd_local_path)
-
-                    if platform.system() == 'Windows':
-                        basement_binary = os.path.join(energyplus_root_folder, 'PreProcess\\GrndTempCalc\\Basement.exe')
-                    else:
-                        basement_binary = os.path.join(energyplus_root_folder, 'PreProcess\\GrndTempCalc\\Basement')
-                    basement_ght_in_idf_path = os.path.join(run_directory, 'BasementGHTIn.idf')
-                    basement_idd_orig_path = os.path.join(energyplus_root_folder, 'PreProcess\\GrndTempCalc\\BasementGHT.idd')
-                    basement_idd_local = os.path.join(run_directory, 'BasementGHT.idd')
-                    if os.path.exists(basement_binary) and os.path.exists(basement_ght_in_idf_path) and os.path.exists(basement_idd_orig_path):
-                        if 'weather' in args and args['weather']:
-                            local_in_epw = os.path.join(run_directory, 'in.epw')
-                            shutil.copy(args['weather'], local_in_epw)
-                            shutil.copy(basement_idd_orig_path, basement_idd_local)
-                            command_line_args = [basement_binary]
-                            try:
-                                for message in self.execute_for_callback(command_line_args, run_directory):
-                                    self.callback(message)
-                            except subprocess.CalledProcessError:
-                                self.callback("Basement FAILED")
-                                return EPLaunchWorkflowResponse1(
-                                    success=False,
-                                    message="Basement failed for file: %s!" % full_file_path,
-                                    column_data={}
-                                )
-                            monthlyresults_csv_path = os.path.join(run_directory, 'MonthlyResults.csv')
-                            bsmt_csv_path = os.path.join(run_directory, file_name_no_ext + '_bsmt.csv')
-                            os.rename(monthlyresults_csv_path, bsmt_csv_path)
-                            runinput_txt_path = os.path.join(run_directory, 'RunINPUT.TXT')
-                            bsmt_out_path = os.path.join(run_directory, file_name_no_ext + '_bsmt.out')
-                            os.rename(runinput_txt_path, bsmt_out_path)
-                            audit_out_path = os.path.join(run_directory, 'audit.out')
-                            bsmt_audit_path = os.path.join(run_directory, file_name_no_ext + '_bsmt.audit')
-                            os.rename(audit_out_path, bsmt_audit_path)
-                            # append the objects to the end of the expidf file
-                            epobjects_txt_path = os.path.join(run_directory, 'EPObjects.txt')
-                            file_bsmt_objs = open(epobjects_txt_path, 'r')
-                            bsmt_objs = file_bsmt_objs.read()
-                            file_bsmt_objs.close()
-                            file_expidf_file = open(expidf_file, 'a')
-                            file_expidf_file.write(bsmt_objs)
-                            file_expidf_file.close()
-                            # clean up files
-                            os.remove(local_in_epw)
-                            os.remove(basement_idd_local)
-                            os.remove(epobjects_txt_path)
-                            os.remove(basement_ght_in_idf_path)
-                        else:
-                            return EPLaunchWorkflowResponse1(
-                                success=False,
-                                message="A weather file must be specified when ground heat transfer objects are included: {}!".format(full_file_path),
-                                column_data=[]
-                            )
 
             # Run EnergyPlus binary
             if platform.system() == 'Windows':
@@ -411,6 +296,9 @@ class EnergyPlusWorkflowIP(BaseEPLaunchWorkflow1):
                 command_line_args = [energyplus_binary]
 
                 # add some config parameters
+                command_line_args += ['--epmacro', '--expandobjects']
+
+                # add some config parameters
                 command_line_args += ['--output-prefix', file_name_no_ext, '--output-suffix', 'C']
 
                 # add in simulation control args
@@ -420,17 +308,7 @@ class EnergyPlusWorkflowIP(BaseEPLaunchWorkflow1):
                     command_line_args += ['--design-day']
 
                 # and at the very end, add the file to run
-                if extension == '.imf':
-                    active_file = file_name_with_idf_ext
-                else:
-                    active_file = full_file_path
-                command_line_args += [active_file]
-
-                # if expandobjects has run,
-                if os.path.exists(expidf_file):
-                    tmpfile = os.path.join(run_directory, '2519753145874-tempEOsave.tmp')
-                    os.rename(active_file, tmpfile)  # temporarily save the active file
-                    shutil.copy(expidf_file, active_file)  # repace the active file witht he expidf file generated by ExpandObjects (temporarily)
+                command_line_args += [full_file_path]
 
                 # run E+ and gather (for now fake) data
                 try:
@@ -443,10 +321,6 @@ class EnergyPlusWorkflowIP(BaseEPLaunchWorkflow1):
                         message="EnergyPlus failed for file: %s!" % full_file_path,
                         column_data={}
                     )
-
-                if os.path.exists(expidf_file):
-                    os.remove(active_file)
-                    os.rename(tmpfile, active_file)  # switch back
 
                 # set up the ESO and MTR output files for either unit conversion or just ReadVarsESO
                 # *.eso back to eplusout.eso
@@ -601,9 +475,6 @@ class EnergyPlusWorkflowIP(BaseEPLaunchWorkflow1):
                 end_file_name = "{0}.end".format(file_name_no_ext)
                 end_file_path = os.path.join(run_directory, end_file_name)
                 success, errors, warnings, runtime = EPlusRunManager.get_end_summary(end_file_path)
-
-                if extension == '.imf':
-                    os.remove(file_name_with_idf_ext)
 
                 column_data = {
                     ColumnNames.Errors: errors,
