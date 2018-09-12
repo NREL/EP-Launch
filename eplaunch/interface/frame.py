@@ -26,6 +26,7 @@ from eplaunch.workflows import manager as workflow_manager
 # noinspection PyUnusedLocal
 class EpLaunchFrame(wx.Frame):
     DefaultSize = (650, 600)
+    MagicNumberWorkflowOffset = 1300
 
     def __init__(self, *args, **kwargs):
 
@@ -72,6 +73,7 @@ class EpLaunchFrame(wx.Frame):
         self.weather_menu = None
         self.weather_recent = None
         self.weather_favorites = None
+        self.workflow_menu = None
         self.output_menu = None
         self.extra_output_menu = None
         self.tb_idf_editor_id = None
@@ -103,7 +105,6 @@ class EpLaunchFrame(wx.Frame):
         self.gui_build()
         self.reset_raw_list_columns()
         self.update_num_processes_status()
-        self.workflow_choice.SetSelection(0)
 
         # this sets up an event handler for workflow completion and callback events
         event_result(self, self.handle_workflow_done)
@@ -305,30 +306,27 @@ class EpLaunchFrame(wx.Frame):
     def update_num_processes_status(self):
         self.status_bar.SetStatusText("Currently %s processes running" % len(self.workflow_threads), i=2)
 
-    def refresh_workflow_selection(self, workflow_to_match):
+    def refresh_workflow_selection(self, name_to_search=None):
         if not self.work_flows:
             self.current_workflow = None
-        else:
-            previous_workflow = self.config.Read('/ActiveWindow/SelectedWorkflow')
-            # if blank try to set the workflow to something with the word EnergyPlus in it
-            # if not previous_workflow:
-            #     energyplus_workflows = [x for x in self.work_flows if 'ENERGYPLUS' in x.name().upper()]
-            #     if energyplus_workflows:
-            #         previous_workflow = energyplus_workflows[0]
-            if previous_workflow:
-                found = False
-                for workflow_index, workflow_choice in enumerate(self.work_flows):
-                    if workflow_to_match == workflow_choice.name:
-                        self.current_workflow = self.work_flows[workflow_index]
-                        self.workflow_choice.SetSelection(workflow_index)
-                        found = True
-                        break
-                if not found:
-                    self.current_workflow = self.work_flows[0]
-                    self.workflow_choice.SetSelection(0)
-            else:
+            return
+        if not name_to_search:
+            previous_workflow = self.config.Read('/ActiveWindow/SelectedWorkflow', '')
+            name_to_search = previous_workflow
+            if not previous_workflow:
                 self.current_workflow = self.work_flows[0]
                 self.workflow_choice.SetSelection(0)
+                return
+        found = False
+        for workflow_index, workflow_choice in enumerate(self.work_flows):
+            if name_to_search == workflow_choice.name:
+                self.current_workflow = self.work_flows[workflow_index]
+                self.workflow_choice.SetSelection(workflow_index)
+                found = True
+                break
+        if not found:
+            self.current_workflow = self.work_flows[0]
+            self.workflow_choice.SetSelection(0)
 
     def update_output_file_status(self):
         file_name_no_ext, extension = os.path.splitext(self.selected_file)
@@ -589,25 +587,14 @@ class EpLaunchFrame(wx.Frame):
         t_size = (24, 24)
         self.primary_toolbar.SetToolBitmapSize(t_size)
 
-        choice_strings = [w.description for w in self.work_flows]
-        self.workflow_choice = wx.Choice(self.primary_toolbar, choices=choice_strings)
-
-        # So, on my Mac, the workflow_choice went invisible when I left the AddControl call in there
-        # There was space where it obviously went, but it was invisible
-        # This needs to be remedied, big time, but until then, on this branch I am:
-        #  - removing the call to AddControl, thus the dropdown will show up, but not be aligned properly, then
-        #  -  making it really wide so that I can easily click it on the right half of the toolbar
-        # if 'CHOICEWORKAROUND' in os.environ:
         if Platform.get_current_platform() == Platform.MAC:
-            workflow_choice_size = (700, -1)
-            self.workflow_choice = wx.Choice(self.primary_toolbar, choices=choice_strings, size=workflow_choice_size)
+            self.workflow_choice = wx.Choice(None, choices=[])
         else:
+            choice_strings = [w.description for w in self.work_flows]
+            self.workflow_choice = wx.Choice(self.primary_toolbar, choices=choice_strings)
             self.primary_toolbar.AddControl(self.workflow_choice)
-
-        self.primary_toolbar.Bind(wx.EVT_CHOICE, self.handle_choice_selection_change, self.workflow_choice)
-
-        previous_workflow = self.config.Read('/ActiveWindow/SelectedWorkflow', defaultVal='')
-        self.refresh_workflow_selection(previous_workflow)
+            self.primary_toolbar.Bind(wx.EVT_CHOICE, self.handle_choice_selection_change, self.workflow_choice)
+            self.refresh_workflow_selection()
 
         file_open_bmp = wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN, wx.ART_TOOLBAR, t_size)
         tb_weather = self.primary_toolbar.AddTool(
@@ -626,12 +613,13 @@ class EpLaunchFrame(wx.Frame):
         self.primary_toolbar.AddSeparator()
 
         exe_bmp = wx.ArtProvider.GetBitmap(wx.ART_EXECUTABLE_FILE, wx.ART_TOOLBAR, t_size)
-        self.tb_idf_editor_id = 40
-        tb_idf_editor = self.primary_toolbar.AddTool(
-            self.tb_idf_editor_id, "IDF Editor", exe_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "IDF Editor",
-            "Open the selected file using the IDF Editor", None
-        )
-        self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_idf_editor, tb_idf_editor)
+        if Platform.get_current_platform() == Platform.WINDOWS:
+            self.tb_idf_editor_id = 40
+            tb_idf_editor = self.primary_toolbar.AddTool(
+                self.tb_idf_editor_id, "IDF Editor", exe_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "IDF Editor",
+                "Open the selected file using the IDF Editor", None
+            )
+            self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_idf_editor, tb_idf_editor)
 
         tb_text_editor = self.primary_toolbar.AddTool(
             50, "Text Editor", exe_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Text Editor",
@@ -706,6 +694,13 @@ class EpLaunchFrame(wx.Frame):
         # disable the menu items that are just information
         self.menu_bar.Enable(301, False)
         self.menu_bar.Enable(304, False)
+
+        self.workflow_menu = wx.Menu()
+        self.menu_bar.Append(self.workflow_menu, "Wor&kflows")
+        for index, wf in enumerate(self.work_flows):
+            wf_menu_item = wx.MenuItem(self.workflow_menu, self.MagicNumberWorkflowOffset+index, wf.description)
+            self.Bind(wx.EVT_MENU, self.handle_workflow_menu_item_selected, wf_menu_item)
+            self.workflow_menu.Append(wf_menu_item)
 
         self.weather_menu = wx.Menu()
         menu_weather_select = self.weather_menu.Append(401, "Select..", "Select a weather file")
@@ -887,12 +882,22 @@ class EpLaunchFrame(wx.Frame):
             pass
         event.Skip()
 
+    def handle_workflow_menu_item_selected(self, menu):
+        item_index = menu.Id - self.MagicNumberWorkflowOffset
+        menu_item_itself = self.workflow_menu.FindItemById(menu.Id)
+        self.workflow_choice.SetSelection(item_index)
+        self.status_bar.SetStatusText('Current workflow: ' + menu_item_itself.Label, i=1)
+        self.current_workflow = self.work_flows[item_index]
+        self.update_control_list_columns()
+        self.update_file_lists()
+        self.update_workflow_dependent_menu_items()
+
     def handle_choice_selection_change(self, event):
         self.current_workflow = self.work_flows[event.Selection]
         self.update_control_list_columns()
         self.update_file_lists()
         self.update_workflow_dependent_menu_items()
-        self.status_bar.SetStatusText('Choice selection changed to ' + event.String, i=0)
+        self.status_bar.SetStatusText('Current workflow: ' + event.String, i=1)
 
     def handle_tb_weather(self, event):
         filename = wx.FileSelector("Select a weather file", wildcard="EnergyPlus Weather File(*.epw)|*.epw",
@@ -1041,11 +1046,14 @@ class EpLaunchFrame(wx.Frame):
                 self.current_workflow_directory = eplus_dir
                 break
         self.update_workflow_list(self.current_selected_version)
+        self.repopulate_workflow_lists()
+        self.repopulate_help_menu()
+
+    def repopulate_workflow_lists(self):
         self.workflow_choice.Clear()
         for work_flow in self.work_flows:
             self.workflow_choice.Append(work_flow.description)
         self.refresh_workflow_selection(self.current_workflow.name)
-        self.repopulate_help_menu()
 
     def handle_specific_documentation_menu(self, event):
         menu_item = self.help_menu.FindItemById(event.GetId())
