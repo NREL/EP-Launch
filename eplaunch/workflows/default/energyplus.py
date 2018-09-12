@@ -115,153 +115,8 @@ class EPlusRunManager(object):
         suffixes.append("Map.txt")
         return suffixes
 
+    def run_energyplus(self, isIP, run_directory, file_name, args):
 
-class EnergyPlusWorkflowSI(BaseEPLaunchWorkflow1):
-
-    def name(self):
-        return "EnergyPlus 8.9 SI"
-
-    def description(self):
-        return "Run EnergyPlus with SI unit system"
-
-    def get_file_types(self):
-        return ["*.idf", "*.imf", "*.epJSON"]
-
-    def get_output_suffixes(self):
-        return EPlusRunManager.eplus_suffixes()
-
-    def get_extra_data(self):
-        return {"Hey, it's extra": "data"}
-
-    def get_interface_columns(self):
-        return [ColumnNames.Errors, ColumnNames.Warnings, ColumnNames.Runtime, ColumnNames.Version]
-
-    def main(self, run_directory, file_name, args):
-
-        full_file_path = os.path.join(run_directory, file_name)
-        file_name_no_ext, extension = os.path.splitext(file_name)
-        if 'workflow location' in args:
-            energyplus_root_folder, _ = os.path.split(args['workflow location'])
-            if platform.system() == 'Windows':
-                energyplus_binary = os.path.join(energyplus_root_folder, 'energyplus.exe')
-            else:
-                energyplus_binary = os.path.join(energyplus_root_folder, 'energyplus')
-            if not os.path.exists(energyplus_binary):
-                return EPLaunchWorkflowResponse1(
-                    success=False,
-                    message="EnergyPlus binary not found: {}!".format(energyplus_binary),
-                    column_data=[]
-                )
-        else:
-            return EPLaunchWorkflowResponse1(
-                success=False,
-                message="Workflow location missing: {}!".format(args['worflow location']),
-                column_data=[]
-            )
-
-        v = Version()
-        is_found, current_version, numeric_version = v.check_energyplus_version(full_file_path)
-        if is_found:
-            if numeric_version >= 80900:
-
-                # start with the binary name, obviously
-                command_line_args = [energyplus_binary]
-
-                # need to run readvars
-                command_line_args += ['--readvars']
-
-                # add some config parameters
-                command_line_args += ['--output-prefix', file_name_no_ext, '--output-suffix', 'C']
-
-                # add in simulation control args
-                if 'weather' in args and args['weather']:
-                    command_line_args += ['--weather', args['weather']]
-                else:
-                    command_line_args += ['--design-day']
-
-                # and at the very end, add the file to run
-                command_line_args += [file_name]
-
-                # run E+ and gather data
-                try:
-                    for message in self.execute_for_callback(command_line_args, run_directory):
-                        self.callback(message)
-                except subprocess.CalledProcessError:
-                    self.callback("E+ FAILED")
-                    return EPLaunchWorkflowResponse1(
-                        success=False,
-                        message="EnergyPlus failed for file: %s!" % full_file_path,
-                        column_data={}
-                    )
-
-                end_file_name = "{0}.end".format(file_name_no_ext)
-                end_file_path = os.path.join(run_directory, end_file_name)
-                success, errors, warnings, runtime = EPlusRunManager.get_end_summary(end_file_path)
-
-                column_data = {
-                    ColumnNames.Errors: errors,
-                    ColumnNames.Warnings: warnings,
-                    ColumnNames.Runtime: runtime,
-                    ColumnNames.Version: current_version
-                }
-
-                # now leave
-                return EPLaunchWorkflowResponse1(
-                    success=True,
-                    message="Ran EnergyPlus OK for file: %s!" % file_name,
-                    column_data=column_data
-                )
-            else:
-                errors = "wrong version"
-                column_data = {ColumnNames.Errors: errors, ColumnNames.Warnings: '', ColumnNames.Runtime: 0,
-                               ColumnNames.Version: current_version}
-
-                # now leave
-                return EPLaunchWorkflowResponse1(
-                    success=False,
-                    message="Incorrect Version found {}: {}!".format(current_version, file_name),
-                    column_data=column_data
-                )
-
-        else:
-
-            errors = "wrong version"
-            column_data = {
-                ColumnNames.Errors: errors,
-                ColumnNames.Warnings: '',
-                ColumnNames.Runtime: 0,
-                ColumnNames.Version: current_version
-            }
-
-            # now leave
-            return EPLaunchWorkflowResponse1(
-                success=False,
-                message="Incorrect Version found {}: {}!".format(current_version, file_name),
-                column_data=column_data
-            )
-
-
-class EnergyPlusWorkflowIP(BaseEPLaunchWorkflow1):
-
-    def name(self):
-        return "EnergyPlus 8.9 IP"
-
-    def description(self):
-        return "Run EnergyPlus with IP unit system"
-
-    def get_file_types(self):
-        return ["*.idf", "*.imf", "*.epJSON"]
-
-    def get_output_suffixes(self):
-        return EPlusRunManager.eplus_suffixes()
-
-    def get_extra_data(self):
-        return {"Hey, it's extra": "data"}
-
-    def get_interface_columns(self):
-        return [ColumnNames.Errors, ColumnNames.Warnings, ColumnNames.Runtime, ColumnNames.Version]
-
-    def main(self, run_directory, file_name, args):
         full_file_path = os.path.join(run_directory, file_name)
         file_name_no_ext, extension = os.path.splitext(file_name)
         # the following is the same when .idf is used
@@ -442,6 +297,15 @@ class EnergyPlusWorkflowIP(BaseEPLaunchWorkflow1):
                         os.remove(eplusout_rvi_path)
                     if os.path.exists(eplusout_mvi_path):
                         os.remove(eplusout_mvi_path)
+                    audit_out_path = os.path.join(run_directory, 'audit.out')
+                    if os.path.exists(audit_out_path):
+                        os.remove(audit_out_path)
+                    expanded_idf_path = os.path.join(run_directory, 'expanded.idf')
+                    if os.path.exists(expanded_idf_path):
+                        os.remove(expanded_idf_path)
+                    out_idf_path = os.path.join(run_directory, 'out.idf')
+                    if os.path.exists(out_idf_path):
+                        os.remove(out_idf_path)
 
                 # run HVAC-Diagram
                 if platform.system() == 'Windows':
@@ -516,3 +380,65 @@ class EnergyPlusWorkflowIP(BaseEPLaunchWorkflow1):
                 message="Incorrect Version found {}: {}!".format(current_version, file_name),
                 column_data=column_data
             )
+
+
+class EnergyPlusWorkflowSI(BaseEPLaunchWorkflow1):
+
+    def name(self):
+        return "EnergyPlus 8.9 SI"
+
+    def description(self):
+        return "Run EnergyPlus with SI unit system"
+
+    def get_file_types(self):
+        return ["*.idf", "*.imf", "*.epJSON"]
+
+    def get_output_suffixes(self):
+        return EPlusRunManager.eplus_suffixes()
+
+    def get_extra_data(self):
+        return {"Hey, it's extra": "data"}
+
+    def get_interface_columns(self):
+        return [ColumnNames.Errors, ColumnNames.Warnings, ColumnNames.Runtime, ColumnNames.Version]
+
+    def main(self, run_directory, file_name, args):
+        response = EPlusRunManager.run_energyplus(self, False, run_directory, file_name, args)
+        if type(response) is not EPLaunchWorkflowResponse1:
+            response = EPLaunchWorkflowResponse1(
+                success=False,
+                message='Current workflow run_energyplus function did not respond properly',
+                column_data=None
+            )
+        return response
+
+
+class EnergyPlusWorkflowIP(BaseEPLaunchWorkflow1):
+
+    def name(self):
+        return "EnergyPlus 8.9 IP"
+
+    def description(self):
+        return "Run EnergyPlus with IP unit system"
+
+    def get_file_types(self):
+        return ["*.idf", "*.imf", "*.epJSON"]
+
+    def get_output_suffixes(self):
+        return EPlusRunManager.eplus_suffixes()
+
+    def get_extra_data(self):
+        return {"Hey, it's extra": "data"}
+
+    def get_interface_columns(self):
+        return [ColumnNames.Errors, ColumnNames.Warnings, ColumnNames.Runtime, ColumnNames.Version]
+
+    def main(self, run_directory, file_name, args):
+        response = EPlusRunManager.run_energyplus(self, True, run_directory, file_name, args)
+        if type(response) is not EPLaunchWorkflowResponse1:
+            response = EPLaunchWorkflowResponse1(
+                success=False,
+                message='Current workflow run_energyplus function did not respond properly',
+                column_data=None
+            )
+        return response
