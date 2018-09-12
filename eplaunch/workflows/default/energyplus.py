@@ -290,7 +290,7 @@ class EnergyPlusWorkflowIP(BaseEPLaunchWorkflow1):
         v = Version()
         is_found, current_version, numeric_version = v.check_energyplus_version(full_file_path)
         if is_found:
-            if numeric_version >= 80900:
+            if numeric_version >= 80300: # EnergyPlus 8.3.0 was the first with command line options.
 
                 # start with the binary name, obviously
                 command_line_args = [energyplus_binary]
