@@ -56,7 +56,6 @@ class EpLaunchFrame(wx.Frame):
         self.menu_file_run = None
         self.menu_bar = None
         self.current_workflow = None
-        self.work_flows = None
         self.selected_directory = None
         self.selected_file = None
         self.menu_output_toolbar = None
@@ -91,7 +90,8 @@ class EpLaunchFrame(wx.Frame):
         self.workflow_directories = None
         self.previous_selected_directory = None
 
-        # this is a map of the background workers, using a uuid as a key
+        # the list of imported workflows, and a map of the background workers, using a uuid as a key
+        self.work_flows = []
         self.workflow_threads = {}
 
         # this is a map of workflow output dialogs, using the uuid as a key
@@ -101,7 +101,7 @@ class EpLaunchFrame(wx.Frame):
         # get the saved workflow directories and update the main workflow list
         self.retrieve_workflow_directories_config()
         self.list_of_versions = self.locate_workflows.get_energyplus_versions()
-        self.update_workflow_array(self.current_selected_version)
+        self.update_workflow_array()  # call without arguments to add all workflows
 
         # build out the whole GUI and do other one-time init here
         self.gui_build()
@@ -109,24 +109,31 @@ class EpLaunchFrame(wx.Frame):
         self.update_num_processes_status()
         self.retrieve_current_directory_config_and_browse_there()
 
-        # this sets up an event handler for workflow completion and callback events
-        event_result(self, self.handle_workflow_done)
-        pub.subscribe(self.workflow_callback, "workflow_callback")
+        # with everything built, update the workflow listing
+        self.get_current_selected_version()
+        self.update_workflow_array(self.current_selected_version)  # call with possible version to filter list
+        previous_workflow = self.config.Read('/ActiveWindow/SelectedWorkflow', '')
+        for work_flow in self.work_flows:
+            self.workflow_choice.Append(work_flow.description)
+        self.refresh_workflow_selection(previous_workflow)
 
         # these are things that need to be done frequently
         self.update_control_list_columns()
         self.update_file_lists()
         self.update_workflow_dependent_menu_items()
 
+        # this sets up an event handler for workflow completion and callback events
+        event_result(self, self.handle_workflow_done)
+        pub.subscribe(self.workflow_callback, "workflow_callback")
+
     # Frame Object Manipulation
 
     def update_workflow_array(self, filter_version=None):
-        self.energyplus_workflow_directories = self.locate_workflows.find()
         # get_workflows now returns a second argument that is a list of workflow.manager.FailedWorkflowDetails
         # each of these instances is related to a failed workflow import
         # the GUI can then show the warnings if desired, for now just ignore them...?
         self.work_flows, _ = workflow_manager.get_workflows(
-            external_workflow_directories=self.energyplus_workflow_directories
+            external_workflow_directories=self.workflow_directories
         )
         if filter_version:
             self.work_flows = [w for w in self.work_flows if w.version_id == filter_version]
@@ -304,17 +311,14 @@ class EpLaunchFrame(wx.Frame):
     def update_num_processes_status(self):
         self.status_bar.SetStatusText("Currently %s processes running" % len(self.workflow_threads), i=2)
 
-    def refresh_workflow_selection(self, name_to_search=None):
+    def refresh_workflow_selection(self, name_to_search):
         if not self.work_flows:
             self.current_workflow = None
             return
         if not name_to_search:
-            previous_workflow = self.config.Read('/ActiveWindow/SelectedWorkflow', '')
-            name_to_search = previous_workflow
-            if not previous_workflow:
-                self.current_workflow = self.work_flows[0]
-                self.workflow_choice.SetSelection(0)
-                return
+            self.current_workflow = self.work_flows[0]
+            self.workflow_choice.SetSelection(0)
+            return
         found = False
         for workflow_index, workflow_choice in enumerate(self.work_flows):
             if name_to_search == workflow_choice.name:
@@ -417,7 +421,9 @@ class EpLaunchFrame(wx.Frame):
     def run_workflow(self):
         if self.selected_directory and self.selected_file and self.current_workflow:
             for thread_id, thread in self.workflow_threads.items():
-                if thread.file_name == self.selected_file and thread.run_directory == self.selected_directory and thread.workflow_instance.name() == self.current_workflow.name:
+                if (thread.file_name == self.selected_file and
+                        thread.run_directory == self.selected_directory and
+                        thread.workflow_instance.name() == self.current_workflow.name):
                     self.show_error_message('ERROR: This workflow/dir/file combination is already running')
                     return
             new_uuid = str(uuid.uuid4())
@@ -568,13 +574,6 @@ class EpLaunchFrame(wx.Frame):
         previous_y = max(previous_y, 128)
         self.SetSize(previous_x, previous_y, previous_width, previous_height)
 
-        self.get_current_selected_version()
-        self.update_workflow_array(self.current_selected_version)
-        self.workflow_choice.Clear()
-        for work_flow in self.work_flows:
-            self.workflow_choice.Append(work_flow.description)
-        self.refresh_workflow_selection(self.current_workflow.name)
-
         # call this to finalize
         self.Layout()
 
@@ -588,11 +587,9 @@ class EpLaunchFrame(wx.Frame):
         if Platform.get_current_platform() == Platform.MAC:
             self.workflow_choice = wx.Choice(None, choices=[])
         else:
-            choice_strings = [w.description for w in self.work_flows]
-            self.workflow_choice = wx.Choice(self.primary_toolbar, choices=choice_strings)
+            self.workflow_choice = wx.Choice(self.primary_toolbar, choices=[])
             self.primary_toolbar.AddControl(self.workflow_choice)
             self.primary_toolbar.Bind(wx.EVT_CHOICE, self.handle_choice_selection_change, self.workflow_choice)
-            self.refresh_workflow_selection()
 
         file_open_bmp = wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN, wx.ART_TOOLBAR, t_size)
         tb_weather = self.primary_toolbar.AddTool(
