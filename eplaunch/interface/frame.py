@@ -549,9 +549,10 @@ class EpLaunchFrame(wx.Frame):
         # now set up the main frame's layout sizer
         main_app_vertical_sizer = wx.BoxSizer(wx.VERTICAL)
         self.gui_build_primary_toolbar()
-        main_app_vertical_sizer.Add(self.primary_toolbar, 0, wx.EXPAND, 0)
+        # main_app_vertical_sizer.Add(self.primary_toolbar, 0, wx.EXPAND, 0)
+        self.ToolBar = self.primary_toolbar
         self.gui_build_output_toolbar()
-        main_app_vertical_sizer.Add(self.output_toolbar, 0, wx.EXPAND, 0)
+        # main_app_vertical_sizer.Add(self.output_toolbar, 0, wx.EXPAND, 0)
         main_app_vertical_sizer.Add(main_left_right_splitter, 1, wx.EXPAND, 0)
 
         # add the status bar
@@ -584,7 +585,7 @@ class EpLaunchFrame(wx.Frame):
 
     def gui_build_primary_toolbar(self):
 
-        self.primary_toolbar = wx.ToolBar(self, style=wx.TB_HORIZONTAL | wx.NO_BORDER | wx.TB_FLAT | wx.TB_TEXT)
+        self.primary_toolbar = self.CreateToolBar(style=wx.TB_HORIZONTAL | wx.NO_BORDER | wx.TB_FLAT | wx.TB_TEXT)
 
         t_size = (24, 24)
         self.primary_toolbar.SetToolBitmapSize(t_size)
@@ -592,17 +593,7 @@ class EpLaunchFrame(wx.Frame):
         choice_strings = [w.description for w in self.work_flows]
         self.workflow_choice = wx.Choice(self.primary_toolbar, choices=choice_strings)
 
-        # So, on my Mac, the workflow_choice went invisible when I left the AddControl call in there
-        # There was space where it obviously went, but it was invisible
-        # This needs to be remedied, big time, but until then, on this branch I am:
-        #  - removing the call to AddControl, thus the dropdown will show up, but not be aligned properly, then
-        #  -  making it really wide so that I can easily click it on the right half of the toolbar
-        # if 'CHOICEWORKAROUND' in os.environ:
-        if Platform.get_current_platform() == Platform.MAC:
-            workflow_choice_size = (700, -1)
-            self.workflow_choice = wx.Choice(self.primary_toolbar, choices=choice_strings, size=workflow_choice_size)
-        else:
-            self.primary_toolbar.AddControl(self.workflow_choice)
+        self.primary_toolbar.AddControl(self.workflow_choice)
 
         self.primary_toolbar.Bind(wx.EVT_CHOICE, self.handle_choice_selection_change, self.workflow_choice)
 
