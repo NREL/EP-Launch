@@ -24,9 +24,10 @@ copyright = '2018, Jason Glazer and Edwin Lee for the United States Department o
 author = 'Jason Glazer and Edwin Lee for the United States Department of Energy'
 
 # The short X.Y version
-version = ''
+from eplaunch import VERSION
+version = VERSION
 # The full version, including alpha/beta/rc tags
-release = '0.5'
+release = VERSION
 
 
 # -- General configuration ---------------------------------------------------

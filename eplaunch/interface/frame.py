@@ -43,8 +43,11 @@ class EpLaunchFrame(wx.Frame):
         # Get saved settings
         self.config = wx.Config("EP-Launch")
 
-        # Get an instance of the supporting function class
+        # Set up instances of supporting classes
         self.support = FrameSupport()
+        self.locate_workflows = LocateWorkflows()
+        self.external_runner = EPLaunchExternalPrograms()
+        self.file_name_manipulator = FileNameManipulation()
 
         # initialize these here (and early) in the constructor to hush up the compiler messages
         self.primary_toolbar = None
@@ -86,6 +89,7 @@ class EpLaunchFrame(wx.Frame):
         self.workflow_choice = None
         self.energyplus_workflow_directories = None
         self.workflow_directories = None
+        self.previous_selected_directory = None
 
         # this is a map of the background workers, using a uuid as a key
         self.workflow_threads = {}
@@ -96,15 +100,14 @@ class EpLaunchFrame(wx.Frame):
 
         # get the saved workflow directories and update the main workflow list
         self.retrieve_workflow_directories_config()
-        self.locate_workflows = LocateWorkflows()
-        self.workflow_directories = self.locate_workflows.find()
         self.list_of_versions = self.locate_workflows.get_energyplus_versions()
-        self.update_workflow_list(self.current_selected_version)
+        self.update_workflow_array(self.current_selected_version)
 
         # build out the whole GUI and do other one-time init here
         self.gui_build()
         self.reset_raw_list_columns()
         self.update_num_processes_status()
+        self.retrieve_current_directory_config_and_browse_there()
 
         # this sets up an event handler for workflow completion and callback events
         event_result(self, self.handle_workflow_done)
@@ -112,22 +115,12 @@ class EpLaunchFrame(wx.Frame):
 
         # these are things that need to be done frequently
         self.update_control_list_columns()
-        self.previous_selected_directory = None
         self.update_file_lists()
         self.update_workflow_dependent_menu_items()
 
-        # get the saved active directory
-        self.retrieve_current_directory_config()
-
-        # create external program runner
-        self.external_runner = EPLaunchExternalPrograms()
-
-        # create file name manipulation object
-        self.file_name_manipulator = FileNameManipulation()
-
     # Frame Object Manipulation
 
-    def update_workflow_list(self, filter_version=None):
+    def update_workflow_array(self, filter_version=None):
         self.energyplus_workflow_directories = self.locate_workflows.find()
         # get_workflows now returns a second argument that is a list of workflow.manager.FailedWorkflowDetails
         # each of these instances is related to a failed workflow import
@@ -217,6 +210,11 @@ class EpLaunchFrame(wx.Frame):
         self.raw_file_list.AppendColumn(_("Size"), format=wx.LIST_FORMAT_RIGHT, width=-1)
 
     def update_file_lists(self):
+
+        # If we aren't in a directory, just warn and abort
+        if not os.path.isdir(self.selected_directory):
+            self.status_bar.SetStatusText('Bad directory selection: ' + self.selected_directory, i=0)
+            return
 
         # if we don't have a directory name, it's probably during init, just ignore
         if not self.selected_directory:
@@ -571,7 +569,7 @@ class EpLaunchFrame(wx.Frame):
         self.SetSize(previous_x, previous_y, previous_width, previous_height)
 
         self.get_current_selected_version()
-        self.update_workflow_list(self.current_selected_version)
+        self.update_workflow_array(self.current_selected_version)
         self.workflow_choice.Clear()
         for work_flow in self.work_flows:
             self.workflow_choice.Append(work_flow.description)
@@ -698,7 +696,7 @@ class EpLaunchFrame(wx.Frame):
         self.workflow_menu = wx.Menu()
         self.menu_bar.Append(self.workflow_menu, "Wor&kflows")
         for index, wf in enumerate(self.work_flows):
-            wf_menu_item = wx.MenuItem(self.workflow_menu, self.MagicNumberWorkflowOffset+index, wf.description)
+            wf_menu_item = wx.MenuItem(self.workflow_menu, self.MagicNumberWorkflowOffset + index, wf.description)
             self.Bind(wx.EVT_MENU, self.handle_workflow_menu_item_selected, wf_menu_item)
             self.workflow_menu.Append(wf_menu_item)
 
@@ -806,7 +804,8 @@ class EpLaunchFrame(wx.Frame):
     def handle_list_ctrl_selection(self, event):
         self.selected_file = event.Item.Text
         self.update_output_file_status()
-        self.enable_disable_idf_editor_button()
+        if Platform.get_current_platform() == Platform.WINDOWS:
+            self.enable_disable_idf_editor_button()
 
     def handle_menu_file_run(self, event):
         self.folder_recent.add_recent(self.directory_tree_control.GetPath())
@@ -878,7 +877,6 @@ class EpLaunchFrame(wx.Frame):
             self.status_bar.SetStatusText('Selected directory: ' + self.selected_directory, i=0)
             self.update_file_lists()
         except Exception as e:  # noqa -- status_bar and things may not exist during initialization, just ignore
-            print(e)
             pass
         event.Skip()
 
@@ -1045,7 +1043,7 @@ class EpLaunchFrame(wx.Frame):
             if self.current_selected_version.upper() in formatted_dir:
                 self.current_workflow_directory = eplus_dir
                 break
-        self.update_workflow_list(self.current_selected_version)
+        self.update_workflow_array(self.current_selected_version)
         self.repopulate_workflow_lists()
         self.repopulate_help_menu()
 
@@ -1135,13 +1133,13 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                     menu_item.Check(True)
                     break
 
-    def retrieve_current_directory_config(self):
+    def retrieve_current_directory_config_and_browse_there(self):
         possible_directory_name = self.config.Read("/ActiveWindow/CurrentDirectory")
-        # set the default to the ExampleFiles directory
         if not possible_directory_name:
-            current_energyplus_directory, _ = os.path.split(self.current_workflow_directory)
-            possible_directory_name = os.path.join(current_energyplus_directory, 'ExampleFiles')
+            home = os.path.expanduser("~")
+            possible_directory_name = home
         if possible_directory_name:
+            # TODO: Protect against the case where a directory no longer exists
             self.selected_directory = possible_directory_name
             real_path = os.path.abspath(self.selected_directory)
             self.directory_tree_control.SelectPath(real_path, True)

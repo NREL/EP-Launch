@@ -12,6 +12,7 @@ Welcome to EP-Launch's documentation!
 
    cache
    workflows
+   mechanics
 
 
 Indices and tables
