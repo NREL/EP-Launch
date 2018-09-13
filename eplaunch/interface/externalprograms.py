@@ -4,6 +4,7 @@ import subprocess
 
 import wx
 
+from eplaunch.utilities.crossplatform import Platform
 from eplaunch.utilities.filenamemanipulation import FileNameManipulation
 
 
@@ -39,6 +40,8 @@ class EPLaunchExternalPrograms:
                     application_path = cmd.split('"')[1]
                 else:
                     application_path = cmd.replace(filename, '').strip()
+            elif Platform.get_current_platform() == Platform.LINUX:
+                application_path = 'xdg-open'
             else:  # for linux just remove the file name used as a dummy
                 application_path = cmd.replace(filename, '')
             return application_path
