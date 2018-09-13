@@ -624,6 +624,13 @@ class EpLaunchFrame(wx.Frame):
 
         self.primary_toolbar.AddSeparator()
 
+        refresh_bmp = wx.ArtProvider.GetBitmap(wx.ART_REDO, wx.ART_TOOLBAR, t_size)
+        tb_refresh = self.primary_toolbar.AddTool(
+            65, "Refresh", refresh_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Refresh",
+            "Refresh the current directory", None
+        )
+        self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_refresh, tb_refresh)
+
         folder_bmp = wx.ArtProvider.GetBitmap(wx.ART_FOLDER, wx.ART_TOOLBAR, t_size)
         tb_explorer = self.primary_toolbar.AddTool(
             80, "Explorer", folder_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Explorer",
@@ -1015,6 +1022,9 @@ class EpLaunchFrame(wx.Frame):
     def handle_tb_text_editor(self, event):
         full_path_name = os.path.join(self.selected_directory, self.selected_file)
         self.external_runner.run_text_editor(full_path_name)
+
+    def handle_tb_refresh(self, event):
+        self.handle_dir_selection_changed(event)
 
     def handle_output_menu_item(self, event):
         full_path_name = os.path.join(self.selected_directory, self.selected_file)
