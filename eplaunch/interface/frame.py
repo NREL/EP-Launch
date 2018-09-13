@@ -585,7 +585,8 @@ class EpLaunchFrame(wx.Frame):
         self.primary_toolbar.SetToolBitmapSize(t_size)
 
         if Platform.get_current_platform() == Platform.MAC:
-            self.workflow_choice = wx.Choice(None, choices=[])
+            self.workflow_choice = wx.Choice(self, choices=[])
+            self.workflow_choice.Hide()
         else:
             self.workflow_choice = wx.Choice(self.primary_toolbar, choices=[])
             self.primary_toolbar.AddControl(self.workflow_choice)
