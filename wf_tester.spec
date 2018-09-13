@@ -30,7 +30,7 @@ exe = EXE(
     a.scripts,
     exclude_binaries=True,
     name='EpLaunchWorkflowTester',
-    debug=True,
+    debug=False,
     strip=False,
     upx=True,
     console=False
