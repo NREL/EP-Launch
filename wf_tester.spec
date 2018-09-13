@@ -1,6 +1,6 @@
 # -*- mode: python -*-
 
-root_files = ['eplaunch/workflows/tester.py']
+root_files = ['eplaunch/workflows/workflow_tester.py']
 
 added_files = [
     ('eplaunch', 'eplaunch'),
