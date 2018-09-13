@@ -11,7 +11,7 @@ import sys
 from importlib import util as import_util
 
 
-def test_workflow_file(file_path):
+def workflow_file_tester(file_path):
     modules = []
 
     if os.path.exists(file_path):
@@ -116,5 +116,5 @@ if __name__ == "__main__":
         sys.exit(2)
     else:
         workflow_file_path = sys.argv[1]
-        response = test_workflow_file(workflow_file_path)
+        response = workflow_file_tester(workflow_file_path)
         sys.exit(response)
