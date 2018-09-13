@@ -1,6 +1,6 @@
 # -*- mode: python -*-
 
-root_files = ['eplaunch/runner.py']
+root_files = ['eplaunch/workflows/workflow_tester.py']
 
 added_files = [
     ('eplaunch', 'eplaunch'),
@@ -11,7 +11,7 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=added_files,
-    hiddenimports=[],
+    hiddenimports=['json'],
     hookspath=[],
     runtime_hooks=[],
     excludes=[],
@@ -29,7 +29,7 @@ exe = EXE(
     pyz,
     a.scripts,
     exclude_binaries=True,
-    name='EP_Launch',
+    name='EpLaunchWorkflowTester',
     debug=False,
     strip=False,
     upx=True,
@@ -43,12 +43,5 @@ coll = COLLECT(
     a.datas,
     strip=False,
     upx=False,
-    name='EPLaunch'
-)
-
-app = BUNDLE(
-    coll,
-    name='eplaunch.app',
-    icon=None,
-    bundle_identifier=None
+    name='EpLaunchWorkflowTester'
 )
