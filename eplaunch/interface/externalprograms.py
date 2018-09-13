@@ -45,12 +45,10 @@ class EPLaunchExternalPrograms:
         else:
             return not_found_application_path
 
-    def run_idf_editor(self, file_path):
+    def run_idf_editor(self, file_path, energyplus_root_folder):
         if platform.system() == 'Windows':
-            idf_editor_binary = 'c:\\EnergyPlusV8-9-0\\PreProcess\\IDFEditor\\IDFEditor.exe'
-        else:
-            idf_editor_binary = ''
-        subprocess.Popen([idf_editor_binary, file_path])
+            idf_editor_binary = os.path.join(energyplus_root_folder, 'PreProcess\\IDFEditor\\IDFEditor.exe')
+            subprocess.Popen([idf_editor_binary, file_path])
 
     def run_text_editor(self, file_path):
         text_editor_binary = self.extension_to_binary_path['txt']
