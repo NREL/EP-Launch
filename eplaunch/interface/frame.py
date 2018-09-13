@@ -1010,7 +1010,8 @@ class EpLaunchFrame(wx.Frame):
 
     def handle_tb_idf_editor(self, event):
         full_path_name = os.path.join(self.selected_directory, self.selected_file)
-        self.external_runner.run_idf_editor(full_path_name)
+        energyplus_root_path, _ = os.path.split(self.current_workflow.workflow_directory)
+        self.external_runner.run_idf_editor(full_path_name, energyplus_root_path)
 
     def handle_tb_text_editor(self, event):
         full_path_name = os.path.join(self.selected_directory, self.selected_file)
