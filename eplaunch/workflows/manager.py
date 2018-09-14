@@ -12,10 +12,11 @@ class FailedWorkflowDetails:
 
 
 class WorkflowDetail:
-    def __init__(self, workflow_class, name, output_suffixes, file_types, columns,
+    def __init__(self, workflow_class, name, context, output_suffixes, file_types, columns,
                  directory, description, is_energyplus, version_id):
         self.workflow_class = workflow_class
         self.name = name
+        self.context = context
         self.output_suffixes = output_suffixes
         self.file_types = file_types
         self.columns = columns
@@ -27,6 +28,18 @@ class WorkflowDetail:
 
 
 def get_workflows(external_workflow_directories, disable_builtins=False):
+
+    # until we actually remove the E+ related workflows from the ep-launch repo, we should at least
+    # ignore them in the UI so the user isn't confused
+    builtin_blacklist = [
+        'app_g_postprocess.py',
+        'calc_soil_surface_temp.py',
+        'coeff_check.py',
+        'coeff_conv.py',
+        'energyplus.py',
+        'transition.py'
+    ]
+
     this_file_directory_path = os.path.dirname(os.path.realpath(__file__))
     built_in_workflow_directory = os.path.join(this_file_directory_path, 'default')
     all_workflow_directories = external_workflow_directories
@@ -35,7 +48,7 @@ def get_workflows(external_workflow_directories, disable_builtins=False):
         pass
     elif built_in_workflow_directory not in all_workflow_directories and os.path.exists(built_in_workflow_directory):
         # add the built-in directory if it exists
-        all_workflow_directories.append(built_in_workflow_directory)
+        all_workflow_directories.add(built_in_workflow_directory)
 
     work_flows = []
     warnings = []
@@ -58,6 +71,8 @@ def get_workflows(external_workflow_directories, disable_builtins=False):
 
         modules = []
         for this_file in os.listdir(workflow_directory):
+            if workflow_directory == built_in_workflow_directory and this_file in builtin_blacklist:
+                continue
             if not this_file.endswith('py'):
                 continue
             if '__init__.py' in this_file:
@@ -105,6 +120,7 @@ def get_workflows(external_workflow_directories, disable_builtins=False):
                     workflow_file_types = workflow_instance.get_file_types()
                     workflow_output_suffixes = workflow_instance.get_output_suffixes()
                     workflow_columns = workflow_instance.get_interface_columns()
+                    workflow_context = workflow_instance.context()
 
                     file_type_string = "("
                     first = True
@@ -116,17 +132,13 @@ def get_workflows(external_workflow_directories, disable_builtins=False):
                         file_type_string += file_type
                     file_type_string += ")"
 
-                    description = "%s %s" % (workflow_name, file_type_string)
-
-                    if dir_is_eplus and version_id:
-                        description += ' (E+ v%s)' % version_id
-                    elif built_in_workflow_directory == workflow_directory:
-                        description += ' (builtin)'
+                    description = "%s: %s %s" % (workflow_context, workflow_name, file_type_string)
 
                     work_flows.append(
                         WorkflowDetail(
                             this_class_type,
                             workflow_name,
+                            workflow_context,
                             workflow_output_suffixes,
                             workflow_file_types,
                             workflow_columns,

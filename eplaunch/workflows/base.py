@@ -21,6 +21,9 @@ class BaseEPLaunchWorkflow1(object):
     def name(self):
         raise NotImplementedError("name function needs to be implemented in derived workflow class")
 
+    def context(self):
+        raise NotImplementedError("context function needs to be implemented in derived workflow class")
+
     def description(self):
         raise NotImplementedError("description function needs to be implemented in derived workflow class")
 
@@ -71,7 +74,7 @@ class BaseEPLaunchWorkflow1(object):
     def main(self, run_directory, file_name, args):
         """
         The actual running operation for the workflow, should check self.abort periodically to allow exiting
-        :return: Should return an EPLaunchWorkflowResponse1 instance
+        :return: Must return an EPLaunchWorkflowResponse1 instance
         """
         raise NotImplementedError("main function needs to be implemented in derived workflow class")
 

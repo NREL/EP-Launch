@@ -10,6 +10,9 @@ class AppGPostProcessWorkflow(BaseEPLaunchWorkflow1):
     def name(self):
         return "AppGPostProcess"
 
+    def context(self):
+        return "EPLaunch 2.9.2"
+
     def description(self):
         return "Run Appendix G Post Processor"
 

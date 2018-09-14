@@ -12,6 +12,9 @@ class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
     def name(self):
         return "Get Site:Location"
 
+    def context(self):
+        return "EPLaunch 2.9.2"
+
     def description(self):
         return "Retrieves the Site:Location name"
 

@@ -394,6 +394,9 @@ class EnergyPlusWorkflowSI(BaseEPLaunchWorkflow1):
     def name(self):
         return "EnergyPlus 8.9 SI"
 
+    def context(self):
+        return "EPLaunch 2.9.2"
+
     def description(self):
         return "Run EnergyPlus with SI unit system"
 
@@ -424,6 +427,9 @@ class EnergyPlusWorkflowIP(BaseEPLaunchWorkflow1):
 
     def name(self):
         return "EnergyPlus 8.9 IP"
+
+    def context(self):
+        return "EPLaunch 2.9.2"
 
     def description(self):
         return "Run EnergyPlus with IP unit system"

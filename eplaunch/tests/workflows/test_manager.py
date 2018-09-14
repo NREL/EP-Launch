@@ -11,12 +11,14 @@ class TestGetWorkflows(unittest.TestCase):
         self.extra_workflow_dir = tempfile.mkdtemp()
 
     def test_default_behavior_with_builtins(self):
-        workflows, warnings = get_workflows([], disable_builtins=False)
+        initial_workflows = set()
+        workflows, warnings = get_workflows(initial_workflows, disable_builtins=False)
         self.assertTrue(len(workflows) > 0)
         self.assertEqual(0, len(warnings))
 
     def test_empty_workflow_response(self):
-        workflows, warnings = get_workflows([], disable_builtins=True)
+        initial_workflows = set()
+        workflows, warnings = get_workflows(initial_workflows, disable_builtins=True)
         self.assertEqual(len(workflows), 0)
         self.assertEqual(0, len(warnings))
 
@@ -25,6 +27,7 @@ class TestGetWorkflows(unittest.TestCase):
 from eplaunch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1
 class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
     def name(self): return 'dummy'
+    def context(self): return 'theseWorkflows'
     def description(self): return 'Dummy workflow'
     def get_file_types(self): return ['*.txt']
     def get_output_suffixes(self): return []
@@ -34,7 +37,9 @@ class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
         """
         with open(os.path.join(self.extra_workflow_dir, 'valid_workflow.py'), 'w') as f:
             f.write(file_contents)
-        external_only_workflows, warnings = get_workflows([self.extra_workflow_dir], disable_builtins=True)
+        initial_workflows = set()
+        initial_workflows.add(self.extra_workflow_dir)
+        external_only_workflows, warnings = get_workflows(initial_workflows, disable_builtins=True)
         self.assertEqual(len(external_only_workflows), 1)
         self.assertEqual(0, len(warnings))
 
@@ -44,6 +49,7 @@ class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
 from eplaunch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1
 class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
     def name(self): return 'dummy
+    def context(self): return 'theseWorkflows'
     def description(self): return 'Dummy workflow'
     def get_file_types(self): return ['*.txt']
     def get_output_suffixes(self): return []
@@ -53,7 +59,9 @@ class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
         """
         with open(os.path.join(self.extra_workflow_dir, 'bad_syntax_workflow.py'), 'w') as f:
             f.write(file_contents)
-        external_only_workflows, warnings = get_workflows([self.extra_workflow_dir], disable_builtins=True)
+        initial_workflows = set()
+        initial_workflows.add(self.extra_workflow_dir)
+        external_only_workflows, warnings = get_workflows(initial_workflows, disable_builtins=True)
         self.assertEqual(len(external_only_workflows), 0)
         self.assertEqual(1, len(warnings))
 
@@ -63,6 +71,7 @@ class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
 from eplaunch.workflows.base import UnknownWorkflowClass, EPLaunchWorkflowResponse1
 class SiteLocationWorkflow(UnknownWorkflowClass):
     def name(self): return 'dummy'
+    def context(self): return 'theseWorkflows'
     def description(self): return 'Dummy workflow'
     def get_file_types(self): return ['*.txt']
     def get_output_suffixes(self): return []
@@ -72,6 +81,8 @@ class SiteLocationWorkflow(UnknownWorkflowClass):
         """
         with open(os.path.join(self.extra_workflow_dir, 'bad_syntax_workflow.py'), 'w') as f:
             f.write(file_contents)
-        external_only_workflows, warnings = get_workflows([self.extra_workflow_dir], disable_builtins=True)
+        initial_workflows = set()
+        initial_workflows.add(self.extra_workflow_dir)
+        external_only_workflows, warnings = get_workflows(initial_workflows, disable_builtins=True)
         self.assertEqual(len(external_only_workflows), 0)
         self.assertEqual(1, len(warnings))

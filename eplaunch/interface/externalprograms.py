@@ -16,9 +16,8 @@ class EPLaunchExternalPrograms:
         other_extensions = ['pdf', 'csv', 'dxf', 'wrl', 'svg', 'htm', 'eso', 'xml']
         txt_path = self.find_program_by_extension('.txt', '')
         self.extension_to_binary_path['txt'] = txt_path
-        for other_extension in other_extensions:
-            self.extension_to_binary_path[other_extension] = self.find_program_by_extension('.' + other_extension,
-                                                                                            txt_path)
+        for other_ext in other_extensions:
+            self.extension_to_binary_path[other_ext] = self.find_program_by_extension('.' + other_ext, txt_path)
 
     def find_program_by_extension(self, extension_string, not_found_application_path):
         # from wxPython Demo for MimeTypesManager

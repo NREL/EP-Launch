@@ -14,7 +14,7 @@ class LocateWorkflows(object):
         self.list_of_energyplus_applications = []
         self.list_of_energyplus_versions = []
 
-    def find(self):
+    def find_eplus_workflows(self):
         search_roots = {
             Platform.WINDOWS: ["%s:\\" % c for c in string.ascii_uppercase],
             Platform.LINUX: ['/usr/local/bin/', '/tmp/'],
@@ -30,7 +30,7 @@ class LocateWorkflows(object):
                 full_search_path_with_workflow = os.path.join(full_search_path, "workflows")
                 possible_directories = glob.glob(full_search_path_with_workflow)
                 found_directories.update(possible_directories)
-        self.list_of_found_directories = list(found_directories)
+        self.list_of_found_directories = set(found_directories)
         return self.list_of_found_directories
 
     def get_energyplus_versions(self):
@@ -58,7 +58,6 @@ class LocateWorkflows(object):
         return self.list_of_energyplus_versions
 
     def get_specific_version_from_exe(self, path_to_energyplus_app):
-        # print("Getting version from exe: ", path_to_energyplus_app)
         try:
             completed = subprocess.run([path_to_energyplus_app, "--version"], stdout=subprocess.PIPE, timeout=1)
             output_line = completed.stdout
@@ -76,7 +75,6 @@ class LocateWorkflows(object):
             return False, '', ''
 
     def get_specific_version_from_idd(self, path_to_energyplus_directory):
-        # print("Getting version from idd in directory: ", path_to_energyplus_directory)
         idd_loc = os.path.join(path_to_energyplus_directory, "Energy+.idd")
         with open(idd_loc, "r") as file:
             idd_line = file.readline().strip()
