@@ -11,6 +11,9 @@ class TransitionWorkflow(BaseEPLaunchWorkflow1):
     def name(self):
         return "Transition"
 
+    def context(self):
+        return "EPLaunch 2.9.2"
+
     def description(self):
         return "Run Version Transition"
 

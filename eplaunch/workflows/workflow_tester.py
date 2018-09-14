@@ -101,6 +101,13 @@ class WorkflowTesting(object):
                             "ERROR: get_interface_columns() function not overridden, or malfunctioning; reason: " + str(e))
                         return 1
 
+                    try:
+                        workflow_instance.context()
+                        print("   OK: Overridden context() function execution works")
+                    except Exception as e:
+                        print("ERROR: context() function not overridden, or malfunctioning; reason: " + str(e))
+                        return 1
+
                 else:
                     print(" INFO: Inheritance does not check out, will continue with other classes in this file")
                     continue

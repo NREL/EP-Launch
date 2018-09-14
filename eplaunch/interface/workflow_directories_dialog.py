@@ -55,8 +55,8 @@ class WorkflowDirectoriesDialog(wx.Dialog):
         self.list_of_directories = list_of_directories
         if len(self.list_of_directories) == 0:
             lw = LocateWorkflows()
-            self.list_of_directories = lw.find()
-        self.directory_listbox.SetItems(self.list_of_directories)
+            self.list_of_directories = lw.find_eplus_workflows()
+        self.directory_listbox.SetItems(list(self.list_of_directories))
 
     def handle_add(self, e):
         dlg = wx.DirDialog(self, "Select a workflow directory", "", wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
@@ -72,7 +72,7 @@ class WorkflowDirectoriesDialog(wx.Dialog):
     def handle_auto_find(self, e):
         current_items = self.directory_listbox.GetStrings()
         lw = LocateWorkflows()
-        found_items = lw.find()
+        found_items = lw.find_eplus_workflows()
         lw.get_energyplus_versions()
         for found_item in found_items:
             if found_item not in current_items:

@@ -12,10 +12,11 @@ class FailedWorkflowDetails:
 
 
 class WorkflowDetail:
-    def __init__(self, workflow_class, name, output_suffixes, file_types, columns,
+    def __init__(self, workflow_class, name, context, output_suffixes, file_types, columns,
                  directory, description, is_energyplus, version_id):
         self.workflow_class = workflow_class
         self.name = name
+        self.context = context
         self.output_suffixes = output_suffixes
         self.file_types = file_types
         self.columns = columns
@@ -105,6 +106,7 @@ def get_workflows(external_workflow_directories, disable_builtins=False):
                     workflow_file_types = workflow_instance.get_file_types()
                     workflow_output_suffixes = workflow_instance.get_output_suffixes()
                     workflow_columns = workflow_instance.get_interface_columns()
+                    workflow_context = workflow_instance.context()
 
                     file_type_string = "("
                     first = True
@@ -116,17 +118,13 @@ def get_workflows(external_workflow_directories, disable_builtins=False):
                         file_type_string += file_type
                     file_type_string += ")"
 
-                    description = "%s %s" % (workflow_name, file_type_string)
-
-                    if dir_is_eplus and version_id:
-                        description += ' (E+ v%s)' % version_id
-                    elif built_in_workflow_directory == workflow_directory:
-                        description += ' (builtin)'
+                    description = "%s: %s %s" % (workflow_context, workflow_name, file_type_string)
 
                     work_flows.append(
                         WorkflowDetail(
                             this_class_type,
                             workflow_name,
+                            workflow_context,
                             workflow_output_suffixes,
                             workflow_file_types,
                             workflow_columns,

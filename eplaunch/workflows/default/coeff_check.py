@@ -11,6 +11,9 @@ class CoeffCheckWorkflow(BaseEPLaunchWorkflow1):
     def name(self):
         return "CoeffCheck"
 
+    def context(self):
+        return "EPLaunch 2.9.2"
+
     def description(self):
         return "Run Coeff Check"
 
