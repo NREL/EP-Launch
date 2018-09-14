@@ -49,7 +49,7 @@ class TestLocateWorkflows(unittest.TestCase):
     def test_getting_energyplus_versions_from_binary(self):
 
         loc_wf = LocateWorkflows()
-        workflow_directories = loc_wf.find_eplus_workflows()
+        workflow_directories = list(loc_wf.find_eplus_workflows())
 
         # as a part of this test, we are mocking the energyplus binary itself with a simple script that returns version
         dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -65,7 +65,7 @@ class TestLocateWorkflows(unittest.TestCase):
     def test_getting_energyplus_versions_from_idd(self):
 
         loc_wf = LocateWorkflows()
-        workflow_directories = loc_wf.find_eplus_workflows()
+        workflow_directories = list(loc_wf.find_eplus_workflows())
         workflow_directories.sort()
 
         # as a part of this test, we are mocking the energyplus IDD with a small dummy version

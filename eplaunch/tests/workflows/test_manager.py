@@ -25,6 +25,7 @@ class TestGetWorkflows(unittest.TestCase):
 from eplaunch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1
 class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
     def name(self): return 'dummy'
+    def context(self): return 'theseWorkflows'
     def description(self): return 'Dummy workflow'
     def get_file_types(self): return ['*.txt']
     def get_output_suffixes(self): return []
@@ -44,6 +45,7 @@ class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
 from eplaunch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1
 class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
     def name(self): return 'dummy
+    def context(self): return 'theseWorkflows'
     def description(self): return 'Dummy workflow'
     def get_file_types(self): return ['*.txt']
     def get_output_suffixes(self): return []
@@ -63,6 +65,7 @@ class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
 from eplaunch.workflows.base import UnknownWorkflowClass, EPLaunchWorkflowResponse1
 class SiteLocationWorkflow(UnknownWorkflowClass):
     def name(self): return 'dummy'
+    def context(self): return 'theseWorkflows'
     def description(self): return 'Dummy workflow'
     def get_file_types(self): return ['*.txt']
     def get_output_suffixes(self): return []
