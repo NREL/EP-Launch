@@ -1,2 +1,2 @@
 NAME = "EP-Launch"
-VERSION = "2.92"
+VERSION = "2.9.3"
