@@ -26,7 +26,7 @@ from eplaunch.workflows import manager as workflow_manager
 # noinspection PyUnusedLocal
 class EpLaunchFrame(wx.Frame):
     DefaultSize = (650, 600)
-    MagicNumberWorkflowOffset = 1300
+    MagicNumberWorkflowOffset = 13000
 
     def __init__(self, *args, **kwargs):
 
@@ -81,7 +81,6 @@ class EpLaunchFrame(wx.Frame):
         self.tb_idf_editor_id = None
         self.output_menu_item = None
         self.extra_output_menu_item = None
-        self.current_workflow_directory = None
         self.option_version_menu = None
         self.help_menu = None
         self.workflow_choice = None
@@ -124,7 +123,7 @@ class EpLaunchFrame(wx.Frame):
         # these are things that need to be done frequently
         self.update_control_list_columns()
         self.update_file_lists()
-        self.update_workflow_dependent_menu_items()
+        self.update_workflow_dependent_gui_items(previous_workflow_name)
 
         # this sets up an event handler for workflow completion and callback events
         event_result(self, self.handle_workflow_done)
@@ -145,12 +144,16 @@ class EpLaunchFrame(wx.Frame):
         if filter_context:
             self.work_flows = [w for w in self.work_flows if w.context == filter_context]
 
-    def update_workflow_dependent_menu_items(self):
+    def update_workflow_dependent_gui_items(self, workflow_name):
         if not self.current_workflow:
             return
         self.menu_output_toolbar.SetText("%s Output Toolbar..." % self.current_workflow.name)
         self.update_output_menu()
         self.update_output_toolbar()
+        self.repopulate_help_menu()
+        self.update_control_list_columns()
+        self.update_file_lists()
+        self.status_bar.SetStatusText('Current workflow: ' + workflow_name, i=1)
 
     def update_output_menu(self):
         # remove all the old menu items first
@@ -409,20 +412,8 @@ class EpLaunchFrame(wx.Frame):
                 break
         return current_selected_context
 
-    def populate_help_menu(self):
-        self.repopulate_help_menu()
-        if self.current_workflow_directory:
-            energyplus_application_directory, _ = os.path.split(self.current_workflow_directory)
-            energyplus_documentation_directory = os.path.join(energyplus_application_directory, 'Documentation')
-            if os.path.exists(energyplus_documentation_directory):
-                documentation_files = os.listdir(energyplus_documentation_directory)
-                for index, doc in enumerate(documentation_files):
-                    specific_documentation_menu = self.help_menu.Insert(
-                        index, 620 + index, doc, helpString=os.path.join(energyplus_documentation_directory, doc)
-                    )
-                    self.Bind(wx.EVT_MENU, self.handle_specific_documentation_menu, specific_documentation_menu)
-
     def repopulate_help_menu(self):
+        current_workflow_directory = self.current_workflow.workflow_directory
         menu_list = self.help_menu.GetMenuItems()
         for menu_item in menu_list:
             if not menu_item.IsSeparator():
@@ -430,8 +421,8 @@ class EpLaunchFrame(wx.Frame):
             else:
                 break
         # then build the items back up
-        if self.current_workflow_directory:
-            energyplus_application_directory, _ = os.path.split(self.current_workflow_directory)
+        if current_workflow_directory:
+            energyplus_application_directory, _ = os.path.split(current_workflow_directory)
             energyplus_documentation_directory = os.path.join(energyplus_application_directory, 'Documentation')
             if not os.path.exists(energyplus_documentation_directory):
                 return
@@ -662,12 +653,12 @@ class EpLaunchFrame(wx.Frame):
         )
         self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_explorer, tb_explorer)
 
-        remove_bmp = wx.ArtProvider.GetBitmap(wx.ART_MINUS, wx.ART_TOOLBAR, t_size)
-        tb_hide_all_files_pane = self.primary_toolbar.AddTool(
-            100, "All Files", remove_bmp, wx.NullBitmap, wx.ITEM_CHECK, "All Files",
-            "Show the panel with all the files for the directory", None
-        )
-        self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_hide_all_files_pane, tb_hide_all_files_pane)
+        # remove_bmp = wx.ArtProvider.GetBitmap(wx.ART_MINUS, wx.ART_TOOLBAR, t_size)
+        # tb_hide_all_files_pane = self.primary_toolbar.AddTool(
+        #     100, "All Files", remove_bmp, wx.NullBitmap, wx.ITEM_CHECK, "All Files",
+        #     "Show the panel with all the files for the directory", None
+        # )
+        # self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_hide_all_files_pane, tb_hide_all_files_pane)
 
         self.primary_toolbar.Realize()
 
@@ -778,11 +769,6 @@ class EpLaunchFrame(wx.Frame):
         self.help_menu.AppendSeparator()
         menu_help_about = self.help_menu.Append(615, "About EP-Launch")
         self.Bind(wx.EVT_MENU, self.handle_menu_help_about, menu_help_about)
-        current_selected_context = self.get_current_selected_context()
-        # self.current_workflow_directory = self.locate_workflows.get_workflow_directory(
-        #     current_selected_context
-        # )
-        self.repopulate_help_menu()
         self.menu_bar.Append(self.help_menu, "&Help")
 
         self.SetMenuBar(self.menu_bar)
@@ -903,18 +889,18 @@ class EpLaunchFrame(wx.Frame):
         item_index = menu.Id - self.MagicNumberWorkflowOffset
         menu_item_itself = self.workflow_menu.FindItemById(menu.Id)
         self.workflow_choice.SetSelection(item_index)
-        self.status_bar.SetStatusText('Current workflow: ' + menu_item_itself.Label, i=1)
         self.current_workflow = self.work_flows[item_index]
-        self.update_control_list_columns()
-        self.update_file_lists()
-        self.update_workflow_dependent_menu_items()
+        self.update_workflow_dependent_gui_items(menu_item_itself.Label)
 
     def handle_choice_selection_change(self, event):
         self.current_workflow = self.work_flows[event.Selection]
-        self.update_control_list_columns()
-        self.update_file_lists()
-        self.update_workflow_dependent_menu_items()
-        self.status_bar.SetStatusText('Current workflow: ' + event.String, i=1)
+        target_menu_item_id = self.MagicNumberWorkflowOffset + self.workflow_choice.GetSelection()
+        for menu_item in self.workflow_menu.GetMenuItems():
+            if menu_item.Id == target_menu_item_id:
+                menu_item.Check(True)
+            else:
+                menu_item.Check(False)
+        self.update_workflow_dependent_gui_items(event.String)
 
     def handle_tb_weather(self, event):
         filename = wx.FileSelector("Select a weather file", wildcard="EnergyPlus Weather File(*.epw)|*.epw",
@@ -1071,9 +1057,8 @@ class EpLaunchFrame(wx.Frame):
         for menu_item in self.workflow_menu.GetMenuItems():
             self.workflow_menu.Remove(menu_item)
         for index, wf in enumerate(self.work_flows):
-            wf_menu_item = wx.MenuItem(self.workflow_menu, self.MagicNumberWorkflowOffset + index, wf.description)
+            wf_menu_item = self.workflow_menu.Append(self.MagicNumberWorkflowOffset + index, wf.description, kind=wx.ITEM_RADIO)
             self.Bind(wx.EVT_MENU, self.handle_workflow_menu_item_selected, wf_menu_item)
-            self.workflow_menu.Append(wf_menu_item)
         self.set_current_workflow(desired_selected_workflow_name)
         self.coerce_gui_to_workflow_selection(self.current_workflow.name)
 
