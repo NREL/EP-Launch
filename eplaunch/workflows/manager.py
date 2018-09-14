@@ -36,7 +36,7 @@ def get_workflows(external_workflow_directories, disable_builtins=False):
         pass
     elif built_in_workflow_directory not in all_workflow_directories and os.path.exists(built_in_workflow_directory):
         # add the built-in directory if it exists
-        all_workflow_directories.append(built_in_workflow_directory)
+        all_workflow_directories.add(built_in_workflow_directory)
 
     work_flows = []
     warnings = []
