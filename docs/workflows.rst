@@ -4,58 +4,31 @@ Workflows
 Starting with EP-Launch 3.0, the code has been 100% rewritten from VB6 to Python, with an eye toward creating a cross-platform tool that can be developed, built, and packaged easily by many developers.
 Also at the heart of this new version of EP-Launch is something called "Workflows."
 
-Quickstart Using EnergyPlus Workflows
--------------------------------------
-
-Although EP-Launch is packaged up with some built-in workflows, the power of EP-Launch is exercised through using workflows with external tools.
-As EP-Launch has historically been geared toward supporting EnergyPlus, this is the natural first starting point.
-Starting with version 9.0, in September 2018, EnergyPlus will be packaged with workflows for exercising its own utilities.
-As of this writing, the EnergyPlus packages will come with workflows for running:
-
-- EnergyPlus itself (along with pre- and post-processors), in both SI and IP unit conventions
-- The CalcSoilSurfTemp ground temperature calculator
-- The CoeffConv conversion utility
-- The CoeffCheck unit utility
-- The AppendixG post processor
-
-Each platform has a "standard" EnergyPlus installation folder:
-
-- ``C:\EnergyPlus-VX-Y-Z`` on Windows
-- ``/Applications/EnergyPlus-X-Y-Z`` on Mac
-- ``/usr/local/bin/EnergyPlus-X-Y-Z`` on Linux
-
-If EnergyPlus is installed in a standard location, the EP-Launch tool will be able to find the workflows for that installation.
-If EnergyPlus is installed in a different location, you can still point EP-Launch to that directory using the Settings->WorkflowDirectories dialog.
-In the same manner, if workflows are created in a totally unrelated directory, use that same dialog to point EP-Launch to those workflows.
-
-Once workflows have been processed by EP-Launch, they are available in the menu bar in the workflows menu item.
-On Windows and Linux they are also available in the combobox in the toolbar.
-On Mac, there is a known issue with this dropdown, so it isn't available there.
-Once EP-Launch is ready with workflows, simply select a workflow from the list.
-The available files in the control file list will filter down to the file extension defined by the workflow.
-If the workflow is applicable to ``*.txt`` files, then only text files in the currently selected file will be shown.
-As a quick start, browse to the EnergyPlus install folder, into the weather directory.
-Then select the ``CalcSoilSurfTemp`` workflow from the dropdown or menu bar.
-Select a weather file in the file listing, and click Run in the toolbar or menu bar.
-The program should start and run instantly, and the column data in the file listing will be updated with output parameters.
-
 Definition
 ----------
 
-Now we'll dig into the details of the workflow.  A workflow can be defined as:
+A workflow can be defined as:
 
 - a Python class,
 - that inherits from an EP-Launch Workflow base class, and
 - properly overrides all abstract methods on the base class.
 
+Some additional interesting features:
+
+- A workflow has a context function that allows the EPLaunch interface to do grouping of related workflows.
+
+  - If multiple workflow files are packaged up with one tool, like they are with EnergyPlus, all those workflows should have the same context.
+  - If the workflow is tied to a specific version of a piece of software, and you might have more than one version on your computer, the context should have the version number in it.
+
 Example
 -------
 
-Let's jump right in with an example of a workflow.
+Let's move now to an example of a workflow.
 To begin, we must know enough about the base class to know what methods we need to override.
 For base class ``BaseEPLaunchWorkflow1``, the methods that must be overridden are:
 
 - ``name()``  (returns a string)
+- ``context()``  (returns a string)
 - ``description()``  (returns a string)
 - ``get_file_types()``  (returns a list of file extensions)
 - ``get_output_suffixes()``  (returns a list of output file suffixes)
@@ -71,6 +44,8 @@ Here's the entire code for the workflow, followed by commentary::
     class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
         def name(self):
             return 'foo'
+        def context(self):
+            return 'my_workflow_collection'
         def description(self):
             return 'Foo workflow'
         def get_file_types(self):
@@ -88,16 +63,18 @@ We'll run through this code line by line:
 2. We create a Python class that inherits from the base class.
 3. We override the ``name`` function,
 4. and return a suitable name for our workflow.
-5. We override the ``description`` function,
-6. and return a suitable description for our workflow.
-7. We override the ``get_file_types`` function,
-8. and return a list of file extensions; for this workflow, it's just one: ``.txt``
-9. We override the ``get_output_suffixes`` function,
-10. and return an empty array, since no output files will be associated with this workflow
-11. We override the ``get_interface_columns`` function,
-12. and return an array of column names; for this workflow, it's just one: ``foo``
-13. We override the ``main`` function,
-14. and return a trivial ``EPLaunchWorkflowResponse1`` instance, with a hello response message, and column data containing one key (foo) and the value (bar)
+5. We override the ``context`` function,
+6. and return a suitable context for this workflow.
+7. We override the ``description`` function,
+8. and return a suitable description for our workflow.
+9. We override the ``get_file_types`` function,
+10. and return a list of file extensions; for this workflow, it's just one: ``.txt``
+11. We override the ``get_output_suffixes`` function,
+12. and return an empty array, since no output files will be associated with this workflow
+13. We override the ``get_interface_columns`` function,
+14. and return an array of column names; for this workflow, it's just one: ``foo``
+15. We override the ``main`` function,
+16. and return a trivial ``EPLaunchWorkflowResponse1`` instance, with a hello response message, and column data containing one key (foo) and the value (bar)
 
 Actual Workflow Operation
 -------------------------
@@ -121,3 +98,50 @@ When a workflow is completed, the following series of events occur:
 - If the workflow was successful, additional information is mined from the run, including the run directory and file name
 - Mined information is used to determine if the current file list should be refreshed to reflect updated outputs from the workflow run
 - The workflow output dialog is closed, the status bar is updated, and the workflow thread is deleted
+
+Workflow Testing
+----------------
+
+A standalone tool has been developed to allow users to test their workflows.
+This tool is available as a plain Python script in the repository, and a packaged executable for Linux.
+Windows and Mac executables will come soon.
+
+The script accepts one command line argument, the path to the workflow to test.
+Consider the workflow that was created for the example above.
+If we run that through the test script, this is the output::
+
+    ./EpLaunchWorkflowTester /tmp/example_workflow.py
+       OK: File path exists at: /tmp/example_workflow.py
+       OK: File ends with .py
+       OK: Python import process completed successfully!
+     INFO: Encountered class: "BaseEPLaunchWorkflow1", testing now...
+     INFO: Inheritance does not check out, will continue with other classes in this file
+     INFO: Encountered class: "EPLaunchWorkflowResponse1", testing now...
+     INFO: Inheritance does not check out, will continue with other classes in this file
+     INFO: Encountered class: "SiteLocationWorkflow", testing now...
+       OK: Basic inheritance checks out OK for class: SiteLocationWorkflow
+       OK: Instantiation of derived class works
+       OK: Overridden name() function execution works
+       OK: Overridden get_file_types() function execution works
+       OK: Overridden get_output_suffixes() function execution works
+       OK: Overridden get_interface_columns() function execution works
+       OK: Overridden context() function execution works
+       OK: Found 1 successful workflow imports
+
+This output was generated using the packaged tool.
+
+If running from the Python script, you would need to execute using Python, and ensure that the PYTHONPATH includes the folder where EPLaunch can be accessed.
+The command line, if run from the root of the repository would bee::
+
+    PYTHONPATH="." python3 eplaunch/workflows/workflow_tester.py /tmp/example_workflow.py
+
+The tester checks some basic file details, then loops over all classes encountered in the file and validates them.
+Note that classes found in the module include classes that are imported, so even though we only defined one workflow class, it checks four.
+The final note summarizes the results of the test.
+The process return code also captures the success/failure:
+
+- 0: success
+- 1: failure due to bad workflow file
+- 2: failure for some other reason
+
+Checking these error codes can allow groups of workflow files to be tested in an automated fashion.
