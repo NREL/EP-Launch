@@ -242,7 +242,7 @@ class EpLaunchFrame(wx.Frame):
         else:
             previous_selected_file = None
 
-        # get the local cache file path for this folder
+        # self.current_cache **should** be available, but this function gets called from lots of places so I'm not sure
         cache_file = CacheFile(self.selected_directory)
 
         # if there is a cache file there, read the cached file data for the current workflow
@@ -831,7 +831,6 @@ class EpLaunchFrame(wx.Frame):
             self.selected_file,
             {'weather': self.current_weather_file}
         )
-        self.current_cache.write()
         self.run_workflow()
         self.update_output_file_status()
 
@@ -1048,7 +1047,9 @@ class EpLaunchFrame(wx.Frame):
             return
         current_selected_context = self.get_current_selected_context()
         self.update_workflow_array(current_selected_context)
-        self.repopulate_workflow_lists(None)
+        self.current_workflow = self.work_flows[0]
+        self.update_workflow_dependent_gui_items(self.current_workflow.name)
+        self.repopulate_workflow_lists(self.current_workflow.name)
         self.repopulate_help_menu()
 
     def repopulate_workflow_lists(self, desired_selected_workflow_name):

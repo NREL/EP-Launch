@@ -52,7 +52,7 @@ def get_workflows(external_workflow_directories, disable_builtins=False):
 
     work_flows = []
     warnings = []
-    for workflow_directory in all_workflow_directories:
+    for i, workflow_directory in enumerate(all_workflow_directories):
         uc_directory = workflow_directory.upper().replace('-', '.').replace('\\', '/')
         version_id = None
         dir_is_eplus = False
@@ -78,7 +78,7 @@ def get_workflows(external_workflow_directories, disable_builtins=False):
             if '__init__.py' in this_file:
                 continue
             this_file_path = os.path.join(workflow_directory, this_file)
-            module_spec = import_util.spec_from_file_location('workflow_module', this_file_path)
+            module_spec = import_util.spec_from_file_location(('workflow_module_%s' % i), this_file_path)
             this_module = import_util.module_from_spec(module_spec)
             try:
                 modules.append(this_module)

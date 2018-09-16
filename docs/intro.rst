@@ -3,6 +3,9 @@ EP-Launch
 
 This document provides an introduction to EP-Launch, a Quickstart guide for users, and setup instructions for developers.
 
+The code for EP-Launch is hosted on `Github <https://github.com/NREL/EP-Launch>`_.
+Known issues are on the `Issue Tracker <https://github.com/NREL/EP-Launch/issues>`_.
+
 What is it?
 -----------
 
