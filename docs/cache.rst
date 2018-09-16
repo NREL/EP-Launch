@@ -33,6 +33,59 @@ This list covers the important parts of the caching operation in EP-Launch:
 Cache File Layout
 -----------------
 
+The cache file is a simple JSON file.
+At the root of the JSON is an object with a single key "workflows", that captures the entire context
+The value of this key is another object with keys for each workflow.
+The value of each workflow key is an object with a single key, "files", whose keys correspond to files that have been run for this workflow.
+Each file object has two keys: "config" and "result".
+The config key captures any input data related to this run, for now it is only weather data.
+The result key captures all the output column data corresponding to this workflow run.
+
+An example of the layout is provided here::
+
+    {
+      "workflows": {
+        "Get Site:Location": {
+          "files": {
+            "1ZoneEvapCooler.idf": {
+              "config": {
+                "weather": ""
+              },
+              "result": {
+                "Site:Location []": "Denver Centennial CO USA WMO=724666"
+              }
+            }
+          }
+        },
+        "EnergyPlus 8.9 SI": {
+          "files": {
+            "1ZoneEvapCooler.idf": {
+              "config": {
+                "weather": "MyWeather.epw"
+              },
+              "result": {
+                "Errors": 0,
+                "Warnings": 1,
+                "Runtime [s]": 1.23,
+                "Version": "8.9"
+              }
+            },
+            "RefBldgMediumOfficeNew2004_Chicago.idf": {
+              "config": {
+                "weather": ""
+              },
+              "result": {
+                "Errors": 0,
+                "Warnings": 4,
+                "Runtime [s]": 1.58,
+                "Version": "8.9"
+              }
+            }
+          }
+        }
+      }
+    }
+
 Future Work
 -----------
 
