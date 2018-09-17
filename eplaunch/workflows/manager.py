@@ -28,7 +28,6 @@ class WorkflowDetail:
 
 
 def get_workflows(external_workflow_directories, disable_builtins=False):
-
     # until we actually remove the E+ related workflows from the ep-launch repo, we should at least
     # ignore them in the UI so the user isn't confused
     builtin_blacklist = [
@@ -114,40 +113,52 @@ def get_workflows(external_workflow_directories, disable_builtins=False):
                 base_class_name = this_class_type.__bases__[0].__name__
                 workflow_base_class_name = 'BaseEPLaunchWorkflow1'
                 if num_inheritance == 1 and workflow_base_class_name in base_class_name:
-                    # we've got a good match, grab a bit more data and get ready to load this into the Detail class
-                    workflow_instance = this_class_type()
-                    workflow_name = workflow_instance.name()
-                    workflow_file_types = workflow_instance.get_file_types()
-                    workflow_output_suffixes = workflow_instance.get_output_suffixes()
-                    workflow_columns = workflow_instance.get_interface_columns()
-                    workflow_context = workflow_instance.context()
+                    try:
+                        # we've got a good match, grab a bit more data and get ready to load this into the Detail class
+                        workflow_instance = this_class_type()
+                        workflow_name = workflow_instance.name()
+                        workflow_file_types = workflow_instance.get_file_types()
+                        workflow_output_suffixes = workflow_instance.get_output_suffixes()
+                        workflow_columns = workflow_instance.get_interface_columns()
+                        workflow_context = workflow_instance.context()
 
-                    file_type_string = "("
-                    first = True
-                    for file_type in workflow_file_types:
-                        if first:
-                            first = False
-                        else:
-                            file_type_string += ", "
-                        file_type_string += file_type
-                    file_type_string += ")"
+                        file_type_string = "("
+                        first = True
+                        for file_type in workflow_file_types:
+                            if first:
+                                first = False
+                            else:
+                                file_type_string += ", "
+                            file_type_string += file_type
+                        file_type_string += ")"
 
-                    description = "%s: %s %s" % (workflow_context, workflow_name, file_type_string)
+                        description = "%s: %s %s" % (workflow_context, workflow_name, file_type_string)
 
-                    work_flows.append(
-                        WorkflowDetail(
-                            this_class_type,
-                            workflow_name,
-                            workflow_context,
-                            workflow_output_suffixes,
-                            workflow_file_types,
-                            workflow_columns,
-                            workflow_directory,
-                            description,
-                            dir_is_eplus,
-                            version_id
+                        work_flows.append(
+                            WorkflowDetail(
+                                this_class_type,
+                                workflow_name,
+                                workflow_context,
+                                workflow_output_suffixes,
+                                workflow_file_types,
+                                workflow_columns,
+                                workflow_directory,
+                                description,
+                                dir_is_eplus,
+                                version_id
+                            )
                         )
-                    )
+                    except NotImplementedError as nme:
+                        warnings.append(
+                            "Unimplemented method error trying to import class: %s; error: %s" %
+                            (this_class_name, str(nme))
+                        )
+                    except Exception as e:
+                        # there's always the potential of some other thing going on when a workflow is executed
+                        warnings.append(
+                            "Unexpected error occurred trying to import class: %s" % this_class_name
+                        )
+                        continue
 
     work_flows.sort(key=lambda w: w.description)
     return work_flows, warnings

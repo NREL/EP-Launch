@@ -101,7 +101,7 @@ class EpLaunchFrame(wx.Frame):
         self.workflow_directories = set()
         self.workflow_directories.update(saved_directories)
         self.workflow_directories.update(eplus_directories)
-        self.initialize_workflow_array()  # call without arguments to add all workflows
+        self.initialize_workflow_array(skip_error=True)  # call without args to add all workflows, skip error 1st time
         self.list_of_contexts = set()
         for wf in self.work_flows:
             self.list_of_contexts.add(wf.context)
@@ -131,13 +131,15 @@ class EpLaunchFrame(wx.Frame):
 
     # Frame Object Manipulation
 
-    def initialize_workflow_array(self):
+    def initialize_workflow_array(self, skip_error=False):
         # get_workflows now returns a second argument that is a list of workflow.manager.FailedWorkflowDetails
         # each of these instances is related to a failed workflow import
-        # the GUI can then show the warnings if desired, for now just ignore them...?
-        self.work_flows, _ = workflow_manager.get_workflows(
+        self.work_flows, warnings = workflow_manager.get_workflows(
             external_workflow_directories=self.workflow_directories
         )
+        if len(warnings) > 0 and not skip_error:
+            message = 'Errors occurred during workflow importing: \n' + str(warnings)
+            self.show_error_message(message)
 
     def update_workflow_array(self, filter_context=None):
         self.initialize_workflow_array()
