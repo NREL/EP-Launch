@@ -12,6 +12,7 @@ from eplaunch.interface import workflow_directories_dialog
 from eplaunch.interface.externalprograms import EPLaunchExternalPrograms
 from eplaunch.interface.filenamemenus import FileNameMenus
 from eplaunch.interface.frame_support import FrameSupport
+from eplaunch.interface.weather_dialog import WeatherDialog
 from eplaunch.interface.workflow_output_dialog import Dialog as OutputDialog
 from eplaunch.interface.workflow_processing import event_result, WorkflowThread
 from eplaunch.utilities.cache import CacheFile
@@ -27,6 +28,7 @@ from eplaunch.workflows import manager as workflow_manager
 class EpLaunchFrame(wx.Frame):
     DefaultSize = (650, 600)
     MagicNumberWorkflowOffset = 13000
+    DD_Only_String = '<DD_Only>'
 
     def __init__(self, *args, **kwargs):
 
@@ -230,7 +232,7 @@ class EpLaunchFrame(wx.Frame):
     def update_control_list_columns(self):
         self.control_file_list.DeleteAllColumns()
         self.control_file_list.AppendColumn(_("File Name"), format=wx.LIST_FORMAT_LEFT, width=-1)
-        self.control_file_list.AppendColumn(_("Weather File"), format=wx.LIST_FORMAT_LEFT, width=-1)
+        self.control_file_list.AppendColumn(_("Weather"), format=wx.LIST_FORMAT_LEFT, width=-1)
         if not self.current_workflow:
             return
         for current_column in self.current_workflow.columns:
@@ -323,6 +325,8 @@ class EpLaunchFrame(wx.Frame):
                 self.control_file_list.Focus(i)
                 self.control_file_list.Select(i)
         self.control_file_list.SetColumnWidth(0, -1)  # autosize column width
+        if self.control_file_list.GetColumnCount() > 1:
+            self.control_file_list.SetColumnWidth(1, -1)  # autosize column width
 
         # clear all the items from the raw list as well and add all of them back
         self.raw_file_list.DeleteAllItems()
@@ -456,7 +460,7 @@ class EpLaunchFrame(wx.Frame):
                 )
                 self.Bind(wx.EVT_MENU, self.handle_specific_documentation_menu, specific_documentation_menu)
 
-    def run_workflow(self):
+    def run_workflow(self, weather_file_to_use):
         if self.selected_directory and self.selected_file and self.current_workflow:
             for thread_id, thread in self.workflow_threads.items():
                 if (thread.file_name == self.selected_file and
@@ -471,9 +475,12 @@ class EpLaunchFrame(wx.Frame):
                 new_uuid,
                 self.callback_intermediary
             )
+            this_weather = ''
+            if weather_file_to_use != self.DD_Only_String:
+                this_weather = weather_file_to_use
             self.workflow_threads[new_uuid] = WorkflowThread(
                 new_uuid, self, new_instance, self.selected_directory, self.selected_file,
-                {'weather': self.current_weather_file, 'workflow location': self.current_workflow.workflow_directory}
+                {'weather': this_weather, 'workflow location': self.current_workflow.workflow_directory}
             )
             self.workflow_output_dialogs[new_uuid] = self.make_and_show_output_dialog(new_uuid)
             self.workflow_output_dialogs[new_uuid].update_output("*** STARTING WORKFLOW ***")
@@ -634,7 +641,7 @@ class EpLaunchFrame(wx.Frame):
         tb_weather = self.primary_toolbar.AddTool(
             10, "Weather", file_open_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Weather", "Select a weather file", None
         )
-        self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_weather, tb_weather)
+        self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_select_new_weather, tb_weather)
 
         forward_bmp = wx.ArtProvider.GetBitmap(wx.ART_GO_FORWARD, wx.ART_TOOLBAR, t_size)
         run_button_id = 20
@@ -642,7 +649,7 @@ class EpLaunchFrame(wx.Frame):
             run_button_id, "Run", forward_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Run",
             "Run the selected workflow on the selected file", None
         )
-        self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_tb_run, self.tb_run)
+        self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_run_workflow, self.tb_run)
 
         self.primary_toolbar.AddSeparator()
 
@@ -699,7 +706,7 @@ class EpLaunchFrame(wx.Frame):
 
         file_menu = wx.Menu()
         self.menu_file_run = file_menu.Append(10, "Run File", "Run currently selected file for selected workflow")
-        self.Bind(wx.EVT_MENU, self.handle_menu_file_run, self.menu_file_run)
+        self.Bind(wx.EVT_MENU, self.handle_run_workflow, self.menu_file_run)
         menu_file_quit = file_menu.Append(wx.ID_EXIT, 'Quit', 'Quit application')
         self.Bind(wx.EVT_MENU, self.handle_menu_file_quit, menu_file_quit)
         self.menu_bar.Append(file_menu, '&File')
@@ -741,7 +748,7 @@ class EpLaunchFrame(wx.Frame):
 
         self.weather_menu = wx.Menu()
         menu_weather_select = self.weather_menu.Append(401, "Select..", "Select a weather file")
-        self.Bind(wx.EVT_MENU, self.handle_menu_weather_select, menu_weather_select)
+        self.Bind(wx.EVT_MENU, self.handle_select_new_weather, menu_weather_select)
         self.weather_menu.Append(402, kind=wx.ITEM_SEPARATOR)
         self.weather_menu.Append(403, "Recent", "Recently selected weather files.")
         self.weather_menu.Append(404, kind=wx.ITEM_SEPARATOR)
@@ -853,25 +860,44 @@ class EpLaunchFrame(wx.Frame):
         if Platform.get_current_platform() == Platform.WINDOWS:
             self.enable_disable_idf_editor_button()
 
-    def handle_menu_file_run(self, event):
-        self.folder_recent.add_recent(self.directory_tree_control.GetPath())
-        self.run_workflow()
-
     def handle_menu_file_quit(self, event):
         self.Close()
 
-    def handle_tb_run(self, event):
+    def handle_run_workflow(self, event):
         if not self.current_workflow or not self.selected_file or not self.selected_directory:
             return  # error
         self.folder_recent.add_recent(self.directory_tree_control.GetPath())
-        if not self.current_weather_file:
-            self.current_weather_file = ''
+        # resolve weather file status, if one isn't selected, make sure one gets selected
+        # I'm not sure if we need to recreate the cache file here, we'll see
+        files_in_current_workflow = self.current_cache.get_files_for_workflow(
+            self.current_workflow.name
+        )
+        weather_file_to_use = False
+        if self.selected_file in files_in_current_workflow:
+            cached_file_info = files_in_current_workflow[self.selected_file]
+            if CacheFile.ParametersKey in cached_file_info:
+                if CacheFile.WeatherFileKey in cached_file_info[CacheFile.ParametersKey]:
+                    weather_file_to_use = cached_file_info[CacheFile.ParametersKey][CacheFile.WeatherFileKey]
+        if not weather_file_to_use:
+            w = WeatherDialog(self, title='Weather File Selection')
+            recent_files = [x.ItemLabel for x in self.weather_recent.menu_items_for_files]
+            favorite_files = [x.ItemLabel for x in self.weather_favorites.menu_items_for_files]
+            w.initialize(recent_files=recent_files, favorite_files=favorite_files)
+            response = w.ShowModal()
+            if response == WeatherDialog.CLOSE_SIGNAL_CANCEL:
+                return  # might need to do some other clean up
+            else:  # a valid response was encountered
+                if not w.selected_weather_file:
+                    weather_file_to_use = self.DD_Only_String
+                else:
+                    weather_file_to_use = w.selected_weather_file
         self.current_cache.add_config(
             self.current_workflow.name,
             self.selected_file,
-            {'weather': self.current_weather_file}
+            {'weather': weather_file_to_use}
         )
-        self.run_workflow()
+        self.update_file_lists()
+        self.run_workflow(weather_file_to_use)
         self.update_output_file_status()
 
     def handle_workflow_done(self, event):
@@ -923,7 +949,7 @@ class EpLaunchFrame(wx.Frame):
             self.status_bar.SetStatusText('Selected directory: ' + self.selected_directory, i=0)
             self.update_file_lists()
         except Exception as e:  # noqa -- status_bar and things may not exist during initialization, just ignore
-            pass
+            print(str(e))  # log it to the console for fun
         event.Skip()
 
     def handle_workflow_menu_item_selected(self, menu):
@@ -942,18 +968,6 @@ class EpLaunchFrame(wx.Frame):
             else:
                 menu_item.Check(False)
         self.update_workflow_dependent_gui_items(event.String)
-
-    def handle_tb_weather(self, event):
-        filename = wx.FileSelector("Select a weather file", wildcard="EnergyPlus Weather File(*.epw)|*.epw",
-                                   flags=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
-        if filename == '':
-            return  # user cancelled
-        self.current_weather_file = filename
-        self.weather_recent.uncheck_all()
-        self.weather_recent.add_recent(filename)
-        self.weather_favorites.uncheck_all()
-        self.weather_favorites.put_checkmark_on_item(filename)
-        self.status_bar.SetStatusText('Weather: ' + self.current_weather_file, i=1)
 
     def handle_tb_hide_all_files_pane(self, event):
         # the following remove the top pane of the right hand splitter
@@ -1002,17 +1016,36 @@ class EpLaunchFrame(wx.Frame):
             self.current_workflow.output_toolbar_order = order
             self.update_output_toolbar()
 
-    def handle_menu_weather_select(self, event):
-        filename = wx.FileSelector("Select a weather file", wildcard="EnergyPlus Weather File(*.epw)|*.epw",
-                                   flags=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
-        if filename == '':
-            return  # user cancelled
+    def handle_select_new_weather(self, event):
+        if not self.selected_file:
+            self.show_error_message("Select a file first before trying to assign a weather option")
+            return
+        w = WeatherDialog(self, title='Weather File Selection')
+        recent_files = [x.ItemLabel for x in self.weather_recent.menu_items_for_files]
+        favorite_files = [x.ItemLabel for x in self.weather_favorites.menu_items_for_files]
+        w.initialize(recent_files=recent_files, favorite_files=favorite_files)
+        response = w.ShowModal()
+        if response == WeatherDialog.CLOSE_SIGNAL_CANCEL:
+            return  # might need to do some other clean up
+        else:  # a valid response was encountered
+            if not w.selected_weather_file:
+                filename = self.DD_Only_String
+            else:
+                filename = w.selected_weather_file
+        # update the frame variable, update cache, and refresh the file listing
         self.current_weather_file = filename
-        self.weather_recent.uncheck_all()
-        self.weather_recent.add_recent(filename)
-        self.weather_favorites.uncheck_all()
-        self.weather_favorites.put_checkmark_on_item(filename)
-        self.status_bar.SetStatusText('Weather: ' + self.current_weather_file, i=1)
+        self.current_cache.add_config(
+            self.current_workflow.name,
+            self.selected_file,
+            {'weather': self.current_weather_file}
+        )
+        self.update_file_lists()
+        # update recent and favorites if we chose an actual file
+        if w.selected_weather_file:
+            self.weather_recent.uncheck_all()
+            self.weather_recent.add_recent(filename)
+            self.weather_favorites.uncheck_all()
+            self.weather_favorites.put_checkmark_on_item(filename)
 
     def handle_folder_recent_menu_selection(self, event):
         menu_item = self.folder_menu.FindItemById(event.GetId())
@@ -1043,7 +1076,6 @@ class EpLaunchFrame(wx.Frame):
         self.weather_recent.put_checkmark_on_item(self.current_weather_file)
         self.weather_favorites.uncheck_all()
         self.weather_favorites.put_checkmark_on_item(self.current_weather_file)
-        self.status_bar.SetStatusText('Weather: ' + self.current_weather_file, i=1)
 
     def handle_weather_favorites_menu_selection(self, event):
         menu_item = self.weather_menu.FindItemById(event.GetId())
@@ -1052,7 +1084,6 @@ class EpLaunchFrame(wx.Frame):
         self.weather_recent.put_checkmark_on_item(self.current_weather_file)
         self.weather_favorites.uncheck_all()
         self.weather_favorites.put_checkmark_on_item(self.current_weather_file)
-        self.status_bar.SetStatusText('Weather: ' + self.current_weather_file, i=1)
 
     def handle_add_current_weather_to_favorites_menu_selection(self, event):
         self.weather_favorites.add_favorite(self.current_weather_file)
@@ -1113,7 +1144,11 @@ class EpLaunchFrame(wx.Frame):
         for menu_item in self.workflow_menu.GetMenuItems():
             self.workflow_menu.Remove(menu_item)
         for index, wf in enumerate(self.work_flows):
-            wf_menu_item = self.workflow_menu.Append(self.MagicNumberWorkflowOffset + index, wf.description, kind=wx.ITEM_RADIO)
+            wf_menu_item = self.workflow_menu.Append(
+                self.MagicNumberWorkflowOffset + index,
+                wf.description,
+                kind=wx.ITEM_RADIO
+            )
             self.Bind(wx.EVT_MENU, self.handle_workflow_menu_item_selected, wf_menu_item)
         self.set_current_workflow(desired_selected_workflow_name)
         self.coerce_gui_to_workflow_selection(self.current_workflow.name)
