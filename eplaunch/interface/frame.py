@@ -86,6 +86,10 @@ class EpLaunchFrame(wx.Frame):
         self.workflow_choice = None
         self.workflow_directories = None
         self.previous_selected_directory = None
+        self.keep_dialog_open = self.config.Read("/ActiveWindow/KeepDialogOpen", '')
+        if self.keep_dialog_open == '':
+            self.keep_dialog_open = False
+        self.menu_settings_keep_open = None
 
         # the list of imported workflows, and a map of the background workers, using a uuid as a key
         self.work_flows = []
@@ -774,7 +778,15 @@ class EpLaunchFrame(wx.Frame):
             72, "Workflow Directories...", 'Select directories where workflows are located'
         )
         self.Bind(wx.EVT_MENU, self.handle_menu_option_workflow_directories, menu_option_workflow_directories)
-
+        self.menu_settings_keep_open = options_menu.Append(
+            751,
+            'Keep output dialog open',
+            'Enable debugging output by keeping the output dialog open after runs',
+            kind=wx.ITEM_CHECK
+        )
+        if self.keep_dialog_open:
+            self.menu_settings_keep_open.Check(True)
+        self.Bind(wx.EVT_MENU, self.handle_menu_option_hold_dialog, self.menu_settings_keep_open)
         self.menu_output_toolbar = options_menu.Append(761, "<workspacename> Output Toolbar...")
         self.Bind(wx.EVT_MENU, self.handle_menu_output_toolbar, self.menu_output_toolbar)
         self.menu_bar.Append(options_menu, "&Settings")
@@ -796,6 +808,9 @@ class EpLaunchFrame(wx.Frame):
     def workflow_callback(self, workflow_id, message):
         if workflow_id in self.workflow_output_dialogs:
             self.workflow_output_dialogs[workflow_id].update_output(message)
+
+    def handle_menu_option_hold_dialog(self, event):
+        self.keep_dialog_open = self.menu_settings_keep_open.IsChecked()
 
     def handle_frame_close(self, event):
         # block for running threads
@@ -874,7 +889,8 @@ class EpLaunchFrame(wx.Frame):
                         self.update_file_lists()
                 except EPLaunchFileException:
                     pass
-#                self.workflow_output_dialogs[event.data.id].Close()
+                if not self.keep_dialog_open:
+                    self.workflow_output_dialogs[event.data.id].Close()
             else:
                 status_message = 'Workflow failed: ' + event.data.message
                 self.workflow_output_dialogs[event.data.id].update_output('Workflow FAILED: ' + event.data.message)
@@ -1217,6 +1233,10 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         self.save_selected_workflow_config()
         self.save_window_size()
         self.save_selected_version_config()
+        if self.keep_dialog_open:
+            self.config.Write("/ActiveWindow/KeepDialogOpen", "TRUE")
+        else:
+            self.config.Write("/ActiveWindow/KeepDialogOpen", "")
 
     def save_current_directory_config(self):
         if self.selected_directory:
