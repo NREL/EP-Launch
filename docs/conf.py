@@ -44,7 +44,10 @@ extensions = [
     'sphinx.ext.todo',
     'sphinx.ext.coverage',
     'sphinx.ext.autosectionlabel',
+    #'sphinx.ext.numfig'
 ]
+
+numfig = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

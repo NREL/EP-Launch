@@ -44,13 +44,19 @@ Quickstart
 
 To get started, simply:
 
-- Install EP-Launch using one of the sections below for your platform/configuration
-- Run EP-Launch again using of the sections below for your platform/configuration
+- Install EP-Launch, using one of the sections below for your platform/configuration
+- Run EP-Launch, again using of the sections below for your platform/configuration
 - Browse to a folder with an IDF
-- Make sure the EPLaunch workflow context is selected
-- Run the built-in SiteLocation workflow, note a dialog is shown but instantly closed and the interface has results in it
+- Make sure the EPLaunch workflow context is selected (see Figure below)
+- Run the built-in SiteLocation workflow, note a dialog is briefly shown and closed (as the process is nearly instantaneous) and the interface has results in it
 - Browse to a different folder and come back -- the data persisted through the cache file
 - Fun experiment: create a "fake" idf and try to run the workflow on that malformed file, note the output dialog stays open with an error
+
+This figure shows the menu location for selecting the workflow version, or context:
+
+.. figure:: workflow_selection.png
+   :scale: 50 %
+   :alt: image 1
 
 Although EP-Launch is packaged up with some built-in workflows, the power of EP-Launch is exercised through using workflows with external tools.
 As EP-Launch has historically been geared toward supporting EnergyPlus, this is the natural first starting point.
