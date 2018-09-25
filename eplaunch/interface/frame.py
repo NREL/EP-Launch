@@ -798,6 +798,7 @@ class EpLaunchFrame(wx.Frame):
             self.workflow_output_dialogs[workflow_id].update_output(message)
 
     def handle_frame_close(self, event):
+        # block for running threads
         if self.any_threads_running():
             msg = 'Program closing, but there are threads running; would you like to kill the threads and close?'
             response = self.show_yes_no_question(msg)
@@ -811,6 +812,11 @@ class EpLaunchFrame(wx.Frame):
             elif response == wx.NO:
                 event.Veto()
                 return
+        # close completed windows
+        keys = list(self.workflow_output_dialogs.keys())
+        for dialog_id in keys:
+            self.workflow_output_dialogs[dialog_id].Close()
+        # save the configuration and close
         self.save_config()
         self.Destroy()
 
@@ -868,7 +874,7 @@ class EpLaunchFrame(wx.Frame):
                         self.update_file_lists()
                 except EPLaunchFileException:
                     pass
-                self.workflow_output_dialogs[event.data.id].Close()
+#                self.workflow_output_dialogs[event.data.id].Close()
             else:
                 status_message = 'Workflow failed: ' + event.data.message
                 self.workflow_output_dialogs[event.data.id].update_output('Workflow FAILED: ' + event.data.message)
