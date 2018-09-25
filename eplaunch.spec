@@ -33,7 +33,8 @@ exe = EXE(
     debug=False,
     strip=False,
     upx=True,
-    console=False
+    console=False,
+    icon='eplaunch/interface/main_icon.ico'
 )
 
 coll = COLLECT(

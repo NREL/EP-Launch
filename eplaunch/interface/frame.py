@@ -37,6 +37,12 @@ class EpLaunchFrame(wx.Frame):
         # Set the title!
         self.SetTitle(_("EP-Launch"))
 
+        # don't forget the icon!
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        icon_path = os.path.join(dir_path, 'main_icon.ico')
+        ico = wx.Icon(icon_path, wx.BITMAP_TYPE_ICO)
+        self.SetIcon(ico)
+
         # set the window exit
         self.Bind(wx.EVT_CLOSE, self.handle_frame_close)
 
