@@ -138,7 +138,10 @@ class EpLaunchFrame(wx.Frame):
             external_workflow_directories=self.workflow_directories
         )
         if len(warnings) > 0 and not skip_error:
-            message = 'Errors occurred during workflow importing: \n' + str(warnings)
+            message = 'Errors occurred during workflow importing! \n'
+            message += 'Address these issues or remove the workflow directory in the settings \n'
+            for warning in warnings:
+                message += '\n - ' + str(warning)
             self.show_error_message(message)
 
     def update_workflow_array(self, filter_context=None):

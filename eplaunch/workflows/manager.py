@@ -80,7 +80,7 @@ def get_workflows(external_workflow_directories, disable_builtins=False):
             module_spec = import_util.spec_from_file_location(('workflow_module_%s' % i), this_file_path)
             this_module = import_util.module_from_spec(module_spec)
             try:
-                modules.append(this_module)
+                modules.append([this_file_path, this_module])
                 module_spec.loader.exec_module(this_module)
             except ImportError as ie:
                 # this error generally means they have a bad workflow class or something
@@ -101,7 +101,7 @@ def get_workflows(external_workflow_directories, disable_builtins=False):
                 )
                 continue
 
-        for this_module in modules:
+        for module_file_path, this_module in modules:
             class_members = inspect.getmembers(this_module, inspect.isclass)
             for this_class in class_members:
                 this_class_name, this_class_type = this_class
@@ -150,13 +150,14 @@ def get_workflows(external_workflow_directories, disable_builtins=False):
                         )
                     except NotImplementedError as nme:
                         warnings.append(
-                            "Unimplemented method error trying to import class: %s; error: %s" %
-                            (this_class_name, str(nme))
+                            "Import error for file \"%s\"; class: \"%s\"; error: \"%s\"" %
+                            (module_file_path, this_class_name, str(nme))
                         )
                     except Exception as e:
                         # there's always the potential of some other thing going on when a workflow is executed
                         warnings.append(
-                            "Unexpected error occurred trying to import class: %s" % this_class_name
+                            "Unexpected error for workflow file \"%s\"; class: \"%s\"; error: \"%s\"" %
+                            (module_file_path, this_class_name, str(e))
                         )
                         continue
 
