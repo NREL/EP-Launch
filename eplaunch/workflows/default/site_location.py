@@ -29,7 +29,6 @@ class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
 
     def main(self, run_directory, file_name, args):
         self.callback("In SiteLocationWorkflow.main(), about to process file")
-        self.callback("About to start the soothing breathing phase")
         file_path = os.path.join(run_directory, file_name)
         content = open(file_path).read()
         new_lines = []
@@ -50,7 +49,11 @@ class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
                 location_name = location_fields[1]
                 break
         else:
-            location_name = 'Unknown'
+            return EPLaunchWorkflowResponse1(
+                success=False,
+                message='Could not parse location object!',
+                column_data={ColumnNames.Location: '*unknown*'}
+            )
         self.callback("Completed SiteLocationWorkflow.main()")
         return EPLaunchWorkflowResponse1(
             success=True,

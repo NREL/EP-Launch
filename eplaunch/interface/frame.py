@@ -101,7 +101,7 @@ class EpLaunchFrame(wx.Frame):
         self.workflow_directories = set()
         self.workflow_directories.update(saved_directories)
         self.workflow_directories.update(eplus_directories)
-        self.initialize_workflow_array()  # call without arguments to add all workflows
+        self.initialize_workflow_array(skip_error=True)  # call without args to add all workflows, skip error 1st time
         self.list_of_contexts = set()
         for wf in self.work_flows:
             self.list_of_contexts.add(wf.context)
@@ -131,13 +131,18 @@ class EpLaunchFrame(wx.Frame):
 
     # Frame Object Manipulation
 
-    def initialize_workflow_array(self):
+    def initialize_workflow_array(self, skip_error=False):
         # get_workflows now returns a second argument that is a list of workflow.manager.FailedWorkflowDetails
         # each of these instances is related to a failed workflow import
-        # the GUI can then show the warnings if desired, for now just ignore them...?
-        self.work_flows, _ = workflow_manager.get_workflows(
+        self.work_flows, warnings = workflow_manager.get_workflows(
             external_workflow_directories=self.workflow_directories
         )
+        if len(warnings) > 0 and not skip_error:
+            message = 'Errors occurred during workflow importing! \n'
+            message += 'Address these issues or remove the workflow directory in the settings \n'
+            for warning in warnings:
+                message += '\n - ' + str(warning)
+            self.show_error_message(message)
 
     def update_workflow_array(self, filter_context=None):
         self.initialize_workflow_array()
@@ -242,7 +247,7 @@ class EpLaunchFrame(wx.Frame):
         else:
             previous_selected_file = None
 
-        # get the local cache file path for this folder
+        # self.current_cache **should** be available, but this function gets called from lots of places so I'm not sure
         cache_file = CacheFile(self.selected_directory)
 
         # if there is a cache file there, read the cached file data for the current workflow
@@ -340,7 +345,15 @@ class EpLaunchFrame(wx.Frame):
             self.current_workflow = None
             return
         if not name_to_search:
-            self.current_workflow = self.work_flows[0]
+            # try to find E+ IP first, then E+ at all, then just take the first
+            index_to_choose = 0  # default
+            for i, wf in enumerate(self.work_flows):
+                if 'EnergyPlus' in wf.description and 'IP' in wf.description:
+                    index_to_choose = i
+                    break
+                elif 'EnergyPlus' in wf.description:
+                    index_to_choose = i
+            self.current_workflow = self.work_flows[index_to_choose]
             return
         found = False
         for workflow_index, workflow_choice in enumerate(self.work_flows):
@@ -831,7 +844,6 @@ class EpLaunchFrame(wx.Frame):
             self.selected_file,
             {'weather': self.current_weather_file}
         )
-        self.current_cache.write()
         self.run_workflow()
         self.update_output_file_status()
 
@@ -906,6 +918,8 @@ class EpLaunchFrame(wx.Frame):
     def handle_tb_weather(self, event):
         filename = wx.FileSelector("Select a weather file", wildcard="EnergyPlus Weather File(*.epw)|*.epw",
                                    flags=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+        if filename == '':
+            return  # user cancelled
         self.current_weather_file = filename
         self.weather_recent.uncheck_all()
         self.weather_recent.add_recent(filename)
@@ -963,6 +977,8 @@ class EpLaunchFrame(wx.Frame):
     def handle_menu_weather_select(self, event):
         filename = wx.FileSelector("Select a weather file", wildcard="EnergyPlus Weather File(*.epw)|*.epw",
                                    flags=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+        if filename == '':
+            return  # user cancelled
         self.current_weather_file = filename
         self.weather_recent.uncheck_all()
         self.weather_recent.add_recent(filename)
@@ -1033,14 +1049,20 @@ class EpLaunchFrame(wx.Frame):
         menu_item = self.output_menu.FindItemById(event.GetId())
         output_file_name = self.file_name_manipulator.replace_extension_with_suffix(full_path_name,
                                                                                     menu_item.GetLabel())
-        self.external_runner.run_program_by_extension(output_file_name)
+        if os.path.exists(output_file_name):
+            self.external_runner.run_program_by_extension(output_file_name)
+        else:
+            self.show_error_message('File cannot be found: \"%s\"' % output_file_name)
 
     def handle_extra_output_menu_item(self, event):
         full_path_name = os.path.join(self.selected_directory, self.selected_file)
         menu_item = self.extra_output_menu.FindItemById(event.GetId())
         output_file_name = self.file_name_manipulator.replace_extension_with_suffix(full_path_name,
                                                                                     menu_item.GetLabel())
-        self.external_runner.run_program_by_extension(output_file_name)
+        if os.path.exists(output_file_name):
+            self.external_runner.run_program_by_extension(output_file_name)
+        else:
+            self.show_error_message('File cannot be found: \"%s\"' % output_file_name)
 
     def handle_specific_version_menu(self, event):
         if self.any_threads_running():
@@ -1048,7 +1070,9 @@ class EpLaunchFrame(wx.Frame):
             return
         current_selected_context = self.get_current_selected_context()
         self.update_workflow_array(current_selected_context)
-        self.repopulate_workflow_lists(None)
+        self.current_workflow = self.work_flows[0]
+        self.update_workflow_dependent_gui_items(self.current_workflow.name)
+        self.repopulate_workflow_lists(self.current_workflow.name)
         self.repopulate_help_menu()
 
     def repopulate_workflow_lists(self, desired_selected_workflow_name):
@@ -1136,10 +1160,27 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         possible_selected_version = self.config.Read("/ActiveWindow/CurrentContext")
         menu_list = self.option_version_menu.GetMenuItems()
         if not possible_selected_version and len(menu_list) >= 1:
-            count = -1
+            # first get a list of all the E+ contexts found
+            all_eplus_menu_item_labels = []
+            last_menu_item_index = -1
             for menu_item in menu_list:
-                count = count + 1
-            menu_list[count].Check(True)
+                last_menu_item_index += 1
+                if 'EnergyPlus' in menu_item.ItemLabel:
+                    all_eplus_menu_item_labels.append(menu_item.ItemLabel)
+            # if we have E+ versions, we should find the newest
+            if len(all_eplus_menu_item_labels) > 0:
+                # create a temporary sorted list of them
+                eplus_sorted_versions = sorted(all_eplus_menu_item_labels)
+                # now what's the last (newest) one
+                newest_eplus_version_label = eplus_sorted_versions[-1]
+                count = -1
+                for menu_item in menu_list:
+                    count += 1
+                    if newest_eplus_version_label == menu_item.ItemLabel:
+                        menu_list[count].Check(True)
+                        break
+            else:
+                menu_list[last_menu_item_index].Check(True)
         else:
             for menu_item in menu_list:
                 if menu_item.GetLabel() == possible_selected_version:
