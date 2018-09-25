@@ -44,7 +44,6 @@ extensions = [
     'sphinx.ext.todo',
     'sphinx.ext.coverage',
     'sphinx.ext.autosectionlabel',
-    #'sphinx.ext.numfig'
 ]
 
 numfig = True

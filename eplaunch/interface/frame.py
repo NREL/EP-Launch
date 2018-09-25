@@ -1037,14 +1037,20 @@ class EpLaunchFrame(wx.Frame):
         menu_item = self.output_menu.FindItemById(event.GetId())
         output_file_name = self.file_name_manipulator.replace_extension_with_suffix(full_path_name,
                                                                                     menu_item.GetLabel())
-        self.external_runner.run_program_by_extension(output_file_name)
+        if os.path.exists(output_file_name):
+            self.external_runner.run_program_by_extension(output_file_name)
+        else:
+            self.show_error_message('File cannot be found: \"%s\"' % output_file_name)
 
     def handle_extra_output_menu_item(self, event):
         full_path_name = os.path.join(self.selected_directory, self.selected_file)
         menu_item = self.extra_output_menu.FindItemById(event.GetId())
         output_file_name = self.file_name_manipulator.replace_extension_with_suffix(full_path_name,
                                                                                     menu_item.GetLabel())
-        self.external_runner.run_program_by_extension(output_file_name)
+        if os.path.exists(output_file_name):
+            self.external_runner.run_program_by_extension(output_file_name)
+        else:
+            self.show_error_message('File cannot be found: \"%s\"' % output_file_name)
 
     def handle_specific_version_menu(self, event):
         if self.any_threads_running():
