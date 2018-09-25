@@ -918,6 +918,8 @@ class EpLaunchFrame(wx.Frame):
     def handle_tb_weather(self, event):
         filename = wx.FileSelector("Select a weather file", wildcard="EnergyPlus Weather File(*.epw)|*.epw",
                                    flags=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+        if filename == '':
+            return  # user cancelled
         self.current_weather_file = filename
         self.weather_recent.uncheck_all()
         self.weather_recent.add_recent(filename)
@@ -975,6 +977,8 @@ class EpLaunchFrame(wx.Frame):
     def handle_menu_weather_select(self, event):
         filename = wx.FileSelector("Select a weather file", wildcard="EnergyPlus Weather File(*.epw)|*.epw",
                                    flags=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+        if filename == '':
+            return  # user cancelled
         self.current_weather_file = filename
         self.weather_recent.uncheck_all()
         self.weather_recent.add_recent(filename)
