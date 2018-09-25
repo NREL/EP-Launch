@@ -345,7 +345,15 @@ class EpLaunchFrame(wx.Frame):
             self.current_workflow = None
             return
         if not name_to_search:
-            self.current_workflow = self.work_flows[0]
+            # try to find E+ IP first, then E+ at all, then just take the first
+            index_to_choose = 0  # default
+            for i, wf in enumerate(self.work_flows):
+                if 'EnergyPlus' in wf.description and 'IP' in wf.description:
+                    index_to_choose = i
+                    break
+                elif 'EnergyPlus' in wf.description:
+                    index_to_choose = i
+            self.current_workflow = self.work_flows[index_to_choose]
             return
         found = False
         for workflow_index, workflow_choice in enumerate(self.work_flows):
@@ -1148,10 +1156,27 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         possible_selected_version = self.config.Read("/ActiveWindow/CurrentContext")
         menu_list = self.option_version_menu.GetMenuItems()
         if not possible_selected_version and len(menu_list) >= 1:
-            count = -1
+            # first get a list of all the E+ contexts found
+            all_eplus_menu_item_labels = []
+            last_menu_item_index = -1
             for menu_item in menu_list:
-                count = count + 1
-            menu_list[count].Check(True)
+                last_menu_item_index += 1
+                if 'EnergyPlus' in menu_item.ItemLabel:
+                    all_eplus_menu_item_labels.append(menu_item.ItemLabel)
+            # if we have E+ versions, we should find the newest
+            if len(all_eplus_menu_item_labels) > 0:
+                # create a temporary sorted list of them
+                eplus_sorted_versions = sorted(all_eplus_menu_item_labels)
+                # now what's the last (newest) one
+                newest_eplus_version_label = eplus_sorted_versions[-1]
+                count = -1
+                for menu_item in menu_list:
+                    count += 1
+                    if newest_eplus_version_label == menu_item.ItemLabel:
+                        menu_list[count].Check(True)
+                        break
+            else:
+                menu_list[last_menu_item_index].Check(True)
         else:
             for menu_item in menu_list:
                 if menu_item.GetLabel() == possible_selected_version:
