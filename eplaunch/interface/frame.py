@@ -247,6 +247,10 @@ class EpLaunchFrame(wx.Frame):
 
     def update_file_lists(self):
 
+        # If selected directory hasn't been set up yet then just carry on
+        if not self.selected_directory:
+            return
+
         # If we aren't in a directory, just warn and abort
         if not os.path.isdir(self.selected_directory):
             self.status_bar.SetStatusText('Bad directory selection: ' + self.selected_directory, i=0)
