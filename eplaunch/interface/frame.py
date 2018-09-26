@@ -3,16 +3,18 @@ import json
 import os
 import uuid
 from gettext import gettext as _
+import webbrowser
 
 import wx
 from pubsub import pub
 
-from eplaunch import VERSION
+from eplaunch import VERSION, DOCS_URL
 from eplaunch.interface import workflow_directories_dialog
 from eplaunch.interface.externalprograms import EPLaunchExternalPrograms
 from eplaunch.interface.filenamemenus import FileNameMenus
 from eplaunch.interface.frame_support import FrameSupport
 from eplaunch.interface.weather_dialog import WeatherDialog
+from eplaunch.interface.welcome_dialog import WelcomeDialog
 from eplaunch.interface.workflow_output_dialog import Dialog as OutputDialog
 from eplaunch.interface.workflow_processing import event_result, WorkflowThread
 from eplaunch.utilities.cache import CacheFile
@@ -29,7 +31,6 @@ class EpLaunchFrame(wx.Frame):
     DefaultSize = (650, 600)
     MagicNumberWorkflowOffset = 13000
     DD_Only_String = '<No_Weather_File>'
-    RTD_Doc_URL = 'https://ep-launch.readthedocs.io/en/latest/'
 
     def __init__(self, *args, **kwargs):
 
@@ -141,6 +142,8 @@ class EpLaunchFrame(wx.Frame):
         # this sets up an event handler for workflow completion and callback events
         event_result(self, self.handle_workflow_done)
         pub.subscribe(self.workflow_callback, "workflow_callback")
+
+        self.show_first_time_welcome()
 
         # one quick redraw *should* help the weird invalidation on Windows
         self.Refresh()
@@ -534,6 +537,13 @@ class EpLaunchFrame(wx.Frame):
         file_name_no_ext, extension = os.path.splitext(self.selected_file)
         self.primary_toolbar.EnableTool(self.tb_idf_editor_id, extension.upper() == ".IDF")
         self.output_toolbar.Realize()
+
+    def show_first_time_welcome(self):
+        welcome_already_shown = self.config.Read('/ActiveWindow/WelcomeAlreadyShown', '')
+        if not welcome_already_shown:  # it's never been shown
+            WelcomeDialog(self, title='Welcome!').ShowModal()
+            self.config.Write('/ActiveWindow/WelcomeAlreadyShown', 'True')
+            self.config.Write('/ActiveWindow/LatestWelcomeVersionShown', VERSION)
 
     def show_error_message(self, message):
         return wx.MessageBox(message, self.GetTitle() + ' Error', wx.OK | wx.ICON_ERROR)
@@ -1176,10 +1186,7 @@ class EpLaunchFrame(wx.Frame):
             pass
 
     def handle_menu_help_docs(self, event):
-        wx.BeginBusyCursor()
-        import webbrowser
-        webbrowser.open(self.RTD_Doc_URL)
-        wx.EndBusyCursor()
+        webbrowser.open(DOCS_URL)
 
     def handle_menu_help_about(self, event):
         text = """
