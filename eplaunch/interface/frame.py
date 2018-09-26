@@ -28,7 +28,7 @@ from eplaunch.workflows import manager as workflow_manager
 class EpLaunchFrame(wx.Frame):
     DefaultSize = (650, 600)
     MagicNumberWorkflowOffset = 13000
-    DD_Only_String = '<DD_Only>'
+    DD_Only_String = '<No_Weather_File>'
 
     def __init__(self, *args, **kwargs):
 
