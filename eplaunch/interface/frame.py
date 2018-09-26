@@ -29,6 +29,7 @@ class EpLaunchFrame(wx.Frame):
     DefaultSize = (650, 600)
     MagicNumberWorkflowOffset = 13000
     DD_Only_String = '<No_Weather_File>'
+    RTD_Doc_URL = 'https://ep-launch.readthedocs.io/en/latest/'
 
     def __init__(self, *args, **kwargs):
 
@@ -809,6 +810,8 @@ class EpLaunchFrame(wx.Frame):
 
         self.help_menu = wx.Menu()
         self.help_menu.AppendSeparator()
+        menu_help_docs = self.help_menu.Append(613, "EP-Launch Documentation")
+        self.Bind(wx.EVT_MENU, self.handle_menu_help_docs, menu_help_docs)
         menu_help_about = self.help_menu.Append(615, "About EP-Launch")
         self.Bind(wx.EVT_MENU, self.handle_menu_help_about, menu_help_about)
         self.menu_bar.Append(self.help_menu, "&Help")
@@ -1171,6 +1174,12 @@ class EpLaunchFrame(wx.Frame):
             os.system('open "{}"'.format(self.selected_directory))
         else:
             pass
+
+    def handle_menu_help_docs(self, event):
+        wx.BeginBusyCursor()
+        import webbrowser
+        webbrowser.open(self.RTD_Doc_URL)
+        wx.EndBusyCursor()
 
     def handle_menu_help_about(self, event):
         text = """
