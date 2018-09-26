@@ -2,8 +2,8 @@ import fnmatch
 import json
 import os
 import uuid
-from gettext import gettext as _
 import webbrowser
+from gettext import gettext as _
 
 import wx
 from pubsub import pub
