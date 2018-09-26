@@ -1140,7 +1140,7 @@ class EpLaunchFrame(wx.Frame):
     def repopulate_workflow_lists(self, desired_selected_workflow_name):
         self.workflow_choice.Clear()
         for work_flow in self.work_flows:
-            self.workflow_choice.Append(work_flow.description)
+            self.workflow_choice.Append(work_flow.name)
         self.workflow_choice.InvalidateBestSize()
         self.workflow_choice.SetSize(self.workflow_choice.GetBestSize())
         self.primary_toolbar.Realize()
