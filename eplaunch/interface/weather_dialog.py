@@ -17,7 +17,7 @@ class WeatherDialog(wx.Dialog):
         self.choice_fave = None
         self.text_select_file = None
         self.panel = None
-        self.rdo_dd, self.rdo_select, self.rdo_recent, self.rdo_fave = [None]*4
+        self.rdo_dd, self.rdo_select, self.rdo_recent, self.rdo_fave = [None] * 4
         self.SetTitle("Choose Weather Configuration")
 
     def initialize(self, recent_files, favorite_files):
@@ -50,7 +50,8 @@ class WeatherDialog(wx.Dialog):
         self.rdo_select.SetMinSize((radio_margin_width, -1))
         single_row_sizer.Add(self.rdo_select, flag=wx.ALIGN_CENTER_VERTICAL)
         self.text_select_file = wx.TextCtrl(self.panel)
-        single_row_sizer.Add(self.text_select_file, proportion=1, flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border=this_border)
+        single_row_sizer.Add(self.text_select_file, proportion=1, flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
+                             border=this_border)
         wf_button = wx.Button(self.panel, label='Find on Disk...')
         wf_button.Bind(wx.EVT_BUTTON, self.handle_select_new_file)
         single_row_sizer.Add(wf_button, flag=wx.ALIGN_CENTER_VERTICAL)
