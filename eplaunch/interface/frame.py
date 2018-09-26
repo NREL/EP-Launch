@@ -141,6 +141,9 @@ class EpLaunchFrame(wx.Frame):
         event_result(self, self.handle_workflow_done)
         pub.subscribe(self.workflow_callback, "workflow_callback")
 
+        # one quick redraw *should* help the weird invalidation on Windows
+        self.Refresh()
+
     # Frame Object Manipulation
 
     def initialize_workflow_array(self, skip_error=False):
