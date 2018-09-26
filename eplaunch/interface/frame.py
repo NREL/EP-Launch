@@ -108,11 +108,7 @@ class EpLaunchFrame(wx.Frame):
         self.workflow_dialog_counter = 0  # a simple counter ultimately used to place dialogs on the screen
 
         # get the saved workflow directories and update the main workflow list
-        saved_directories = self.retrieve_workflow_directories_config()
-        ep_directories = self.locate_workflows.find_eplus_workflows()
-        self.workflow_directories = set()
-        self.workflow_directories.update(saved_directories)
-        self.workflow_directories.update(ep_directories)
+        self.workflow_directories = self.get_known_workflow_directories()
         self.initialize_workflow_array(skip_error=True)  # call without args to add all workflows, skip error 1st time
         self.list_of_contexts = set()
         for wf in self.work_flows:
@@ -120,8 +116,6 @@ class EpLaunchFrame(wx.Frame):
 
         # build out the whole GUI and do other one-time init here
         self.gui_build()
-        self.reset_raw_list_columns()
-        self.update_num_processes_status()
         self.retrieve_current_directory_config_and_browse_there()
 
         # with everything built, update the workflow listings
@@ -147,6 +141,14 @@ class EpLaunchFrame(wx.Frame):
         self.Refresh()
 
     # Frame Object Manipulation
+
+    def get_known_workflow_directories(self):
+        workflow_directories = set()
+        saved_directories = self.retrieve_workflow_directories_config()
+        ep_directories = self.locate_workflows.find_eplus_workflows()
+        workflow_directories.update(saved_directories)
+        workflow_directories.update(ep_directories)
+        return workflow_directories
 
     def initialize_workflow_array(self, skip_error=False):
         # get_workflows now returns a second argument that is a list of workflow.manager.FailedWorkflowDetails
@@ -242,11 +244,6 @@ class EpLaunchFrame(wx.Frame):
             return
         for current_column in self.current_workflow.columns:
             self.control_file_list.AppendColumn(_(current_column), format=wx.LIST_FORMAT_LEFT, width=-1)
-
-    def reset_raw_list_columns(self):
-        self.raw_file_list.AppendColumn(_("File Name"), format=wx.LIST_FORMAT_LEFT, width=-1)
-        self.raw_file_list.AppendColumn(_("Date Modified"), format=wx.LIST_FORMAT_LEFT, width=-1)
-        self.raw_file_list.AppendColumn(_("Size"), format=wx.LIST_FORMAT_RIGHT, width=-1)
 
     def update_file_lists(self):
 
@@ -384,6 +381,8 @@ class EpLaunchFrame(wx.Frame):
             self.current_workflow = self.work_flows[0]
 
     def refresh_workflow_context_menu(self):
+        for menu_item in self.option_version_menu.GetMenuItems():
+            self.option_version_menu.Remove(menu_item)
         for index, context in enumerate(self.list_of_contexts):
             specific_context_menu = self.option_version_menu.Append(710 + index, context, kind=wx.ITEM_RADIO)
             self.Bind(wx.EVT_MENU, self.handle_specific_version_menu, specific_context_menu)
@@ -588,6 +587,9 @@ class EpLaunchFrame(wx.Frame):
         self.raw_file_list_panel = wx.Panel(self.file_lists_splitter, wx.ID_ANY)
         self.raw_file_list = wx.ListCtrl(self.raw_file_list_panel, wx.ID_ANY,
                                          style=wx.LC_HRULES | wx.LC_REPORT | wx.LC_VRULES)
+        self.raw_file_list.AppendColumn(_("File Name"), format=wx.LIST_FORMAT_LEFT, width=-1)
+        self.raw_file_list.AppendColumn(_("Date Modified"), format=wx.LIST_FORMAT_LEFT, width=-1)
+        self.raw_file_list.AppendColumn(_("Size"), format=wx.LIST_FORMAT_RIGHT, width=-1)
         raw_file_list_sizer = wx.BoxSizer(wx.VERTICAL)
         raw_file_list_sizer.Add(self.raw_file_list, 1, wx.EXPAND, 0)
         self.raw_file_list_panel.SetSizer(raw_file_list_sizer)
@@ -613,8 +615,9 @@ class EpLaunchFrame(wx.Frame):
         main_app_vertical_sizer.Add(self.output_toolbar, 0, wx.EXPAND, 0)
         main_app_vertical_sizer.Add(main_left_right_splitter, 1, wx.EXPAND, 0)
 
-        # add the status bar
+        # add the status bar, initialize anything
         self.status_bar = self.CreateStatusBar(3)
+        self.update_num_processes_status()
 
         # assign the final form's sizer
         self.SetSizer(main_app_vertical_sizer)
@@ -998,7 +1001,24 @@ class EpLaunchFrame(wx.Frame):
         return_value = workflow_dir_dialog.ShowModal()
         if return_value == wx.ID_OK:
             self.workflow_directories = workflow_dir_dialog.list_of_directories
-        # TODO: Do we need to reset things in the UI?
+
+            self.initialize_workflow_array(skip_error=True)  # call w/o args to add all workflows, skip error 1st time
+            self.list_of_contexts = set()
+            for wf in self.work_flows:
+                self.list_of_contexts.add(wf.context)
+
+            self.refresh_workflow_context_menu()
+            self.retrieve_selected_version_config()
+            current_selected_context = self.get_current_selected_context()
+            self.update_workflow_array(current_selected_context)  # call with possible version to filter list
+            previous_workflow_name = self.config.Read('/ActiveWindow/SelectedWorkflow', '')
+            self.repopulate_workflow_lists(previous_workflow_name)
+
+            # these are things that need to be done frequently
+            self.update_control_list_columns()
+            self.update_file_lists()
+            self.update_workflow_dependent_gui_items(previous_workflow_name)
+
         workflow_dir_dialog.Destroy()
 
     def handle_menu_output_toolbar(self, event):
@@ -1138,7 +1158,7 @@ class EpLaunchFrame(wx.Frame):
 
     def handle_specific_version_menu(self, event):
         if self.any_threads_running():
-            self.show_error_message('Cannot update workflow directories, etc., while workflows are running.')
+            self.show_error_message('Cannot change workflow versions, etc., while workflows are running.')
             return
         current_selected_context = self.get_current_selected_context()
         self.update_workflow_array(current_selected_context)
@@ -1271,8 +1291,10 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         if not possible_directory_name:
             home = os.path.expanduser("~")
             possible_directory_name = home
-        if possible_directory_name:
-            # TODO: Protect against the case where a directory no longer exists
+        elif not os.path.exists(possible_directory_name):
+            home = os.path.expanduser("~")
+            possible_directory_name = home
+        else:
             self.selected_directory = possible_directory_name
             real_path = os.path.abspath(self.selected_directory)
             self.directory_tree_control.SelectPath(real_path, True)
