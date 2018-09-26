@@ -16,67 +16,80 @@ class WeatherDialog(wx.Dialog):
         self.choice_recent = None
         self.choice_fave = None
         self.text_select_file = None
+        self.panel = None
+        self.rdo_dd, self.rdo_select, self.rdo_recent, self.rdo_fave = [None]*4
         self.SetTitle("Choose Weather Configuration")
 
     def initialize(self, recent_files, favorite_files):
         self._recent_files = recent_files
         self._favorite_files = favorite_files
-        this_border = 4
+        radio_margin_width = 230
+        this_border = 8
         sizer_main_vertical = wx.BoxSizer(wx.VERTICAL)
 
+        self.panel = wx.Panel(self, wx.ID_ANY)
+
+        title = wx.StaticText(self.panel, wx.ID_ANY, 'Choose a Weather File Configuration Option')
+        title_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        title_sizer.Add(title, 0, wx.ALL, border=this_border)
+
+        sizer_main_vertical.Add(title_sizer, 0, wx.CENTER)
+        sizer_main_vertical.Add(wx.StaticLine(self.panel, ), 0, wx.ALL | wx.EXPAND, border=this_border)
+
         single_row_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        st1 = wx.StaticText(self, label='Use Design Days Only; *NO* Weather File:', style=wx.ALIGN_RIGHT)
-        single_row_sizer.Add(st1, proportion=9, border=this_border, flag=wx.ALIGN_CENTER_VERTICAL)
-        dd_button = wx.Button(self, label='Select This!')
-        dd_button.Bind(wx.EVT_BUTTON, self.handle_dd_only)
-        single_row_sizer.Add(dd_button, flag=wx.ALL, proportion=1, border=this_border)
+        self.rdo_dd = wx.RadioButton(self.panel, label='Design Days:')
+        self.rdo_dd.SetMinSize((radio_margin_width, -1))
+        single_row_sizer.Add(self.rdo_dd, flag=wx.ALIGN_CENTER_VERTICAL)
+        st1 = wx.StaticText(self.panel, label='** Use Design Days Only; No Weather File **', style=wx.ALIGN_LEFT)
+        single_row_sizer.Add(st1, border=this_border, flag=wx.ALIGN_CENTER_VERTICAL)
         sizer_main_vertical.Add(single_row_sizer, flag=wx.ALL, border=this_border)
 
         single_row_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        wf_button = wx.Button(self, label='Find on Disk...')
+        self.rdo_select = wx.RadioButton(self.panel, label='Selected EPW:')
+        self.rdo_select.SetValue(value=True)
+        self.rdo_select.SetMinSize((radio_margin_width, -1))
+        single_row_sizer.Add(self.rdo_select, flag=wx.ALIGN_CENTER_VERTICAL)
+        self.text_select_file = wx.TextCtrl(self.panel)
+        single_row_sizer.Add(self.text_select_file, proportion=1, flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border=this_border)
+        wf_button = wx.Button(self.panel, label='Find on Disk...')
         wf_button.Bind(wx.EVT_BUTTON, self.handle_select_new_file)
-        single_row_sizer.Add(wf_button, flag=wx.ALL, proportion=2, border=this_border)
-        self.text_select_file = wx.TextCtrl(self)
-        single_row_sizer.Add(self.text_select_file, flag=wx.ALL, proportion=7, border=this_border)
-        select_button = wx.Button(self, label="Select This!")
-        self.Bind(wx.EVT_BUTTON, self.handle_select_file, select_button)
-        single_row_sizer.Add(select_button, flag=wx.ALL, proportion=1, border=this_border)
-        sizer_main_vertical.Add(single_row_sizer, flag=wx.ALL, border=this_border)
+        single_row_sizer.Add(wf_button, flag=wx.ALIGN_CENTER_VERTICAL)
+        sizer_main_vertical.Add(single_row_sizer, flag=wx.ALL | wx.EXPAND, border=this_border)
 
         if recent_files:
             single_row_sizer = wx.BoxSizer(wx.HORIZONTAL)
-            st1 = wx.StaticText(self, label='Recents:', style=wx.ALIGN_RIGHT)
-            single_row_sizer.Add(st1, flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, proportion=2, border=this_border)
-            self.choice_recent = wx.Choice(self, choices=recent_files)
+            self.rdo_recent = wx.RadioButton(self.panel, label='Recent EPW:')
+            self.rdo_recent.SetValue(value=True)
+            self.rdo_recent.SetMinSize((radio_margin_width, -1))
+            single_row_sizer.Add(self.rdo_recent, flag=wx.ALIGN_CENTER_VERTICAL)
+            self.choice_recent = wx.Choice(self.panel, choices=recent_files)
             self.choice_recent.SetSelection(0)
-            single_row_sizer.Add(self.choice_recent, flag=wx.ALL, proportion=7, border=this_border)
-            recent_button = wx.Button(self, label="Select This!")
-            self.Bind(wx.EVT_BUTTON, self.handle_recent, recent_button)
-            single_row_sizer.Add(recent_button, flag=wx.ALL, proportion=1, border=this_border)
+            single_row_sizer.Add(self.choice_recent, flag=wx.ALIGN_CENTER_VERTICAL)
             sizer_main_vertical.Add(single_row_sizer, flag=wx.ALL, border=this_border)
 
         if favorite_files:
             single_row_sizer = wx.BoxSizer(wx.HORIZONTAL)
-            st1 = wx.StaticText(self, label='Favorites:', style=wx.ALIGN_RIGHT)
-            single_row_sizer.Add(st1, flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, proportion=2, border=this_border)
-            self.choice_fave = wx.Choice(self, choices=favorite_files)
+            self.rdo_fave = wx.RadioButton(self.panel, label='Favorite EPW:')
+            self.rdo_fave.SetValue(value=True)
+            self.rdo_fave.SetMinSize((radio_margin_width, -1))
+            single_row_sizer.Add(self.rdo_fave, flag=wx.ALIGN_CENTER_VERTICAL)
+            self.choice_fave = wx.Choice(self.panel, choices=favorite_files)
             self.choice_fave.SetSelection(0)
-            single_row_sizer.Add(self.choice_fave, flag=wx.ALL, proportion=7, border=this_border)
-            fave_button = wx.Button(self, label="Select This!")
-            self.Bind(wx.EVT_BUTTON, self.handle_favorite, fave_button)
-            single_row_sizer.Add(fave_button, flag=wx.ALL, proportion=1, border=this_border)
+            single_row_sizer.Add(self.choice_fave, flag=wx.ALIGN_CENTER_VERTICAL)
             sizer_main_vertical.Add(single_row_sizer, flag=wx.ALL, border=this_border)
 
-        cancel_button = wx.Button(self, label='Cancel')
+        single_row_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        ok_button = wx.Button(self.panel, label='OK')
+        ok_button.Bind(wx.EVT_BUTTON, self.handle_close_ok)
+        single_row_sizer.Add(ok_button, flag=wx.ALIGN_CENTER_VERTICAL)
+        cancel_button = wx.Button(self.panel, label='Cancel')
         cancel_button.Bind(wx.EVT_BUTTON, self.handle_close_cancel)
-        sizer_main_vertical.Add(cancel_button, flag=wx.ALIGN_CENTER | wx.ALL, border=this_border)
+        single_row_sizer.Add(cancel_button, flag=wx.ALIGN_CENTER_VERTICAL)
+        sizer_main_vertical.Add(single_row_sizer, flag=wx.ALL | wx.ALIGN_CENTER, border=this_border)
 
-        self.SetSizer(sizer_main_vertical)
+        self.rdo_dd.SetValue(value=True)
+        self.panel.SetSizer(sizer_main_vertical)
         sizer_main_vertical.Fit(self)
-
-    def handle_dd_only(self, e):
-        self.selected_weather_file = None  # OK+None = DD Only
-        self.EndModal(WeatherDialog.CLOSE_SIGNAL_OK)
 
     def handle_select_new_file(self, e):
         filename = wx.FileSelector("Select weather file", wildcard="Weather File(*.epw)|*.epw",
@@ -85,16 +98,23 @@ class WeatherDialog(wx.Dialog):
             return  # user cancelled
         self.text_select_file.SetValue(filename)
 
-    def handle_select_file(self, e):
-        self.selected_weather_file = 'Selected File'  # OK+String = Weather file!
-        self.EndModal(WeatherDialog.CLOSE_SIGNAL_OK)
-
-    def handle_recent(self, e):
-        self.selected_weather_file = self._recent_files[self.choice_recent.GetSelection()]  # OK+String = Weather file!
-        self.EndModal(WeatherDialog.CLOSE_SIGNAL_OK)
-
-    def handle_favorite(self, e):
-        self.selected_weather_file = self._favorite_files[self.choice_fave.GetSelection()]  # OK+String = Weather file!
+    def handle_close_ok(self, e):
+        if self.rdo_dd.GetValue():
+            self.selected_weather_file = None  # OK+None = DD Only
+        elif self.rdo_select.GetValue():
+            if self.text_select_file.GetValue() == '':
+                wx.MessageDialog(
+                    self,
+                    "Weather file path is blank, choose another option or enter a weather file path in the box",
+                    "Weather File Error",
+                    style=wx.OK
+                ).ShowModal()
+                return
+            self.selected_weather_file = self.text_select_file.GetValue()
+        elif self.rdo_recent.GetValue():
+            self.selected_weather_file = self._recent_files[self.choice_recent.GetSelection()]
+        elif self.rdo_fave.GetValue():
+            self.selected_weather_file = self._favorite_files[self.choice_fave.GetSelection()]
         self.EndModal(WeatherDialog.CLOSE_SIGNAL_OK)
 
     def handle_close_cancel(self, e):
