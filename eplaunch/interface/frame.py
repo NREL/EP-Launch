@@ -29,6 +29,7 @@ from eplaunch.workflows import manager as workflow_manager
 # noinspection PyUnusedLocal
 class EpLaunchFrame(wx.Frame):
     DefaultSize = (650, 600)
+    OutputToolbarIconSize = (16, 15)
     MagicNumberWorkflowOffset = 13000
     DD_Only_String = '<No_Weather_File>'
 
@@ -63,7 +64,6 @@ class EpLaunchFrame(wx.Frame):
         self.primary_toolbar = None
         self.output_toolbar = None
         self.tb_run = None
-        self.menu_file_run = None
         self.menu_bar = None
         self.current_workflow = None
         self.selected_directory = None
@@ -74,7 +74,6 @@ class EpLaunchFrame(wx.Frame):
         self.control_file_list = None
         self.current_cache = None
         self.current_weather_file = None
-        self.output_toolbar_icon_size = None
         self.directory_tree_control = None
         self.file_lists_splitter = None
         self.control_file_list_panel = None
@@ -99,7 +98,6 @@ class EpLaunchFrame(wx.Frame):
         self.keep_dialog_open = self.config.Read("/ActiveWindow/KeepDialogOpen", '')
         if self.keep_dialog_open == '':
             self.keep_dialog_open = False
-        self.menu_settings_keep_open = None
 
         # the list of imported workflows, and a map of the background workers, using a uuid as a key
         self.work_flows = []
@@ -111,10 +109,10 @@ class EpLaunchFrame(wx.Frame):
 
         # get the saved workflow directories and update the main workflow list
         saved_directories = self.retrieve_workflow_directories_config()
-        eplus_directories = self.locate_workflows.find_eplus_workflows()
+        ep_directories = self.locate_workflows.find_eplus_workflows()
         self.workflow_directories = set()
         self.workflow_directories.update(saved_directories)
-        self.workflow_directories.update(eplus_directories)
+        self.workflow_directories.update(ep_directories)
         self.initialize_workflow_array(skip_error=True)  # call without args to add all workflows, skip error 1st time
         self.list_of_contexts = set()
         for wf in self.work_flows:
@@ -212,7 +210,7 @@ class EpLaunchFrame(wx.Frame):
         # remove all the old menu items first
         self.output_toolbar.ClearTools()
         # add tools based on the workflow
-        norm_bmp = wx.ArtProvider.GetBitmap(wx.ART_NORMAL_FILE, wx.ART_TOOLBAR, self.output_toolbar_icon_size)
+        norm_bmp = wx.ArtProvider.GetBitmap(wx.ART_NORMAL_FILE, wx.ART_TOOLBAR, EpLaunchFrame.OutputToolbarIconSize)
         tb_output_suffixes = []
         if self.current_workflow:
             output_suffixes = self.current_workflow.output_suffixes
@@ -708,10 +706,9 @@ class EpLaunchFrame(wx.Frame):
         self.primary_toolbar.Realize()
 
     def gui_build_output_toolbar(self):
-        self.output_toolbar_icon_size = (16, 15)
         self.output_toolbar = wx.ToolBar(self, style=wx.TB_HORIZONTAL | wx.NO_BORDER | wx.TB_FLAT | wx.TB_TEXT)
-        self.output_toolbar.SetToolBitmapSize(self.output_toolbar_icon_size)
-        wx.ArtProvider.GetBitmap(wx.ART_NORMAL_FILE, wx.ART_TOOLBAR, self.output_toolbar_icon_size)
+        self.output_toolbar.SetToolBitmapSize(EpLaunchFrame.OutputToolbarIconSize)
+        wx.ArtProvider.GetBitmap(wx.ART_NORMAL_FILE, wx.ART_TOOLBAR, EpLaunchFrame.OutputToolbarIconSize)
         self.output_toolbar.Realize()
 
     def gui_build_menu_bar(self):
@@ -719,8 +716,8 @@ class EpLaunchFrame(wx.Frame):
         self.menu_bar = wx.MenuBar()
 
         file_menu = wx.Menu()
-        self.menu_file_run = file_menu.Append(10, "Run File", "Run currently selected file for selected workflow")
-        self.Bind(wx.EVT_MENU, self.handle_run_workflow, self.menu_file_run)
+        menu_file_run = file_menu.Append(10, "Run File", "Run currently selected file for selected workflow")
+        self.Bind(wx.EVT_MENU, self.handle_run_workflow, menu_file_run)
         menu_file_quit = file_menu.Append(wx.ID_EXIT, 'Quit', 'Quit application')
         self.Bind(wx.EVT_MENU, self.handle_menu_file_quit, menu_file_quit)
         self.menu_bar.Append(file_menu, '&File')
@@ -805,15 +802,15 @@ class EpLaunchFrame(wx.Frame):
             72, "Workflow Directories...", 'Select directories where workflows are located'
         )
         self.Bind(wx.EVT_MENU, self.handle_menu_option_workflow_directories, menu_option_workflow_directories)
-        self.menu_settings_keep_open = options_menu.Append(
+        menu_settings_keep_open = options_menu.Append(
             751,
             'Keep output dialog open',
             'Enable debugging output by keeping the output dialog open after runs',
             kind=wx.ITEM_CHECK
         )
         if self.keep_dialog_open:
-            self.menu_settings_keep_open.Check(True)
-        self.Bind(wx.EVT_MENU, self.handle_menu_option_hold_dialog, self.menu_settings_keep_open)
+            menu_settings_keep_open.Check(True)
+        self.Bind(wx.EVT_MENU, self.handle_menu_option_hold_dialog, menu_settings_keep_open)
         self.menu_output_toolbar = options_menu.Append(761, "<workspacename> Output Toolbar...")
         self.Bind(wx.EVT_MENU, self.handle_menu_output_toolbar, self.menu_output_toolbar)
         self.menu_bar.Append(options_menu, "&Settings")
@@ -839,7 +836,7 @@ class EpLaunchFrame(wx.Frame):
             self.workflow_output_dialogs[workflow_id].update_output(message)
 
     def handle_menu_option_hold_dialog(self, event):
-        self.keep_dialog_open = self.menu_settings_keep_open.IsChecked()
+        self.keep_dialog_open = event.IsChecked()
 
     def handle_frame_close(self, event):
         # block for running threads
