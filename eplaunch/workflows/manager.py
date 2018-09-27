@@ -134,7 +134,7 @@ def get_workflows(external_workflow_directories, disable_builtins=False):
                             file_type_string += file_type
                         file_type_string += ")"
 
-                        description = "%s: %s %s" % (workflow_context, workflow_name, file_type_string)
+                        description = "%s %s" % (workflow_name, file_type_string)
 
                         work_flows.append(
                             WorkflowDetail(
