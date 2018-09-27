@@ -27,6 +27,13 @@ class BaseEPLaunchWorkflow1(object):
     def description(self):
         raise NotImplementedError("description function needs to be implemented in derived workflow class")
 
+    def uses_weather(self):
+        """
+        If it returns True, this workflow accepts a "weather" key in the arguments to the workflow
+        :return: Boolean
+        """
+        return False
+
     def get_file_types(self):
         raise NotImplementedError("get_file_types needs to be implemented in derived workflow class")
 

@@ -95,6 +95,7 @@ class EpLaunchFrame(wx.Frame):
         self.workflow_choice = None
         self.workflow_directories = None
         self.previous_selected_directory = None
+        self.tb_weather = None
         self.keep_dialog_open = self.config.Read("/ActiveWindow/KeepDialogOpen", '')
         if self.keep_dialog_open == '':
             self.keep_dialog_open = False
@@ -177,6 +178,10 @@ class EpLaunchFrame(wx.Frame):
         self.repopulate_help_menu()
         self.update_control_list_columns()
         self.update_file_lists()
+        # if self.current_workflow.uses_weather:
+        #     self.tb_weather.Enable(True)
+        # else:
+        #     self.tb_weather.Enable(False)
         self.status_bar.SetStatusText('Current workflow: ' + workflow_name, i=1)
 
     def update_output_menu(self):
@@ -239,9 +244,10 @@ class EpLaunchFrame(wx.Frame):
     def update_control_list_columns(self):
         self.control_file_list.DeleteAllColumns()
         self.control_file_list.AppendColumn(_("File Name"), format=wx.LIST_FORMAT_LEFT, width=-1)
-        self.control_file_list.AppendColumn(_("Weather"), format=wx.LIST_FORMAT_LEFT, width=-1)
         if not self.current_workflow:
             return
+        if self.current_workflow.uses_weather:
+            self.control_file_list.AppendColumn(_("Weather"), format=wx.LIST_FORMAT_LEFT, width=-1)
         for current_column in self.current_workflow.columns:
             self.control_file_list.AppendColumn(_(current_column), format=wx.LIST_FORMAT_LEFT, width=-1)
 
@@ -307,14 +313,15 @@ class EpLaunchFrame(wx.Frame):
             # if it in the cache then the listview row can include additional data
             if file_name in files_in_current_workflow:
                 cached_file_info = files_in_current_workflow[file_name]
-                if CacheFile.ParametersKey in cached_file_info:
-                    if CacheFile.WeatherFileKey in cached_file_info[CacheFile.ParametersKey]:
-                        full_weather_path = cached_file_info[CacheFile.ParametersKey][CacheFile.WeatherFileKey]
-                        row.append(os.path.basename(full_weather_path))
+                if self.current_workflow.uses_weather:
+                    if CacheFile.ParametersKey in cached_file_info:
+                        if CacheFile.WeatherFileKey in cached_file_info[CacheFile.ParametersKey]:
+                            full_weather_path = cached_file_info[CacheFile.ParametersKey][CacheFile.WeatherFileKey]
+                            row.append(os.path.basename(full_weather_path))
+                        else:
+                            row.append('<no_weather_files>')
                     else:
-                        row.append('<no_weather_files>')
-                else:
-                    row.append('<no_weather_file>')
+                        row.append('<no_weather_file>')
                 if CacheFile.ResultsKey in cached_file_info:
                     for column in workflow_columns:
                         if column in cached_file_info[CacheFile.ResultsKey]:
@@ -330,9 +337,13 @@ class EpLaunchFrame(wx.Frame):
             if row[0] == previous_selected_file:
                 self.control_file_list.Focus(i)
                 self.control_file_list.Select(i)
-        self.control_file_list.SetColumnWidth(0, -1)  # autosize column width
-        if self.control_file_list.GetColumnCount() > 1:
-            self.control_file_list.SetColumnWidth(1, -1)  # autosize column width
+        for i in range(self.control_file_list.GetColumnCount()):
+            self.control_file_list.SetColumnWidth(i, wx.LIST_AUTOSIZE_USEHEADER)
+            wh = self.control_file_list.GetColumnWidth(i)
+            self.control_file_list.SetColumnWidth(i, wx.LIST_AUTOSIZE)
+            wc = self.control_file_list.GetColumnWidth(i)
+            if wh > wc:
+                self.control_file_list.SetColumnWidth(i, wx.LIST_AUTOSIZE_USEHEADER)
 
         # clear all the items from the raw list as well and add all of them back
         self.raw_file_list.DeleteAllItems()
@@ -658,10 +669,10 @@ class EpLaunchFrame(wx.Frame):
             self.primary_toolbar.Bind(wx.EVT_CHOICE, self.handle_choice_selection_change, self.workflow_choice)
 
         file_open_bmp = wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN, wx.ART_TOOLBAR, t_size)
-        tb_weather = self.primary_toolbar.AddTool(
+        self.tb_weather = self.primary_toolbar.AddTool(
             10, "Weather", file_open_bmp, wx.NullBitmap, wx.ITEM_NORMAL, "Weather", "Select a weather file", None
         )
-        self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_select_new_weather, tb_weather)
+        self.primary_toolbar.Bind(wx.EVT_TOOL, self.handle_select_new_weather, self.tb_weather)
 
         forward_bmp = wx.ArtProvider.GetBitmap(wx.ART_GO_FORWARD, wx.ART_TOOLBAR, t_size)
         run_button_id = 20
@@ -894,30 +905,31 @@ class EpLaunchFrame(wx.Frame):
             self.current_workflow.name
         )
         weather_file_to_use = False
-        if self.selected_file in files_in_current_workflow:
-            cached_file_info = files_in_current_workflow[self.selected_file]
-            if CacheFile.ParametersKey in cached_file_info:
-                if CacheFile.WeatherFileKey in cached_file_info[CacheFile.ParametersKey]:
-                    weather_file_to_use = cached_file_info[CacheFile.ParametersKey][CacheFile.WeatherFileKey]
-        if not weather_file_to_use:
-            w = WeatherDialog(self, title='Weather File Selection')
-            recent_files = [x.ItemLabel for x in self.weather_recent.menu_items_for_files]
-            favorite_files = [x.ItemLabel for x in self.weather_favorites.menu_items_for_files]
-            w.initialize(recent_files=recent_files, favorite_files=favorite_files)
-            response = w.ShowModal()
-            if response == WeatherDialog.CLOSE_SIGNAL_CANCEL:
-                return  # might need to do some other clean up
-            else:  # a valid response was encountered
-                if not w.selected_weather_file:
-                    weather_file_to_use = self.DD_Only_String
-                else:
-                    weather_file_to_use = w.selected_weather_file
-        self.current_cache.add_config(
-            self.current_workflow.name,
-            self.selected_file,
-            {'weather': weather_file_to_use}
-        )
-        self.update_file_lists()
+        if self.current_workflow.uses_weather:
+            if self.selected_file in files_in_current_workflow:
+                cached_file_info = files_in_current_workflow[self.selected_file]
+                if CacheFile.ParametersKey in cached_file_info:
+                    if CacheFile.WeatherFileKey in cached_file_info[CacheFile.ParametersKey]:
+                        weather_file_to_use = cached_file_info[CacheFile.ParametersKey][CacheFile.WeatherFileKey]
+            if not weather_file_to_use:
+                w = WeatherDialog(self, title='Weather File Selection')
+                recent_files = [x.ItemLabel for x in self.weather_recent.menu_items_for_files]
+                favorite_files = [x.ItemLabel for x in self.weather_favorites.menu_items_for_files]
+                w.initialize(recent_files=recent_files, favorite_files=favorite_files)
+                response = w.ShowModal()
+                if response == WeatherDialog.CLOSE_SIGNAL_CANCEL:
+                    return  # might need to do some other clean up
+                else:  # a valid response was encountered
+                    if not w.selected_weather_file:
+                        weather_file_to_use = self.DD_Only_String
+                    else:
+                        weather_file_to_use = w.selected_weather_file
+            self.current_cache.add_config(
+                self.current_workflow.name,
+                self.selected_file,
+                {'weather': weather_file_to_use}
+            )
+            self.update_file_lists()
         self.run_workflow(weather_file_to_use)
         self.update_output_file_status()
 
@@ -1057,6 +1069,9 @@ class EpLaunchFrame(wx.Frame):
     def handle_select_new_weather(self, event):
         if not self.selected_file:
             self.show_error_message("Select a file first before trying to assign a weather option")
+            return
+        if not self.current_workflow.uses_weather:
+            self.show_error_message("This workflow doesn't use weather data, try an EnergyPlus workflow")
             return
         w = WeatherDialog(self, title='Weather File Selection')
         recent_files = [x.ItemLabel for x in self.weather_recent.menu_items_for_files]

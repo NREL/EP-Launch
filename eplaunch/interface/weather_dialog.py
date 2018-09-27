@@ -65,6 +65,7 @@ class WeatherDialog(wx.Dialog):
             single_row_sizer.Add(self.rdo_recent, flag=wx.ALIGN_CENTER_VERTICAL)
             self.choice_recent = wx.Choice(self.panel, choices=recent_files)
             self.choice_recent.SetSelection(0)
+            self.choice_recent.Bind(wx.EVT_CHOICE, self.handle_choice_recent)
             single_row_sizer.Add(self.choice_recent, flag=wx.ALIGN_CENTER_VERTICAL)
             sizer_main_vertical.Add(single_row_sizer, flag=wx.ALL, border=this_border)
 
@@ -76,6 +77,7 @@ class WeatherDialog(wx.Dialog):
             single_row_sizer.Add(self.rdo_fave, flag=wx.ALIGN_CENTER_VERTICAL)
             self.choice_fave = wx.Choice(self.panel, choices=favorite_files)
             self.choice_fave.SetSelection(0)
+            self.choice_fave.Bind(wx.EVT_CHOICE, self.handle_choice_fave)
             single_row_sizer.Add(self.choice_fave, flag=wx.ALIGN_CENTER_VERTICAL)
             sizer_main_vertical.Add(single_row_sizer, flag=wx.ALL, border=this_border)
 
@@ -92,12 +94,19 @@ class WeatherDialog(wx.Dialog):
         self.panel.SetSizer(sizer_main_vertical)
         sizer_main_vertical.Fit(self)
 
+    def handle_choice_recent(self, e):
+        self.rdo_recent.SetValue(value=True)
+
+    def handle_choice_fave(self, e):
+        self.rdo_fave.SetValue(value=True)
+
     def handle_select_new_file(self, e):
         filename = wx.FileSelector("Select weather file", wildcard="Weather File(*.epw)|*.epw",
                                    flags=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
         if filename == '':
             return  # user cancelled
         self.text_select_file.SetValue(filename)
+        self.rdo_select.SetValue(value=True)
 
     def handle_close_ok(self, e):
         if self.rdo_dd.GetValue():
