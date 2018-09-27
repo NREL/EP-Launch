@@ -13,7 +13,7 @@ class FailedWorkflowDetails:
 
 class WorkflowDetail:
     def __init__(self, workflow_class, name, context, output_suffixes, file_types, columns,
-                 directory, description, is_energyplus, version_id):
+                 directory, description, is_energyplus, uses_weather, version_id):
         self.workflow_class = workflow_class
         self.name = name
         self.context = context
@@ -23,6 +23,7 @@ class WorkflowDetail:
         self.workflow_directory = directory
         self.description = description
         self.is_energyplus = is_energyplus
+        self.uses_weather = uses_weather
         self.version_id = version_id
         self.output_toolbar_order = None
 
@@ -121,6 +122,7 @@ def get_workflows(external_workflow_directories, disable_builtins=False):
                         workflow_output_suffixes = workflow_instance.get_output_suffixes()
                         workflow_columns = workflow_instance.get_interface_columns()
                         workflow_context = workflow_instance.context()
+                        workflow_weather = workflow_instance.uses_weather()
 
                         file_type_string = "("
                         first = True
@@ -132,7 +134,7 @@ def get_workflows(external_workflow_directories, disable_builtins=False):
                             file_type_string += file_type
                         file_type_string += ")"
 
-                        description = "%s: %s %s" % (workflow_context, workflow_name, file_type_string)
+                        description = "%s %s" % (workflow_name, file_type_string)
 
                         work_flows.append(
                             WorkflowDetail(
@@ -145,6 +147,7 @@ def get_workflows(external_workflow_directories, disable_builtins=False):
                                 workflow_directory,
                                 description,
                                 dir_is_eplus,
+                                workflow_weather,
                                 version_id
                             )
                         )
