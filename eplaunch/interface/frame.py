@@ -540,6 +540,7 @@ class EpLaunchFrame(wx.Frame):
         self.output_toolbar.Realize()
 
     def show_first_time_welcome(self):
+        # we don't want to try to show the window during testing!!
         welcome_already_shown = self.config.Read('/ActiveWindow/WelcomeAlreadyShown', '')
         if not welcome_already_shown:  # it's never been shown
             WelcomeDialog(self, title='Welcome!').ShowModal()
