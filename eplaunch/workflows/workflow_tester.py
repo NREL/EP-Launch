@@ -45,7 +45,7 @@ class WorkflowTesting(object):
             return 1
         except Exception as e:
             # there's always the potential of some other unforeseen thing going on when a workflow is executed
-            print("ERROR: Unexpected error occurred trying to import workflow: %s" % file_path)
+            print("ERROR: Unexpected error occurred trying to import workflow: %s: %a" % file_path, e)
             return 1
 
         successful_classes = 0
