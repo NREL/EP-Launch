@@ -57,7 +57,6 @@ class FileNameMenus(object):
                 break
             if menu_item.GetId() == self.start_separator_id:
                 mode = True
-        return
 
     def compute_file_menu_id(self, index):
         return self.start_separator_id * 20 + index
@@ -96,7 +95,6 @@ class FileNameMenus(object):
             self.add_file_name_list(list_of_items)
             self.get_file_list()
         self.put_checkmark_on_item(path)
-        return self.file_name_to_id[path]
 
     def add_favorite(self, path):
         list_of_items = self.get_file_list()

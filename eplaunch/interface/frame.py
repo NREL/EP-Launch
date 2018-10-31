@@ -1096,7 +1096,7 @@ class EpLaunchFrame(wx.Frame):
         # update recent and favorites if we chose an actual file
         if w.selected_weather_file:
             self.weather_recent.uncheck_all()
-            new_id = self.weather_recent.add_recent(filename)
+            self.weather_recent.add_recent(filename)
             for menu_item in self.weather_recent.menu_items_for_files:
                 self.Bind(wx.EVT_MENU, self.handle_weather_recent_menu_selection, menu_item)
             self.weather_favorites.uncheck_all()
