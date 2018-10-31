@@ -899,6 +899,8 @@ class EpLaunchFrame(wx.Frame):
         if not self.current_workflow or not self.selected_file or not self.selected_directory:
             return  # error
         self.folder_recent.add_recent(self.directory_tree_control.GetPath())
+        for menu_item in self.folder_recent.menu_items_for_files:
+            self.Bind(wx.EVT_MENU, self.handle_folder_recent_menu_selection, menu_item)
         # resolve weather file status, if one isn't selected, make sure one gets selected
         # I'm not sure if we need to recreate the cache file here, we'll see
         files_in_current_workflow = self.current_cache.get_files_for_workflow(
@@ -1120,6 +1122,8 @@ class EpLaunchFrame(wx.Frame):
 
     def handle_add_current_folder_to_favorites_menu_selection(self, event):
         self.folder_favorites.add_favorite(self.directory_tree_control.GetPath())
+        for menu_item in self.folder_favorites.menu_items_for_files:
+            self.Bind(wx.EVT_MENU, self.handle_folder_favorites_menu_selection, menu_item)
 
     def handle_remove_current_folder_from_favorites_menu_selection(self, event):
         self.folder_favorites.remove_favorite(self.directory_tree_control.GetPath())
@@ -1142,6 +1146,8 @@ class EpLaunchFrame(wx.Frame):
 
     def handle_add_current_weather_to_favorites_menu_selection(self, event):
         self.weather_favorites.add_favorite(self.current_weather_file)
+        for menu_item in self.weather_favorites.menu_items_for_files:
+            self.Bind(wx.EVT_MENU, self.handle_weather_favorites_menu_selection, menu_item)
 
     def handle_remove_current_weather_from_favorites_menu_selection(self, event):
         self.weather_favorites.remove_favorite(self.current_weather_file)
