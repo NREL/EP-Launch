@@ -98,7 +98,7 @@ def get_workflows(external_workflow_directories, disable_builtins=False):
             except Exception as e:
                 # there's always the potential of some other unforeseen thing going on when a workflow is executed
                 warnings.append(
-                    "Unexpected error occurred trying to import workflow: %s: %s" % (this_file_path, e)
+                    "Unexpected error occurred trying to import workflow: %s: %s" % (this_file_path, str(e))
                 )
                 continue
 
