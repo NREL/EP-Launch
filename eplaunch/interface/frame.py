@@ -482,9 +482,11 @@ class EpLaunchFrame(wx.Frame):
     def run_workflow(self, weather_file_to_use):
         if self.selected_directory and self.selected_file and self.current_workflow:
             for thread_id, thread in self.workflow_threads.items():
-                if (thread.file_name == self.selected_file
-                        and thread.run_directory == self.selected_directory
-                        and thread.workflow_instance.name() == self.current_workflow.name):
+                if (
+                    thread.file_name == self.selected_file and
+                    thread.run_directory == self.selected_directory and
+                    thread.workflow_instance.name() == self.current_workflow.name
+                ):
                     self.show_error_message('ERROR: This workflow/dir/file combination is already running')
                     return
             new_uuid = str(uuid.uuid4())
