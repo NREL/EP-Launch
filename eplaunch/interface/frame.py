@@ -481,10 +481,11 @@ class EpLaunchFrame(wx.Frame):
 
     def run_workflow(self, weather_file_to_use):
         if self.selected_directory and self.selected_file and self.current_workflow:
-            for thread_id, thread in self.workflow_threads.items():
-                if (thread.file_name == self.selected_file and
-                        thread.run_directory == self.selected_directory and
-                        thread.workflow_instance.name() == self.current_workflow.name):
+            sel_dir = self.selected_directory
+            sel_file = self.selected_file
+            cur_wf = self.current_workflow.name
+            for thread_id, t in self.workflow_threads.items():
+                if t.file_name == sel_file and t.run_directory == sel_dir and t.workflow_instance.name() == cur_wf:
                     self.show_error_message('ERROR: This workflow/dir/file combination is already running')
                     return
             new_uuid = str(uuid.uuid4())
@@ -899,6 +900,8 @@ class EpLaunchFrame(wx.Frame):
         if not self.current_workflow or not self.selected_file or not self.selected_directory:
             return  # error
         self.folder_recent.add_recent(self.directory_tree_control.GetPath())
+        for menu_item in self.folder_recent.menu_items_for_files:
+            self.Bind(wx.EVT_MENU, self.handle_folder_recent_menu_selection, menu_item)
         # resolve weather file status, if one isn't selected, make sure one gets selected
         # I'm not sure if we need to recreate the cache file here, we'll see
         files_in_current_workflow = self.current_cache.get_files_for_workflow(
@@ -1097,6 +1100,8 @@ class EpLaunchFrame(wx.Frame):
         if w.selected_weather_file:
             self.weather_recent.uncheck_all()
             self.weather_recent.add_recent(filename)
+            for menu_item in self.weather_recent.menu_items_for_files:
+                self.Bind(wx.EVT_MENU, self.handle_weather_recent_menu_selection, menu_item)
             self.weather_favorites.uncheck_all()
             self.weather_favorites.put_checkmark_on_item(filename)
 
@@ -1118,6 +1123,8 @@ class EpLaunchFrame(wx.Frame):
 
     def handle_add_current_folder_to_favorites_menu_selection(self, event):
         self.folder_favorites.add_favorite(self.directory_tree_control.GetPath())
+        for menu_item in self.folder_favorites.menu_items_for_files:
+            self.Bind(wx.EVT_MENU, self.handle_folder_favorites_menu_selection, menu_item)
 
     def handle_remove_current_folder_from_favorites_menu_selection(self, event):
         self.folder_favorites.remove_favorite(self.directory_tree_control.GetPath())
@@ -1140,6 +1147,8 @@ class EpLaunchFrame(wx.Frame):
 
     def handle_add_current_weather_to_favorites_menu_selection(self, event):
         self.weather_favorites.add_favorite(self.current_weather_file)
+        for menu_item in self.weather_favorites.menu_items_for_files:
+            self.Bind(wx.EVT_MENU, self.handle_weather_favorites_menu_selection, menu_item)
 
     def handle_remove_current_weather_from_favorites_menu_selection(self, event):
         self.weather_favorites.remove_favorite(self.current_weather_file)

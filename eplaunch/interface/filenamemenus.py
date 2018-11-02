@@ -93,6 +93,7 @@ class FileNameMenus(object):
             list_of_items.insert(0, path)
             self.delete_file_list()
             self.add_file_name_list(list_of_items)
+            self.get_file_list()
         self.put_checkmark_on_item(path)
 
     def add_favorite(self, path):
