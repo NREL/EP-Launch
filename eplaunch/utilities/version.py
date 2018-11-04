@@ -65,7 +65,12 @@ class Version:
         # the rest of the version number should just be separated by periods
         parts = words[0].split(".")
         numeric_version = 0
-        parts = parts[:2]
+        parts = parts[:3]
+        # overwrite the patch number with a zero, or append a zero patch number
+        if len(parts) == 3:
+            parts[2] = 0
+        if len(parts) == 2:
+            parts.append("0")
         for part in parts:
             numeric_version = numeric_version * 100 + int(part)
         return numeric_version
@@ -77,14 +82,18 @@ class Version:
         # the rest of the version number should just be separated by periods
         parts = string_version.split("-")
         numeric_version = 0
-        parts = parts[:2]
+        # overwrite the patch number with a zero, or append a zero patch number
+        if len(parts) == 3:
+            parts[2] = 0
+        if len(parts) == 2:
+            parts.append("0")
         for part in parts:
             numeric_version = numeric_version * 100 + int(part)
         return numeric_version
 
     def string_version_from_number(self, version_number):
         # converts a coded number like 50200 (fictional version 5.2) to string with leading zeros 'V050200'
-        return 'V' + str(version_number).zfill(4)
+        return 'V' + str(version_number).zfill(6)
 
     def check_json_energyplus_version(self, file_path):
         with open(file_path, "r") as readfile:
