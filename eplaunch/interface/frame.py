@@ -1132,6 +1132,12 @@ class EpLaunchFrame(wx.Frame):
     def handle_weather_recent_menu_selection(self, event):
         menu_item = self.weather_menu.FindItemById(event.GetId())
         self.current_weather_file = menu_item.GetLabel()
+        self.current_cache.add_config(
+            self.current_workflow.name,
+            self.selected_file,
+            {'weather': self.current_weather_file}
+        )
+        self.update_file_lists()
         self.weather_recent.uncheck_all()
         self.weather_recent.put_checkmark_on_item(self.current_weather_file)
         self.weather_favorites.uncheck_all()
@@ -1140,6 +1146,12 @@ class EpLaunchFrame(wx.Frame):
     def handle_weather_favorites_menu_selection(self, event):
         menu_item = self.weather_menu.FindItemById(event.GetId())
         self.current_weather_file = menu_item.GetLabel()
+        self.current_cache.add_config(
+            self.current_workflow.name,
+            self.selected_file,
+            {'weather': self.current_weather_file}
+        )
+        self.update_file_lists()
         self.weather_recent.uncheck_all()
         self.weather_recent.put_checkmark_on_item(self.current_weather_file)
         self.weather_favorites.uncheck_all()
