@@ -16,10 +16,7 @@ jobs:
 
     - name: Install Pip Dependencies
       shell: bash
-      run: |
-        set -x
-        pip install --upgrade pip
-        pip install --user coveralls nose wxpython
+      run: pip install --user coveralls nose wxpython
 
     - name: Run headless test
       uses: GabrielBB/xvfb-action@v1
