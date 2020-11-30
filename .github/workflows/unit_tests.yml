@@ -1,4 +1,4 @@
-name: Mac Unit Tests
+name: Linux Unit Tests
 
 on: [push]
 
@@ -7,14 +7,22 @@ jobs:
     strategy:
       matrix:
         include:
+          - os: ubuntu-18.04
+            wxpython: https://extras.wxpython.org/wxPython4/extras/linux/gtk2/ubuntu-18.04/wxPython-4.1.0-cp37-cp37m-linux_x86_64.whl
+            python: xvfb-run python3
+            pip_arg: ""
+          - os: ubuntu-20.04
+            wxpython: https://extras.wxpython.org/wxPython4/extras/linux/gtk2/ubuntu-18.04/wxPython-4.1.0-cp37-cp37m-linux_x86_64.whl
+            python: xvfb-run python3
+            pip_arg: ""
           - os: macos-10.15
             wxpython: wxpython
             python: python3
             pip_arg: ""
-
-
-
-
+          - os: windows-2019
+            wxpython: wxpython
+            python: python
+            pip_arg: --user
 
     runs-on: ${{ matrix.os }}
 
