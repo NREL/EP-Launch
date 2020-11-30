@@ -1,13 +1,10 @@
-name: Linux Unit Tests
+name: Windows Unit Tests
 
 on: [push]
 
 jobs:
   unit_tests:
-    strategy:
-      matrix:
-        os: [ ubuntu-18.04, ubuntu-20.04 ]
-    runs-on: ${{ matrix.os }}
+    runs-on: windows-2019
 
     steps:
     - uses: actions/checkout@v2
@@ -22,12 +19,12 @@ jobs:
       run: |
         set -x
         pip install --upgrade pip
-        pip install coveralls nose
-        pip install https://extras.wxpython.org/wxPython4/extras/linux/gtk2/ubuntu-18.04/wxPython-4.1.0-cp37-cp37m-linux_x86_64.whl
+        pip install coveralls nose wxpython
 
-    - name: Run Tests
-      shell: bash
-      run: xvfb-run python3 ${{ github.workspace }}/setup.py nosetests
+    - name: Run headless test
+      uses: GabrielBB/xvfb-action@v1
+      with:
+        run: python3 setup.py nosetests
 
     - name: Coveralls
       env:
