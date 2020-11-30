@@ -17,10 +17,6 @@ jobs:
       with:
         python-version: 3.7
 
-    - name: Install Apt Dependencies
-      shell: bash
-      run: sudo apt install xvfb
-
     - name: Install Pip Dependencies
       shell: bash
       run: |
@@ -31,7 +27,7 @@ jobs:
 
     - name: Run Tests
       shell: bash
-      run: xvfb-run nosetests --with-coverage --cover-erase
+      run: xvfb-run python3 setup.py nosetests
 
     - name: Submit Coverage
       shell: bash
