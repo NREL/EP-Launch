@@ -4,7 +4,19 @@ on: [push]
 
 jobs:
   unit_tests:
-    runs-on: macos-10.15
+    strategy:
+      matrix:
+        include:
+          - os: macos-10.15
+            wxpython: wxpython
+            python: python3
+            pip_arg: ""
+
+
+
+
+
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v2
@@ -16,11 +28,11 @@ jobs:
 
     - name: Install Pip Dependencies
       shell: bash
-      run: pip install coveralls nose wxpython
+      run: pip install ${{ matrix.pip_arg }} coveralls nose ${{ matrix.wxpython }}
 
-    - name: Run headless test
+    - name: Run Tests
       shell: bash
-      run: python3 setup.py nosetests
+      run: ${{ matrix.python }} setup.py nosetests
 
     - name: Coveralls
       env:
