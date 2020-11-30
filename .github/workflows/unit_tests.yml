@@ -28,21 +28,17 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-
     - name: Set up Python 3.7
       uses: actions/setup-python@v2
       with:
         python-version: 3.7
-
     - name: Install Pip Dependencies
       shell: bash
       run: pip install ${{ matrix.pip_arg }} coveralls nose ${{ matrix.wxpython }}
-
     - name: Run Tests
       shell: bash
       run: ${{ matrix.python }} setup.py nosetests
-
-    - name: Coveralls
+    - name: Upload Coverage Results
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: coveralls

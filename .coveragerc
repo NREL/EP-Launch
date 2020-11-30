@@ -8,7 +8,7 @@ omit =
         .tox/*
         *.pyenv*
         *.venv*
-
+        */AppData/*
         setup.py
         eplaunch/runner.py
         eplaunch/interface/application.py
