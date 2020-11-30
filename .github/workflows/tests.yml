@@ -1,0 +1,39 @@
+name: Mac Build
+
+on: [push]
+
+jobs:
+  linux_tests:
+    strategy:
+      matrix:
+        os: [ ubuntu-18.04, ubuntu-20.04, macos-10.15 ]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v2
+#
+    - name: Set up Python 3.7
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
+
+    - name: Install Pip Dependencies
+      shell: bash
+      runs: |
+        set -x
+        pip install --upgrade pip
+        pip install tox coveralls
+        pip install https://extras.wxpython.org/wxPython4/extras/linux/gtk2/ubuntu-14.04/wxPython-4.0.3-cp36-cp36m-linux_x86_64.whl
+
+    - name: Run Tests
+      shell: bash
+      runs: |
+        set -x
+        echo "DISPLAY=:99.0" >> $GITHUB_ENV
+        sh -e /etc/init.d/xvfb start
+        sleep 3
+        nosetests --with-coverage --cover-erase
+
+    - name: Submit Coverage
+      shell: bash
+      runs: coveralls

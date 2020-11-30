@@ -36,8 +36,8 @@ class FileNameMenus(object):
             if menu_item.GetId() == self.end_separator_id:
                 mode = False
             if mode:
-                list_of_menu_item_labels.append(menu_item.GetLabel())
-                self.file_name_to_id[menu_item.GetLabel()] = menu_item.GetId()
+                list_of_menu_item_labels.append(menu_item.GetItemLabel())
+                self.file_name_to_id[menu_item.GetItemLabel()] = menu_item.GetId()
             if menu_item.GetId() == self.start_separator_id:
                 mode = True
         return list_of_menu_item_labels
@@ -66,7 +66,7 @@ class FileNameMenus(object):
         #    HKEY_CURRENT_USER\Software\EP-Launch3
         self.config.WriteInt(self.path_to_config + "/Count", len(self.menu_items_for_files))
         # save menu items to configuration file
-        menu_labels = [menu_item.GetLabel() for menu_item in self.menu_items_for_files]
+        menu_labels = [menu_item.GetItemLabel() for menu_item in self.menu_items_for_files]
         for count, menu_label in enumerate(menu_labels):
             self.config.Write(self.path_to_config + "/Path-{:02d}".format(count), menu_label)
 

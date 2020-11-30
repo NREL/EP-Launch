@@ -172,7 +172,8 @@ class EpLaunchFrame(wx.Frame):
     def update_workflow_dependent_gui_items(self, workflow_name):
         if not self.current_workflow:
             return
-        self.menu_output_toolbar.SetText("%s Output Toolbar..." % self.current_workflow.name)
+        print(dir(self.menu_output_toolbar))
+        self.menu_output_toolbar.SetItemLabel("%s Output Toolbar..." % self.current_workflow.name)
         self.update_output_menu()
         self.update_output_toolbar()
         self.repopulate_help_menu()
@@ -413,7 +414,7 @@ class EpLaunchFrame(wx.Frame):
     def disable_output_menu_items(self):
         output_menu_items = self.output_menu.GetMenuItems()
         for output_menu_item in output_menu_items:
-            if output_menu_item.GetLabel() != "Extra":
+            if output_menu_item.GetItemLabel() != "Extra":
                 output_menu_item.Enable(False)
         if self.extra_output_menu is not None:
             extra_output_menu_items = self.extra_output_menu.GetMenuItems()
@@ -423,13 +424,13 @@ class EpLaunchFrame(wx.Frame):
     def enable_existing_menu_items(self, path_no_ext):
         output_menu_items = self.output_menu.GetMenuItems()
         for output_menu_item in output_menu_items:
-            if output_menu_item.GetLabel() != "Extra":
-                if os.path.exists(path_no_ext + output_menu_item.GetLabel()):
+            if output_menu_item.GetItemLabel() != "Extra":
+                if os.path.exists(path_no_ext + output_menu_item.GetItemLabel()):
                     output_menu_item.Enable(True)
         if self.extra_output_menu is not None:
             extra_output_menu_items = self.extra_output_menu.GetMenuItems()
             for extra_output_menu_item in extra_output_menu_items:
-                if os.path.exists(path_no_ext + extra_output_menu_item.GetLabel()):
+                if os.path.exists(path_no_ext + extra_output_menu_item.GetItemLabel()):
                     extra_output_menu_item.Enable(True)
 
     def disable_output_toolbar_buttons(self):
@@ -454,7 +455,7 @@ class EpLaunchFrame(wx.Frame):
         menu_list = self.option_version_menu.GetMenuItems()
         for menu_item in menu_list:
             if menu_item.IsChecked():
-                current_selected_context = menu_item.GetLabel()
+                current_selected_context = menu_item.GetItemLabel()
                 break
         return current_selected_context
 
@@ -1107,17 +1108,17 @@ class EpLaunchFrame(wx.Frame):
 
     def handle_folder_recent_menu_selection(self, event):
         menu_item = self.folder_menu.FindItemById(event.GetId())
-        print('from frame.py - folder recent clicked menu item:', menu_item.GetLabel(), menu_item.GetId())
+        print('from frame.py - folder recent clicked menu item:', menu_item.GetItemLabel(), menu_item.GetId())
         self.folder_recent.uncheck_other_items(menu_item)
-        real_path = os.path.abspath(menu_item.GetLabel())
+        real_path = os.path.abspath(menu_item.GetItemLabel())
         self.directory_tree_control.SelectPath(real_path, True)
         self.directory_tree_control.ExpandPath(real_path)
 
     def handle_folder_favorites_menu_selection(self, event):
         menu_item = self.folder_menu.FindItemById(event.GetId())
-        print('from frame.py - folder favorites clicked menu item:', menu_item.GetLabel(), menu_item.GetId())
+        print('from frame.py - folder favorites clicked menu item:', menu_item.GetItemLabel(), menu_item.GetId())
         self.folder_favorites.uncheck_other_items(menu_item)
-        real_path = os.path.abspath(menu_item.GetLabel())
+        real_path = os.path.abspath(menu_item.GetItemLabel())
         self.directory_tree_control.SelectPath(real_path, True)
         self.directory_tree_control.ExpandPath(real_path)
 
@@ -1131,7 +1132,7 @@ class EpLaunchFrame(wx.Frame):
 
     def handle_weather_recent_menu_selection(self, event):
         menu_item = self.weather_menu.FindItemById(event.GetId())
-        self.current_weather_file = menu_item.GetLabel()
+        self.current_weather_file = menu_item.GetItemLabel()
         self.current_cache.add_config(
             self.current_workflow.name,
             self.selected_file,
@@ -1145,7 +1146,7 @@ class EpLaunchFrame(wx.Frame):
 
     def handle_weather_favorites_menu_selection(self, event):
         menu_item = self.weather_menu.FindItemById(event.GetId())
-        self.current_weather_file = menu_item.GetLabel()
+        self.current_weather_file = menu_item.GetItemLabel()
         self.current_cache.add_config(
             self.current_workflow.name,
             self.selected_file,
@@ -1181,7 +1182,7 @@ class EpLaunchFrame(wx.Frame):
         full_path_name = os.path.join(self.selected_directory, self.selected_file)
         menu_item = self.output_menu.FindItemById(event.GetId())
         output_file_name = self.file_name_manipulator.replace_extension_with_suffix(full_path_name,
-                                                                                    menu_item.GetLabel())
+                                                                                    menu_item.GetItemLabel())
         if os.path.exists(output_file_name):
             self.external_runner.run_program_by_extension(output_file_name)
         else:
@@ -1191,7 +1192,7 @@ class EpLaunchFrame(wx.Frame):
         full_path_name = os.path.join(self.selected_directory, self.selected_file)
         menu_item = self.extra_output_menu.FindItemById(event.GetId())
         output_file_name = self.file_name_manipulator.replace_extension_with_suffix(full_path_name,
-                                                                                    menu_item.GetLabel())
+                                                                                    menu_item.GetItemLabel())
         if os.path.exists(output_file_name):
             self.external_runner.run_program_by_extension(output_file_name)
         else:
@@ -1323,7 +1324,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                 menu_list[last_menu_item_index].Check(True)
         else:
             for menu_item in menu_list:
-                if menu_item.GetLabel() == possible_selected_version:
+                if menu_item.GetItemLabel() == possible_selected_version:
                     menu_item.Check(True)
                     break
 
