@@ -22,9 +22,9 @@ jobs:
         pip install coveralls nose wxpython
 
     - name: Run headless test
-        uses: GabrielBB/xvfb-action@v1
-        with:
-          run: python3 setup.py nosetests
+      uses: GabrielBB/xvfb-action@v1
+      with:
+        run: python3 setup.py nosetests
 
     - name: Coveralls
       env:
