@@ -1,6 +1,3 @@
-# Might want to convert over the xcode9.4 osx_image, which appears to have Python 3.6
-# https://blog.travis-ci.com/2018-07-19-xcode9-4-default-announce
-
 os: linux
 language: python
 
@@ -10,39 +7,13 @@ matrix:
           dist: trusty
           sudo: required
           python: 3.6
-          env: TOX_ENV=linuxtest
-        - os: linux
-          dist: trusty
-          sudo: required
-          python: 3.6
-          env: TOX_ENV=flake8
-        - os: linux
-          dist: trusty
-          sudo: required
-          python: 3.6
           env: TOX_ENV=linuxpackage
         - os: osx
           language: generic
           env: TOX_ENV=macpackage
 
-before_install: |
-  if [ "$TRAVIS_OS_NAME" == "osx" ]; then
-    git clone https://github.com/MacPython/terryfy.git
-    source terryfy/travis_tools.sh
-    get_python_environment macpython 3.6 venv
-  fi
-
-install:
-- pip install --upgrade pip
-- pip install tox coveralls
-
 script:
 - tox -e $TOX_ENV
-
-after_success: |
-  if [ "$TOX_ENV" == "linuxtest" ]; then
-    coveralls
-  fi
 
 deploy:
   - provider: releases
