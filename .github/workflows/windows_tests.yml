@@ -19,7 +19,7 @@ jobs:
       run: |
         set -x
         pip install --upgrade pip
-        pip install coveralls nose wxpython
+        pip install --user coveralls nose wxpython
 
     - name: Run headless test
       uses: GabrielBB/xvfb-action@v1
