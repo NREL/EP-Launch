@@ -27,7 +27,7 @@ jobs:
 
     - name: Run Tests
       shell: bash
-      run: xvfb-run python3 ${{ github.workspace }}/EP-Launch/setup.py nosetests
+      run: xvfb-run python3 ${{ github.workspace }}/setup.py nosetests
 
     - name: Submit Coverage
       shell: bash
