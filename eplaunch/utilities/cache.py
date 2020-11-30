@@ -82,6 +82,7 @@ class CacheFile(object):
         :return: None
         """
 
+
         # if there is already a config for this workflow/file, update it
         # if something is missing from the structure, initialize it on each stage
         self._print("Adding file attribute for workflow: %s, file: %s" % (workflow_name, file_name))
