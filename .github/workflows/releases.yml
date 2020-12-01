@@ -36,7 +36,7 @@ jobs:
 
     - name: Build
       shell: bash
-      run: pyinstaller ${{ matrix.pyinstall_args }} specs/eplaunch.spec
+      run: pyinstaller ${{ matrix.pyinstall_args }} eplaunch.spec
         # pyinstaller wf_tester.spec
 
     - name: Upload
