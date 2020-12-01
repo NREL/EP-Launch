@@ -6,7 +6,15 @@ jobs:
   release:
     strategy:
       matrix:
-        os: [ubuntu-20.04, ubuntu-18.04]
+        include:
+          - os: ubuntu-20.04
+            pyinstall_args: ""
+          - os: ubuntu-18.04
+            pyinstall_args: ""
+          - os: macos-10.15
+            pyinstall_args: --onefile --windowed
+          - os: windows-2019
+            pyinstall_args: --windowed
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -23,7 +31,7 @@ jobs:
 
     - name: Build
       shell: bash
-      run: pyinstaller eplaunch.spec
+      run: pyinstaller ${{ matrix.pyinstall_args }} eplaunch.spec
         # pyinstaller wf_tester.spec
 
     - name: Upload
