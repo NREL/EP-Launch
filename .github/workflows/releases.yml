@@ -9,12 +9,17 @@ jobs:
         include:
           - os: ubuntu-20.04
             pyinstall_args: ""
+            wxpython: https://extras.wxpython.org/wxPython4/extras/linux/gtk2/ubuntu-18.04/wxPython-4.1.0-cp37-cp37m-linux_x86_64.whl
           - os: ubuntu-18.04
             pyinstall_args: ""
+            wxpython: https://extras.wxpython.org/wxPython4/extras/linux/gtk2/ubuntu-18.04/wxPython-4.1.0-cp37-cp37m-linux_x86_64.whl
           - os: macos-10.15
             pyinstall_args: --onefile --windowed
+            wxpython: wxpython
           - os: windows-2019
             pyinstall_args: --windowed
+            wxpython: wxpython
+
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -27,7 +32,7 @@ jobs:
 
     - name: Install Pip Dependencies
       shell: bash
-      run: pip install pyinstaller pypubsub https://extras.wxpython.org/wxPython4/extras/linux/gtk2/ubuntu-18.04/wxPython-4.1.0-cp37-cp37m-linux_x86_64.whl
+      run: pip install pyinstaller pypubsub ${{ matrix.wxpython }}
 
     - name: Build
       shell: bash
