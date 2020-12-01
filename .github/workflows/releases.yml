@@ -1,0 +1,35 @@
+name: Releases
+
+on: [push]
+
+jobs:
+  release:
+    strategy:
+      matrix:
+        os: [ubuntu-18.04, ubuntu-20.04]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Python 3.7
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
+
+    - name: Install Pip Dependencies
+      shell: bash
+      run: pip install https://extras.wxpython.org/wxPython4/extras/linux/gtk2/ubuntu-18.04/wxPython-4.1.0-cp37-cp37m-linux_x86_64.whl
+
+    - name: Do Packaging
+      shell: bash
+      run: |
+        echo "VERSION=$(grep VERSION eplaunch/__init__.py | cut -d= -f2 | cut -d\" -f2)" >> $GITHUB_ENV
+        echo "SHA=$(echo "${TRAVIS_COMMIT}" | cut -c 1-8)" >> $GITHUB_ENV
+        pyinstaller eplaunch.spec
+        pyinstaller wf_tester.spec
+        tar -C dist -zcf EPLaunch-"${VERSION}"-"${SHA}"-linux.tar.gz EPLaunch
+        tar -C dist -zcf EPLaunchWorkflowTester-"${VERSION}"-"${SHA}"-linux.tar.gz EpLaunchWorkflowTester
+        mkdir tmp_build
+        cp EPLaunch-"${VERSION}"-"${SHA}"-linux.tar.gz tmp_build
+        cp EPLaunchWorkflowTester-"${VERSION}"-"${SHA}"-linux.tar.gz tmp_build
