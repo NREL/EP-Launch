@@ -8,7 +8,7 @@ omit =
         .tox/*
         *.pyenv*
         *.venv*
-
+        */AppData/*
         setup.py
         eplaunch/runner.py
         eplaunch/interface/application.py
@@ -20,4 +20,3 @@ omit =
         eplaunch/interface/workflow_directories_dialog.py
         eplaunch/interface/workflow_output_dialog.py
         eplaunch/interface/workflow_processing.py
-        eplaunch/workflows/*
