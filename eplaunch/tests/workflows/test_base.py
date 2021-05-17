@@ -82,6 +82,11 @@ class TestBaseWorkflowFunctionality(unittest.TestCase):
         pass
 
     def test_run_fake_workflow(self):
+        self.workflow.name()
+        self.workflow.context()
+        self.workflow.description()
+        self.workflow.get_file_types()
+        self.workflow.get_output_suffixes()
         self.workflow.register_standard_output_callback(
             0,
             TestBaseWorkflowFunctionality.callback
