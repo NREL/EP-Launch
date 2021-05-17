@@ -5,10 +5,10 @@ import platform
 from importlib import util as import_util
 
 
-class FailedWorkflowDetails:
-    def __init__(self, workflow_file_path, message):
-        self.workflow_file_path = workflow_file_path
-        self.message = message
+# class FailedWorkflowDetails:
+#     def __init__(self, workflow_file_path, message):
+#         self.workflow_file_path = workflow_file_path
+#         self.message = message
 
 
 class WorkflowDetail:
@@ -29,17 +29,6 @@ class WorkflowDetail:
 
 
 def get_workflows(external_workflow_directories, disable_builtins=False):
-    # until we actually remove the E+ related workflows from the ep-launch repo, we should at least
-    # ignore them in the UI so the user isn't confused
-    builtin_blacklist = [
-        'app_g_postprocess.py',
-        'calc_soil_surface_temp.py',
-        'coeff_check.py',
-        'coeff_conv.py',
-        'energyplus.py',
-        'transition.py'
-    ]
-
     this_file_directory_path = os.path.dirname(os.path.realpath(__file__))
     built_in_workflow_directory = os.path.join(this_file_directory_path, 'default')
     all_workflow_directories = external_workflow_directories
@@ -71,8 +60,6 @@ def get_workflows(external_workflow_directories, disable_builtins=False):
 
         modules = []
         for this_file in os.listdir(workflow_directory):
-            if workflow_directory == built_in_workflow_directory and this_file in builtin_blacklist:
-                continue
             if not this_file.endswith('py'):
                 continue
             if '__init__.py' in this_file:
@@ -95,7 +82,7 @@ def get_workflows(external_workflow_directories, disable_builtins=False):
                     "Syntax error occurred on workflow file %s, line %s: %s" % (this_file_path, se.lineno, se.msg)
                 )
                 continue
-            except Exception as e:
+            except Exception as e:  # pragma: no cover
                 # there's always the potential of some other unforeseen thing going on when a workflow is executed
                 warnings.append(
                     "Unexpected error occurred trying to import workflow: %s: %s" % (this_file_path, str(e))
