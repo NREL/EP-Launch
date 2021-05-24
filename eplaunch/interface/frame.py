@@ -172,7 +172,7 @@ class EpLaunchFrame(wx.Frame):
     def update_workflow_dependent_gui_items(self, workflow_name):
         if not self.current_workflow:
             return
-        print(dir(self.menu_output_toolbar))
+        # print(dir(self.menu_output_toolbar))
         self.menu_output_toolbar.SetItemLabel("%s Output Toolbar..." % self.current_workflow.name)
         self.update_output_menu()
         self.update_output_toolbar()
