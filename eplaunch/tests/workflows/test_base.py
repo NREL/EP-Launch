@@ -22,6 +22,10 @@ class TestBaseWorkflowMethods(unittest.TestCase):
         with self.assertRaises(NotImplementedError):
             self.base_workflow.name()
 
+    def test_context_abstract(self):
+        with self.assertRaises(NotImplementedError):
+            self.base_workflow.context()
+
     def test_description_abstract(self):
         with self.assertRaises(NotImplementedError):
             self.base_workflow.description()
@@ -43,3 +47,49 @@ class TestBaseWorkflowMethods(unittest.TestCase):
     def test_main_abstract(self):
         with self.assertRaises(NotImplementedError):
             self.base_workflow.main('run_dir', 'file_name', ['arg1'])
+
+
+class TestBaseWorkflowFunctionality(unittest.TestCase):
+    class MyFakeWorkflow(BaseEPLaunchWorkflow1):
+        def name(self):
+            pass
+
+        def context(self):
+            pass
+
+        def description(self):
+            pass
+
+        def get_file_types(self):
+            pass
+
+        def get_output_suffixes(self):
+            pass
+
+        def main(self, run_directory, file_name, args):
+            self.callback("Hello")
+            # I don't quite understand why but Python is skipping over this in getting coverage as well as
+            # in the debugger.  I can step into the base class callback() function call just above, but when I step
+            # into this next line it just acts like nothing happens.  I can run all the workflows from the GUI though
+            # so I know this is generally working fine.  I'm not really sure.
+            self.execute_for_callback(['sleep', '1'], '/')
+
+    def setUp(self):
+        self.workflow = TestBaseWorkflowFunctionality.MyFakeWorkflow()
+
+    @staticmethod
+    def callback(my_id, msg):
+        pass
+
+    def test_run_fake_workflow(self):
+        self.workflow.name()
+        self.workflow.context()
+        self.workflow.description()
+        self.workflow.get_file_types()
+        self.workflow.get_output_suffixes()
+        self.workflow.register_standard_output_callback(
+            0,
+            TestBaseWorkflowFunctionality.callback
+        )
+        self.workflow.main(".", "", [])
+        self.workflow.abort()

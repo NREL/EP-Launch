@@ -5,6 +5,7 @@ source =
 omit =
         /usr/*
         /tmp/*
+        /private/*
         .tox/*
         *.pyenv*
         *.venv*
@@ -20,3 +21,5 @@ omit =
         eplaunch/interface/workflow_directories_dialog.py
         eplaunch/interface/workflow_output_dialog.py
         eplaunch/interface/workflow_processing.py
+        eplaunch/workflows/default/*
+        eplaunch/workflows/workflow_tester.py

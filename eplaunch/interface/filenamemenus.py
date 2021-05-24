@@ -100,7 +100,7 @@ class FileNameMenus(object):
         list_of_items = self.get_file_list()
         if path not in list_of_items:
             list_of_items.append(path)
-            print(list_of_items)
+            # print(list_of_items)
             list_of_items.sort()
             self.delete_file_list()
             self.add_file_name_list(list_of_items)
