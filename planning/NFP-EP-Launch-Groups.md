@@ -1,5 +1,10 @@
+NFP EP-Launch Group Runs
+================
 
-## NFP EP-Launch Group Runs
+**Jason Glazer, GARD Analytics**
+
+ - May 24, 2021
+
 
 To increase use, the EP-Launch 3 will be enhanced to allow multiple files to be 
 run a workflow at once. The classic VB based version of EP-Launch included a 
@@ -26,7 +31,8 @@ effort will occur for them to be done separately.
 The current interface for EP-Launch 3 does not allow shift-clicking a range of files 
 or control clicking to select multiple files. This will be changed to allow multiple
 files to be selected individually using control-click in turn or by using the 
-shift-click and selecting a group at once.
+shift-click and selecting a group at once. The commonly used CTRL-A to select all
+files in a folder will also be implemented.
 
 Once multiple files are selected when the "RUN" button is pressed, the currently 
 selected workflow will be run on each of the files selected. For workflows that 
