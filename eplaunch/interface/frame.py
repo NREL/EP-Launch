@@ -888,11 +888,28 @@ class EpLaunchFrame(wx.Frame):
         output_file_name = self.file_name_manipulator.replace_extension_with_suffix(full_path_name, tb_button.Label)
         self.external_runner.run_program_by_extension(output_file_name)
 
-    def handle_list_ctrl_selection(self, event):
-        self.selected_file = event.Item.Text
-        self.update_output_file_status()
-        if Platform.get_current_platform() == Platform.WINDOWS:
-            self.enable_disable_idf_editor_button()
+    def handle_list_ctrl_selection(self, _):
+        old_selected_file = self.selected_file
+        selected_file_index = self.control_file_list.GetFirstSelected()
+        self.selected_file = self.control_file_list.GetItem(selected_file_index).Text
+        if old_selected_file != self.selected_file:
+            self.update_output_file_status()
+            if Platform.get_current_platform() == Platform.WINDOWS:
+                self.enable_disable_idf_editor_button()
+
+        # new
+        # print(f"first selected file {self.selected_file}")
+        # print(f"number of files selected {self.control_file_list.GetSelectedItemCount()}")
+        list_index = self.control_file_list.GetFirstSelected()
+        list_of_items = [self.control_file_list.GetItem(list_index).Text]
+        if self.control_file_list.GetSelectedItemCount() > 1:
+            if list_index > -1:
+                while 1:
+                    list_index = self.control_file_list.GetNextSelected(list_index)
+                    if list_index == -1:
+                        break
+                    list_of_items.append(self.control_file_list.GetItem(list_index).Text)
+        # print(list_of_items)
 
     def handle_menu_file_quit(self, event):
         self.Close()
