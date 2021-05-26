@@ -68,6 +68,7 @@ class EpLaunchFrame(wx.Frame):
         self.current_workflow = None
         self.selected_directory = None
         self.selected_file = None
+        self.selected_files = []
         self.menu_output_toolbar = None
         self.status_bar = None
         self.raw_file_list = None
@@ -897,20 +898,6 @@ class EpLaunchFrame(wx.Frame):
             if Platform.get_current_platform() == Platform.WINDOWS:
                 self.enable_disable_idf_editor_button()
 
-        # new
-        # print(f"first selected file {self.selected_file}")
-        # print(f"number of files selected {self.control_file_list.GetSelectedItemCount()}")
-        list_index = self.control_file_list.GetFirstSelected()
-        list_of_items = [self.control_file_list.GetItem(list_index).Text]
-        if self.control_file_list.GetSelectedItemCount() > 1:
-            if list_index > -1:
-                while 1:
-                    list_index = self.control_file_list.GetNextSelected(list_index)
-                    if list_index == -1:
-                        break
-                    list_of_items.append(self.control_file_list.GetItem(list_index).Text)
-        # print(list_of_items)
-
     def handle_menu_file_quit(self, event):
         self.Close()
 
@@ -1189,8 +1176,10 @@ class EpLaunchFrame(wx.Frame):
         self.external_runner.run_idf_editor(full_path_name, energyplus_root_path)
 
     def handle_tb_text_editor(self, event):
-        full_path_name = os.path.join(self.selected_directory, self.selected_file)
-        self.external_runner.run_text_editor(full_path_name)
+        self.get_all_selected_files()
+        for file_name in self.selected_files:
+            full_path_name = os.path.join(self.selected_directory, file_name)
+            self.external_runner.run_text_editor(full_path_name)
 
     def handle_tb_refresh(self, event):
         self.handle_dir_selection_changed(event)
@@ -1406,3 +1395,18 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         # save menu items to configuration file
         for count, workflow_directory in enumerate(self.workflow_directories):
             self.config.Write("/WorkflowDirectories/Path-{:02d}".format(count), workflow_directory)
+
+    def get_all_selected_files(self):
+        self.selected_files = []
+        # print(f"first selected file {self.selected_file}")
+        # print(f"number of files selected {self.control_file_list.GetSelectedItemCount()}")
+        list_index = self.control_file_list.GetFirstSelected()
+        self.selected_files = [self.control_file_list.GetItem(list_index).Text]
+        if self.control_file_list.GetSelectedItemCount() > 1:
+            if list_index > -1:
+                while 1:
+                    list_index = self.control_file_list.GetNextSelected(list_index)
+                    if list_index == -1:
+                        break
+                    self.selected_files.append(self.control_file_list.GetItem(list_index).Text)
+        print(self.selected_files)
