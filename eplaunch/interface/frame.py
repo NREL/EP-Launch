@@ -269,9 +269,10 @@ class EpLaunchFrame(wx.Frame):
             return
 
         if self.previous_selected_directory == self.selected_directory:
-            previous_selected_file = self.selected_file
+            self.get_all_selected_files()
+            previous_selected_files = self.selected_files
         else:
-            previous_selected_file = None
+            previous_selected_files = []
 
         # self.current_cache **should** be available, but this function gets called from lots of places so I'm not sure
         cache_file = CacheFile(self.selected_directory)
@@ -336,7 +337,7 @@ class EpLaunchFrame(wx.Frame):
         self.control_file_list.DeleteAllItems()
         for i, row in enumerate(control_list_rows):
             self.control_file_list.Append(row)
-            if row[0] == previous_selected_file:
+            if row[0] in previous_selected_files:
                 self.control_file_list.Focus(i)
                 self.control_file_list.Select(i)
         for i in range(self.control_file_list.GetColumnCount()):
@@ -889,7 +890,8 @@ class EpLaunchFrame(wx.Frame):
             full_path_name = os.path.join(self.selected_directory, file_name)
             tb_button = self.output_toolbar.FindById(event.GetId())
             if os.path.exists(full_path_name):
-                output_file_name = self.file_name_manipulator.replace_extension_with_suffix(full_path_name, tb_button.Label)
+                output_file_name = self.file_name_manipulator.replace_extension_with_suffix(full_path_name,
+                                                                                            tb_button.Label)
                 if os.path.exists(output_file_name):
                     self.external_runner.run_program_by_extension(output_file_name)
 
@@ -1416,8 +1418,9 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         self.selected_files = []
         # print(f"first selected file {self.selected_file}")
         # print(f"number of files selected {self.control_file_list.GetSelectedItemCount()}")
-        list_index = self.control_file_list.GetFirstSelected()
-        self.selected_files = [self.control_file_list.GetItem(list_index).Text]
+        if self.control_file_list.GetSelectedItemCount() > 0:
+            list_index = self.control_file_list.GetFirstSelected()
+            self.selected_files = [self.control_file_list.GetItem(list_index).Text]
         if self.control_file_list.GetSelectedItemCount() > 1:
             if list_index > -1:
                 while 1:
