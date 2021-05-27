@@ -487,9 +487,9 @@ class EpLaunchFrame(wx.Frame):
         if self.selected_directory and self.selected_files and self.current_workflow:
             sel_dir = self.selected_directory
             cur_wf = self.current_workflow.name
-            for sel_file in self.selected_files:
+            for selected_file_name in self.selected_files:
                 for thread_id, t in self.workflow_threads.items():
-                    if t.file_name == sel_file and t.run_directory == sel_dir and t.workflow_instance.name() == cur_wf:
+                    if t.file_name == selected_file_name and t.run_directory == sel_dir and t.workflow_instance.name() == cur_wf:
                         self.show_error_message('ERROR: This workflow/dir/file combination is already running')
                         return
                 new_uuid = str(uuid.uuid4())
@@ -503,7 +503,7 @@ class EpLaunchFrame(wx.Frame):
                 if weather_file_to_use != self.DD_Only_String:
                     this_weather = weather_file_to_use
                 self.workflow_threads[new_uuid] = WorkflowThread(
-                    new_uuid, self, new_instance, self.selected_directory, sel_file,
+                    new_uuid, self, new_instance, self.selected_directory, selected_file_name,
                     {'weather': this_weather, 'workflow location': self.current_workflow.workflow_directory}
                 )
                 self.workflow_output_dialogs[new_uuid] = self.make_and_show_output_dialog(new_uuid)
