@@ -1079,7 +1079,8 @@ class EpLaunchFrame(wx.Frame):
             self.update_output_toolbar()
 
     def handle_select_new_weather(self, event):
-        if not self.selected_file:
+        self.get_all_selected_files()
+        if not self.selected_files:
             self.show_error_message("Select a file first before trying to assign a weather option")
             return
         if not self.current_workflow.uses_weather:
@@ -1099,11 +1100,12 @@ class EpLaunchFrame(wx.Frame):
                 filename = w.selected_weather_file
         # update the frame variable, update cache, and refresh the file listing
         self.current_weather_file = filename
-        self.current_cache.add_config(
-            self.current_workflow.name,
-            self.selected_file,
-            {'weather': self.current_weather_file}
-        )
+        for selected_file_name in self.selected_files:
+            self.current_cache.add_config(
+                self.current_workflow.name,
+                selected_file_name,
+                {'weather': self.current_weather_file}
+            )
         self.update_file_lists()
         # update recent and favorites if we chose an actual file
         if w.selected_weather_file:
@@ -1141,11 +1143,13 @@ class EpLaunchFrame(wx.Frame):
     def handle_weather_recent_menu_selection(self, event):
         menu_item = self.weather_menu.FindItemById(event.GetId())
         self.current_weather_file = menu_item.GetItemLabel()
-        self.current_cache.add_config(
-            self.current_workflow.name,
-            self.selected_file,
-            {'weather': self.current_weather_file}
-        )
+        self.get_all_selected_files()
+        for selected_file_name in self.selected_files:
+            self.current_cache.add_config(
+                self.current_workflow.name,
+                selected_file_name,
+                {'weather': self.current_weather_file}
+            )
         self.update_file_lists()
         self.weather_recent.uncheck_all()
         self.weather_recent.put_checkmark_on_item(self.current_weather_file)
@@ -1155,11 +1159,13 @@ class EpLaunchFrame(wx.Frame):
     def handle_weather_favorites_menu_selection(self, event):
         menu_item = self.weather_menu.FindItemById(event.GetId())
         self.current_weather_file = menu_item.GetItemLabel()
-        self.current_cache.add_config(
-            self.current_workflow.name,
-            self.selected_file,
-            {'weather': self.current_weather_file}
-        )
+        self.get_all_selected_files()
+        for selected_file_name in self.selected_files:
+            self.current_cache.add_config(
+                self.current_workflow.name,
+                selected_file_name,
+                {'weather': self.current_weather_file}
+            )
         self.update_file_lists()
         self.weather_recent.uncheck_all()
         self.weather_recent.put_checkmark_on_item(self.current_weather_file)
