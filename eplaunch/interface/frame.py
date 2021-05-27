@@ -441,7 +441,7 @@ class EpLaunchFrame(wx.Frame):
             cur_tool = self.output_toolbar.GetToolByPos(tool_num)
             cur_id = cur_tool.GetId()
             self.output_toolbar.EnableTool(cur_id, False)
-        self.output_toolbar.Realize()
+        # self.output_toolbar.Realize()
 
     def enable_existing_output_toolbar_buttons(self, path_no_ext):
         number_of_tools = self.output_toolbar.GetToolsCount()
@@ -450,7 +450,7 @@ class EpLaunchFrame(wx.Frame):
             cur_id = cur_tool.GetId()
             if os.path.exists(path_no_ext + cur_tool.GetLabel()):
                 self.output_toolbar.EnableTool(cur_id, True)
-        self.output_toolbar.Realize()
+        # self.output_toolbar.Realize()
 
     def get_current_selected_context(self):
         current_selected_context = None
@@ -483,30 +483,31 @@ class EpLaunchFrame(wx.Frame):
                 self.Bind(wx.EVT_MENU, self.handle_specific_documentation_menu, specific_documentation_menu)
 
     def run_workflow(self, weather_file_to_use):
-        if self.selected_directory and self.selected_file and self.current_workflow:
+        self.get_all_selected_files()
+        if self.selected_directory and self.selected_files and self.current_workflow:
             sel_dir = self.selected_directory
-            sel_file = self.selected_file
             cur_wf = self.current_workflow.name
-            for thread_id, t in self.workflow_threads.items():
-                if t.file_name == sel_file and t.run_directory == sel_dir and t.workflow_instance.name() == cur_wf:
-                    self.show_error_message('ERROR: This workflow/dir/file combination is already running')
-                    return
-            new_uuid = str(uuid.uuid4())
-            self.status_bar.SetStatusText('Starting workflow', i=0)
-            new_instance = self.current_workflow.workflow_class()
-            new_instance.register_standard_output_callback(
-                new_uuid,
-                self.callback_intermediary
-            )
-            this_weather = ''
-            if weather_file_to_use != self.DD_Only_String:
-                this_weather = weather_file_to_use
-            self.workflow_threads[new_uuid] = WorkflowThread(
-                new_uuid, self, new_instance, self.selected_directory, self.selected_file,
-                {'weather': this_weather, 'workflow location': self.current_workflow.workflow_directory}
-            )
-            self.workflow_output_dialogs[new_uuid] = self.make_and_show_output_dialog(new_uuid)
-            self.workflow_output_dialogs[new_uuid].update_output("*** STARTING WORKFLOW ***")
+            for sel_file in self.selected_files:
+                for thread_id, t in self.workflow_threads.items():
+                    if t.file_name == sel_file and t.run_directory == sel_dir and t.workflow_instance.name() == cur_wf:
+                        self.show_error_message('ERROR: This workflow/dir/file combination is already running')
+                        return
+                new_uuid = str(uuid.uuid4())
+                self.status_bar.SetStatusText('Starting workflow', i=0)
+                new_instance = self.current_workflow.workflow_class()
+                new_instance.register_standard_output_callback(
+                    new_uuid,
+                    self.callback_intermediary
+                )
+                this_weather = ''
+                if weather_file_to_use != self.DD_Only_String:
+                    this_weather = weather_file_to_use
+                self.workflow_threads[new_uuid] = WorkflowThread(
+                    new_uuid, self, new_instance, self.selected_directory, sel_file,
+                    {'weather': this_weather, 'workflow location': self.current_workflow.workflow_directory}
+                )
+                self.workflow_output_dialogs[new_uuid] = self.make_and_show_output_dialog(new_uuid)
+                self.workflow_output_dialogs[new_uuid].update_output("*** STARTING WORKFLOW ***")
         else:
             self.show_error_message('ERROR: Make sure you select a workflow, directory and a file')
         self.update_num_processes_status()
@@ -552,7 +553,7 @@ class EpLaunchFrame(wx.Frame):
     def enable_disable_idf_editor_button(self):
         file_name_no_ext, extension = os.path.splitext(self.selected_file)
         self.primary_toolbar.EnableTool(self.tb_idf_editor_id, extension.upper() == ".IDF")
-        self.output_toolbar.Realize()
+        self.primary_toolbar.Realize()
 
     def show_first_time_welcome(self):
         # we don't want to try to show the window during testing!!
@@ -908,7 +909,8 @@ class EpLaunchFrame(wx.Frame):
         self.Close()
 
     def handle_run_workflow(self, event):
-        if not self.current_workflow or not self.selected_file or not self.selected_directory:
+        self.get_all_selected_files()
+        if not self.current_workflow or not self.selected_files or not self.selected_directory:
             return  # error
         self.folder_recent.add_recent(self.directory_tree_control.GetPath())
         for menu_item in self.folder_recent.menu_items_for_files:
@@ -920,11 +922,12 @@ class EpLaunchFrame(wx.Frame):
         )
         weather_file_to_use = False
         if self.current_workflow.uses_weather:
-            if self.selected_file in files_in_current_workflow:
-                cached_file_info = files_in_current_workflow[self.selected_file]
-                if CacheFile.ParametersKey in cached_file_info:
-                    if CacheFile.WeatherFileKey in cached_file_info[CacheFile.ParametersKey]:
-                        weather_file_to_use = cached_file_info[CacheFile.ParametersKey][CacheFile.WeatherFileKey]
+            for selected_file_name in self.selected_files:
+                if selected_file_name in files_in_current_workflow:
+                    cached_file_info = files_in_current_workflow[selected_file_name]
+                    if CacheFile.ParametersKey in cached_file_info:
+                        if CacheFile.WeatherFileKey in cached_file_info[CacheFile.ParametersKey]:
+                            weather_file_to_use = cached_file_info[CacheFile.ParametersKey][CacheFile.WeatherFileKey]
             if not weather_file_to_use:
                 w = WeatherDialog(self, title='Weather File Selection')
                 recent_files = [x.ItemLabel for x in self.weather_recent.menu_items_for_files]
@@ -938,11 +941,12 @@ class EpLaunchFrame(wx.Frame):
                         weather_file_to_use = self.DD_Only_String
                     else:
                         weather_file_to_use = w.selected_weather_file
-            self.current_cache.add_config(
-                self.current_workflow.name,
-                self.selected_file,
-                {'weather': weather_file_to_use}
-            )
+            for selected_file_name in self.selected_files:
+                self.current_cache.add_config(
+                    self.current_workflow.name,
+                    selected_file_name,
+                    {'weather': weather_file_to_use}
+                )
             self.update_file_lists()
         self.run_workflow(weather_file_to_use)
         self.update_output_file_status()
