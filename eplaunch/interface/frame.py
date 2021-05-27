@@ -884,10 +884,14 @@ class EpLaunchFrame(wx.Frame):
         self.Destroy()
 
     def handle_out_tb_button(self, event):
-        full_path_name = os.path.join(self.selected_directory, self.selected_file)
-        tb_button = self.output_toolbar.FindById(event.GetId())
-        output_file_name = self.file_name_manipulator.replace_extension_with_suffix(full_path_name, tb_button.Label)
-        self.external_runner.run_program_by_extension(output_file_name)
+        self.get_all_selected_files()
+        for file_name in self.selected_files:
+            full_path_name = os.path.join(self.selected_directory, file_name)
+            tb_button = self.output_toolbar.FindById(event.GetId())
+            if os.path.exists(full_path_name):
+                output_file_name = self.file_name_manipulator.replace_extension_with_suffix(full_path_name, tb_button.Label)
+                if os.path.exists(output_file_name):
+                    self.external_runner.run_program_by_extension(output_file_name)
 
     def handle_list_ctrl_selection(self, _):
         old_selected_file = self.selected_file
@@ -1171,9 +1175,11 @@ class EpLaunchFrame(wx.Frame):
         self.weather_favorites.remove_favorite(self.current_weather_file)
 
     def handle_tb_idf_editor(self, event):
-        full_path_name = os.path.join(self.selected_directory, self.selected_file)
-        energyplus_root_path, _ = os.path.split(self.current_workflow.workflow_directory)
-        self.external_runner.run_idf_editor(full_path_name, energyplus_root_path)
+        self.get_all_selected_files()
+        for file_name in self.selected_files:
+            full_path_name = os.path.join(self.selected_directory, file_name)
+            energyplus_root_path, _ = os.path.split(self.current_workflow.workflow_directory)
+            self.external_runner.run_idf_editor(full_path_name, energyplus_root_path)
 
     def handle_tb_text_editor(self, event):
         self.get_all_selected_files()
