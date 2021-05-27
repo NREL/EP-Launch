@@ -1191,24 +1191,28 @@ class EpLaunchFrame(wx.Frame):
         self.handle_dir_selection_changed(event)
 
     def handle_output_menu_item(self, event):
-        full_path_name = os.path.join(self.selected_directory, self.selected_file)
         menu_item = self.output_menu.FindItemById(event.GetId())
-        output_file_name = self.file_name_manipulator.replace_extension_with_suffix(full_path_name,
-                                                                                    menu_item.GetItemLabel())
-        if os.path.exists(output_file_name):
-            self.external_runner.run_program_by_extension(output_file_name)
-        else:
-            self.show_error_message('File cannot be found: \"%s\"' % output_file_name)
+        self.get_all_selected_files()
+        for file_name in self.selected_files:
+            full_path_name = os.path.join(self.selected_directory, file_name)
+            output_file_name = self.file_name_manipulator.replace_extension_with_suffix(full_path_name,
+                                                                                        menu_item.GetItemLabel())
+            if os.path.exists(output_file_name):
+                self.external_runner.run_program_by_extension(output_file_name)
+            else:
+                self.show_error_message('File cannot be found: \"%s\"' % output_file_name)
 
     def handle_extra_output_menu_item(self, event):
-        full_path_name = os.path.join(self.selected_directory, self.selected_file)
         menu_item = self.extra_output_menu.FindItemById(event.GetId())
-        output_file_name = self.file_name_manipulator.replace_extension_with_suffix(full_path_name,
-                                                                                    menu_item.GetItemLabel())
-        if os.path.exists(output_file_name):
-            self.external_runner.run_program_by_extension(output_file_name)
-        else:
-            self.show_error_message('File cannot be found: \"%s\"' % output_file_name)
+        self.get_all_selected_files()
+        for file_name in self.selected_files:
+            full_path_name = os.path.join(self.selected_directory, file_name)
+            output_file_name = self.file_name_manipulator.replace_extension_with_suffix(full_path_name,
+                                                                                        menu_item.GetItemLabel())
+            if os.path.exists(output_file_name):
+                self.external_runner.run_program_by_extension(output_file_name)
+            else:
+                self.show_error_message('File cannot be found: \"%s\"' % output_file_name)
 
     def handle_specific_version_menu(self, event):
         if self.any_threads_running():
@@ -1415,4 +1419,4 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                     if list_index == -1:
                         break
                     self.selected_files.append(self.control_file_list.GetItem(list_index).Text)
-        print(self.selected_files)
+        # print(self.selected_files)
