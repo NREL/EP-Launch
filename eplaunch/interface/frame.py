@@ -245,6 +245,7 @@ class EpLaunchFrame(wx.Frame):
     def update_control_list_columns(self):
         self.control_file_list.DeleteAllColumns()
         self.control_file_list.AppendColumn(_("File Name"), format=wx.LIST_FORMAT_LEFT, width=-1)
+        self.control_file_list.AppendColumn(_("Stale"), format=wx.LIST_FORMAT_LEFT, width=-1)
         if not self.current_workflow:
             return
         if self.current_workflow.uses_weather:
@@ -313,6 +314,10 @@ class EpLaunchFrame(wx.Frame):
             row = [file_name]
             # if it in the cache then the listview row can include additional data
             if file_name in files_in_current_workflow:
+                if self.is_file_stale(file_name):
+                    row.append('*')
+                else:
+                    row.append('')
                 cached_file_info = files_in_current_workflow[file_name]
                 if self.current_workflow.uses_weather:
                     if CacheFile.ParametersKey in cached_file_info:
@@ -354,6 +359,22 @@ class EpLaunchFrame(wx.Frame):
         self.raw_file_list.SetColumnWidth(1, -1)
 
         self.previous_selected_directory = self.selected_directory
+
+    def is_file_stale(self, input_file_name):
+        input_file_name_path = os.path.join(self.selected_directory, input_file_name)
+        if os.path.exists(input_file_name_path):
+            input_file_date = os.path.getmtime(input_file_name_path)
+            suffixes = self.current_workflow.output_suffixes
+            if '.err' in suffixes: # for energyplus workflows just use the err file
+                suffixes = ['.err']
+            file_name_no_ext, _ = os.path.splitext(input_file_name)
+            for suffix in suffixes:
+                full_output_file_path = os.path.join(self.selected_directory, file_name_no_ext + suffix)
+                if os.path.exists(full_output_file_path):
+                    output_file_date = os.path.getmtime(full_output_file_path)
+                    if output_file_date < input_file_date:
+                        return True
+        return False
 
     def update_num_processes_status(self):
         self.status_bar.SetStatusText("Currently %s processes running" % len(self.workflow_threads), i=2)
