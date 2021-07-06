@@ -365,7 +365,7 @@ class EpLaunchFrame(wx.Frame):
         if os.path.exists(input_file_name_path):
             input_file_date = os.path.getmtime(input_file_name_path)
             suffixes = self.current_workflow.output_suffixes
-            if '.err' in suffixes: # for energyplus workflows just use the err file
+            if '.err' in suffixes:  # for energyplus workflows just use the err file
                 suffixes = ['.err']
             file_name_no_ext, _ = os.path.splitext(input_file_name)
             for suffix in suffixes:
