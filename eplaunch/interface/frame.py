@@ -17,6 +17,7 @@ from eplaunch.interface.weather_dialog import WeatherDialog
 from eplaunch.interface.welcome_dialog import WelcomeDialog
 from eplaunch.interface.workflow_output_dialog import Dialog as OutputDialog
 from eplaunch.interface.workflow_processing import event_result, WorkflowThread
+from eplaunch.interface.viewer_dialog import ViewerDialog
 from eplaunch.utilities.cache import CacheFile
 from eplaunch.utilities.crossplatform import Platform
 from eplaunch.utilities.exceptions import EPLaunchDevException, EPLaunchFileException
@@ -855,6 +856,8 @@ class EpLaunchFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.handle_menu_option_hold_dialog, menu_settings_keep_open)
         self.menu_output_toolbar = options_menu.Append(761, "<workspacename> Output Toolbar...")
         self.Bind(wx.EVT_MENU, self.handle_menu_output_toolbar, self.menu_output_toolbar)
+        menu_option_viewers = options_menu.Append(73, "Viewers...", 'Select which viewer applications are used for differen types of files')
+        self.Bind(wx.EVT_MENU, self.handle_menu_option_viewers, menu_option_viewers)
         self.menu_bar.Append(options_menu, "&Settings")
 
         self.help_menu = wx.Menu()
@@ -1062,6 +1065,20 @@ class EpLaunchFrame(wx.Frame):
             self.update_workflow_dependent_gui_items(previous_workflow_name)
 
         workflow_dir_dialog.Destroy()
+
+    def handle_menu_option_viewers(self, event):
+        if self.current_workflow:
+            output_suffixes = self.current_workflow.output_suffixes
+        else:
+            output_suffixes = []
+        viewer_overrides = {}
+        viewer_dialog = ViewerDialog(None)
+        viewer_dialog.initialize_ui(list_of_suffixes=output_suffixes, dict_of_viewer_overrides=viewer_overrides)
+        return_value = viewer_dialog.ShowModal()
+        if return_value == ViewerDialog.CLOSE_SIGNAL_CANCEL:
+            return
+        else:
+            print(viewer_dialog.viewer_overrides)
 
     def handle_menu_output_toolbar(self, event):
 
