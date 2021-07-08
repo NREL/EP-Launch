@@ -39,8 +39,8 @@ class ViewerDialog(wx.Dialog):
         self.viewer_type_list_box.Bind(wx.EVT_LISTBOX, self.handle_viewer_type_click)
 
         application_path_label = wx.StaticText(self, wx.ID_ANY, "Application Path")
-        self.application_ctrl = wx.TextCtrl(self, wx.ID_ANY, self.extension_to_viewer['txt'],
-                                       style=wx.TE_MULTILINE | wx.TE_READONLY)
+        self.application_ctrl = wx.TextCtrl(self, wx.ID_ANY, self.extension_to_viewer['txt'], style=wx.TE_MULTILINE
+                                                                                                    | wx.TE_READONLY)
         self.viewer_type_list_box.SetSelection(0)
 
         button_default = wx.Button(self, wx.ID_ANY, "Default")
@@ -99,7 +99,7 @@ class ViewerDialog(wx.Dialog):
         self.extension_to_viewer[current_extension] = self.DEFAULT_STRING
 
     def handle_button_select(self, e):
-        application_file_name = wx.FileSelector("Select application",wildcard='*.exe')
+        application_file_name = wx.FileSelector("Select application", wildcard='*.exe')
         self.application_ctrl.SetValue(application_file_name)
         current_extension = self.viewer_type_list_box.GetString(self.viewer_type_list_box.GetSelection())
         self.extension_to_viewer[current_extension] = application_file_name
@@ -107,3 +107,4 @@ class ViewerDialog(wx.Dialog):
     def handle_viewer_type_click(self, e):
         selected_extension = e.GetEventObject().GetStringSelection()
         self.application_ctrl.SetValue(self.extension_to_viewer[selected_extension])
+        
