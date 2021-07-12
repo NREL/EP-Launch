@@ -109,6 +109,9 @@ class EpLaunchFrame(wx.Frame):
         self.workflow_output_dialogs = {}
         self.workflow_dialog_counter = 0  # a simple counter ultimately used to place dialogs on the screen
 
+        # viewer overrides
+        self.application_viewers = self.retrieve_application_viewer_overrides_config()
+
         # get the saved workflow directories and update the main workflow list
         self.workflow_directories = self.get_known_workflow_directories()
         self.initialize_workflow_array(skip_error=True)  # call without args to add all workflows, skip error 1st time
@@ -1071,14 +1074,15 @@ class EpLaunchFrame(wx.Frame):
             output_suffixes = self.current_workflow.output_suffixes
         else:
             output_suffixes = []
-        viewer_overrides = {}
         viewer_dialog = ViewerDialog(None)
-        viewer_dialog.initialize_ui(list_of_suffixes=output_suffixes, dict_of_viewer_overrides=viewer_overrides)
+        print(f"initial viewer overrides {self.application_viewers}")
+        viewer_dialog.initialize_ui(list_of_suffixes=output_suffixes, dict_of_viewer_overrides=self.application_viewers)
         return_value = viewer_dialog.ShowModal()
         if return_value == ViewerDialog.CLOSE_SIGNAL_CANCEL:
             return
         else:
-            print(viewer_dialog.viewer_overrides)
+            self.application_viewers = viewer_dialog.viewer_overrides
+            print(f"final viewer overrides {self.application_viewers}")
 
     def handle_menu_output_toolbar(self, event):
 
@@ -1380,6 +1384,17 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             self.directory_tree_control.SelectPath(real_path, True)
             self.directory_tree_control.ExpandPath(real_path)
 
+    def retrieve_application_viewer_overrides_config(self):
+        count_directories = self.config.ReadInt("/ViewerOverrides/Count", 0)
+        dict_of_overrides = {}
+        for count in range(0, count_directories):
+            extension = self.config.Read("/ViewerOverrides/Ext-{:02d}".format(count))
+            application_path = self.config.Read("/ViewerOverrides/Path-{:02d}".format(count))
+            if extension and application_path:
+                if os.path.exists(application_path):
+                    dict_of_overrides[extension] = application_path
+        return dict_of_overrides
+
     # Save Config Functions
 
     def save_config(self):
@@ -1392,6 +1407,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         self.save_selected_workflow_config()
         self.save_window_size()
         self.save_selected_version_config()
+        self.save_application_viewer_overrides_config()
         if self.keep_dialog_open:
             self.config.Write("/ActiveWindow/KeepDialogOpen", "TRUE")
         else:
@@ -1427,3 +1443,11 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         # save menu items to configuration file
         for count, workflow_directory in enumerate(self.workflow_directories):
             self.config.Write("/WorkflowDirectories/Path-{:02d}".format(count), workflow_directory)
+
+    def save_application_viewer_overrides_config(self):
+        self.config.DeleteGroup("/ViewerOverrides")
+        self.config.WriteInt("/ViewerOverrides/Count", len(self.application_viewers))
+        for count, (extension, application_path) in enumerate(self.application_viewers.items()):
+            self.config.Write("/ViewerOverrides/Ext-{:02d}".format(count), extension)
+            self.config.Write("/ViewerOverrides/Path-{:02d}".format(count), application_path)
+

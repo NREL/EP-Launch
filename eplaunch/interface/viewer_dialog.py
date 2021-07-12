@@ -107,4 +107,3 @@ class ViewerDialog(wx.Dialog):
     def handle_viewer_type_click(self, e):
         selected_extension = e.GetEventObject().GetStringSelection()
         self.application_ctrl.SetValue(self.extension_to_viewer[selected_extension])
-        
