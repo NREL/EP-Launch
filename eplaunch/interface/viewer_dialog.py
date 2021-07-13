@@ -10,6 +10,8 @@ class ViewerDialog(wx.Dialog):
         super(ViewerDialog, self).__init__(*args, **kwargs)
         self.SetSize((550, 400))
         self.SetTitle("Viewers")
+        self.viewer_type_list_box = None
+        self.application_ctrl = None
         self.viewer_overrides = {}
         self.suffixes = []
         self.extension_to_viewer = {}
@@ -75,7 +77,7 @@ class ViewerDialog(wx.Dialog):
         horiz_sizer_right.Add(button_select, flag=wx.ALL, border=5)
 
         vert_sizer_right.Add(horiz_sizer_right, flag=wx.ALL | wx.EXPAND, border=5)
-        vert_sizer_right.Add(instructions_label, 1, flag=wx.ALL| wx.EXPAND, border=5)
+        vert_sizer_right.Add(instructions_label, 1, flag=wx.ALL | wx.EXPAND, border=5)
 
         horiz_sizer_top.Add(vert_sizer_right, 1, flag=wx.ALL | wx.EXPAND, border=5)
 
@@ -93,22 +95,22 @@ class ViewerDialog(wx.Dialog):
         button_ok.Bind(wx.EVT_BUTTON, self.handle_close_ok)
         button_cancel.Bind(wx.EVT_BUTTON, self.handle_close_cancel)
 
-    def handle_close_ok(self, e):
+    def handle_close_ok(self, _):
         self.viewer_overrides = {}
         for extension, application in self.extension_to_viewer.items():
             if application is not self.DEFAULT_STRING:
                 self.viewer_overrides[extension] = application
         self.EndModal(ViewerDialog.CLOSE_SIGNAL_OK)
 
-    def handle_close_cancel(self, e):
+    def handle_close_cancel(self, _):
         self.EndModal(ViewerDialog.CLOSE_SIGNAL_CANCEL)
 
-    def handle_button_default(self, e):
+    def handle_button_default(self, _):
         self.application_ctrl.SetValue(self.DEFAULT_STRING)
         current_extension = self.viewer_type_list_box.GetString(self.viewer_type_list_box.GetSelection())
         self.extension_to_viewer[current_extension] = self.DEFAULT_STRING
 
-    def handle_button_select(self, e):
+    def handle_button_select(self, _):
         application_file_name = wx.FileSelector("Select application", wildcard='*.exe')
         self.application_ctrl.SetValue(application_file_name)
         current_extension = self.viewer_type_list_box.GetString(self.viewer_type_list_box.GetSelection())
