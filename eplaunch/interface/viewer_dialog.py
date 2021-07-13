@@ -41,6 +41,15 @@ class ViewerDialog(wx.Dialog):
         application_path_label = wx.StaticText(self, wx.ID_ANY, "Application Path")
         self.application_ctrl = wx.TextCtrl(self, wx.ID_ANY, self.extension_to_viewer['txt'], style=wx.TE_MULTILINE
                                                                                                     | wx.TE_READONLY)
+
+        instructions_label = wx.StaticText(self, wx.ID_ANY, "Only set applications for extensions that don't open with "
+                                                            "the desired applications automatically. Typically, "
+                                                            "extension 'htm' opens using a web browser, extension "
+                                                            "'csv' opens using a spreadsheet program, extension 'txt' "
+                                                            "opens using a text editor, etc. By default, the 'txt' "
+                                                            "extension also opens all non-typical extensions such as "
+                                                            "'err' and 'eio'.")
+
         self.viewer_type_list_box.SetSelection(0)
 
         button_default = wx.Button(self, wx.ID_ANY, "Default")
@@ -65,7 +74,8 @@ class ViewerDialog(wx.Dialog):
         horiz_sizer_right.Add(button_default, flag=wx.ALL, border=5)
         horiz_sizer_right.Add(button_select, flag=wx.ALL, border=5)
 
-        vert_sizer_right.Add(horiz_sizer_right, 1, flag=wx.ALL | wx.EXPAND, border=5)
+        vert_sizer_right.Add(horiz_sizer_right, flag=wx.ALL | wx.EXPAND, border=5)
+        vert_sizer_right.Add(instructions_label, 1, flag=wx.ALL| wx.EXPAND, border=5)
 
         horiz_sizer_top.Add(vert_sizer_right, 1, flag=wx.ALL | wx.EXPAND, border=5)
 

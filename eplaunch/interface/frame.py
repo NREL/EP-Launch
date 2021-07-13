@@ -1076,12 +1076,12 @@ class EpLaunchFrame(wx.Frame):
         viewer_dialog = ViewerDialog(None)
         # print(f"initial viewer overrides {self.external_runner.application_viewers}")
         viewer_dialog.initialize_ui(list_of_suffixes=output_suffixes,
-                                    dict_of_viewer_overrides=self.external_runner.application_viewers)
+                                    dict_of_viewer_overrides=self.external_runner.viewer_overrides)
         return_value = viewer_dialog.ShowModal()
         if return_value == ViewerDialog.CLOSE_SIGNAL_CANCEL:
             return
         else:
-            self.external_runner.application_viewers = viewer_dialog.viewer_overrides
+            self.external_runner.viewer_overrides = viewer_dialog.viewer_overrides
             # print(f"final viewer overrides {self.external_runner.application_viewers}")
         viewer_dialog.Destroy()
 

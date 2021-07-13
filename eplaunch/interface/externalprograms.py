@@ -15,7 +15,7 @@ class EPLaunchExternalPrograms:
         self.fnm = FileNameManipulation()
         # viewer overrides
         self.config = config
-        self.application_viewers = {}
+        self.viewer_overrides = {}
         self.retrieve_application_viewer_overrides_config()
 
         other_extensions = ['pdf', 'csv', 'dxf', 'wrl', 'svg', 'htm', 'eso', 'xml']
@@ -59,13 +59,19 @@ class EPLaunchExternalPrograms:
             subprocess.Popen([idf_editor_binary, file_path])
 
     def run_text_editor(self, file_path):
-        text_editor_binary = self.extension_to_binary_path['txt']
+        if 'txt' in self.viewer_overrides:
+            text_editor_binary = self.viewer_overrides['txt']
+        else:
+            text_editor_binary = self.extension_to_binary_path['txt']
         subprocess.Popen([text_editor_binary, file_path])
 
     def run_program_by_extension(self, file_path):
         _, ext = os.path.splitext(file_path)
         ext_no_period = self.fnm.remove_leading_period(ext)
-        if ext_no_period in self.extension_to_binary_path:
+        if ext_no_period in self.viewer_overrides:
+            viewer_binary = self.viewer_overrides[ext_no_period]
+            subprocess.Popen([viewer_binary, file_path])
+        elif ext_no_period in self.extension_to_binary_path:
             viewer_binary = self.extension_to_binary_path[ext_no_period]
             subprocess.Popen([viewer_binary, file_path])
         else:
@@ -80,11 +86,11 @@ class EPLaunchExternalPrograms:
             if extension and application_path:
                 if os.path.exists(application_path):
                     dict_of_overrides[extension] = application_path
-        self.application_viewers = dict_of_overrides
+        self.viewer_overrides = dict_of_overrides
 
     def save_application_viewer_overrides_config(self):
         self.config.DeleteGroup("/ViewerOverrides")
-        self.config.WriteInt("/ViewerOverrides/Count", len(self.application_viewers))
-        for count, (extension, application_path) in enumerate(self.application_viewers.items()):
+        self.config.WriteInt("/ViewerOverrides/Count", len(self.viewer_overrides))
+        for count, (extension, application_path) in enumerate(self.viewer_overrides.items()):
             self.config.Write("/ViewerOverrides/Ext-{:02d}".format(count), extension)
             self.config.Write("/ViewerOverrides/Path-{:02d}".format(count), application_path)
