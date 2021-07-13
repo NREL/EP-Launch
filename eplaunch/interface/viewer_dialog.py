@@ -41,8 +41,8 @@ class ViewerDialog(wx.Dialog):
         self.viewer_type_list_box.Bind(wx.EVT_LISTBOX, self.handle_viewer_type_click)
 
         application_path_label = wx.StaticText(self, wx.ID_ANY, "Application Path")
-        self.application_ctrl = wx.TextCtrl(self, wx.ID_ANY, self.extension_to_viewer['txt'], style=wx.TE_MULTILINE
-                                                                                                    | wx.TE_READONLY)
+        self.application_ctrl = wx.TextCtrl(self, wx.ID_ANY, self.extension_to_viewer['txt'],
+                                            style=wx.TE_MULTILINE | wx.TE_READONLY)
 
         instructions_label = wx.StaticText(self, wx.ID_ANY, "Only set applications for extensions that don't open with "
                                                             "the desired applications automatically. Typically, "
