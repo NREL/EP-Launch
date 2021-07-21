@@ -8,7 +8,7 @@ class ViewerDialog(wx.Dialog):
 
     def __init__(self, *args, **kwargs):
         super(ViewerDialog, self).__init__(*args, **kwargs)
-        self.SetSize((550, 400))
+        self.SetSize((550, 480))
         self.SetTitle("Viewers")
         self.viewer_type_list_box = None
         self.application_ctrl = None
@@ -70,14 +70,14 @@ class ViewerDialog(wx.Dialog):
         vert_sizer_left.Add(self.viewer_type_list_box, 1, flag=wx.ALL | wx.EXPAND, border=5)
         horiz_sizer_top.Add(vert_sizer_left, flag=wx.ALL | wx.EXPAND, border=5)
 
-        vert_sizer_right.Add(application_path_label, flag=wx.ALL, border=5)
-        vert_sizer_right.Add(self.application_ctrl, flag=wx.ALL | wx.EXPAND, border=5)
+        vert_sizer_right.Add(application_path_label, 0, flag=wx.ALL, border=5)
+        vert_sizer_right.Add(self.application_ctrl, 1, flag=wx.ALL | wx.EXPAND, border=5)
 
         horiz_sizer_right.Add(button_default, flag=wx.ALL, border=5)
         horiz_sizer_right.Add(button_select, flag=wx.ALL, border=5)
 
-        vert_sizer_right.Add(horiz_sizer_right, flag=wx.ALL | wx.EXPAND, border=5)
-        vert_sizer_right.Add(instructions_label, 1, flag=wx.ALL | wx.EXPAND, border=5)
+        vert_sizer_right.Add(horiz_sizer_right, 0, flag=wx.ALL, border=5)
+        vert_sizer_right.Add(instructions_label, 2, flag=wx.ALL | wx.EXPAND, border=5)
 
         horiz_sizer_top.Add(vert_sizer_right, 1, flag=wx.ALL | wx.EXPAND, border=5)
 
