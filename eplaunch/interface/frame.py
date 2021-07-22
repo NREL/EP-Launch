@@ -848,6 +848,9 @@ class EpLaunchFrame(wx.Frame):
         menu_group_run = self.group_menu.Append(852, "Run Group", "Run workflow on selected group")
 
         self.menu_bar.Append(self.group_menu, "&Group")
+        # disable the menu items that are just information
+        self.menu_bar.Enable(812, False)
+        self.menu_bar.Enable(830, False)
 
         self.output_menu = wx.Menu()
         self.menu_bar.Append(self.output_menu, "&Output")
