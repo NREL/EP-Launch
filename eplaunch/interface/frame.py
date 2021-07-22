@@ -816,6 +816,39 @@ class EpLaunchFrame(wx.Frame):
         self.menu_bar.Enable(403, False)
         self.menu_bar.Enable(406, False)
 
+        # Group Menu Defined
+        self.group_menu = wx.Menu()
+        menu_group_show_first = self.group_menu.Append(801, "Show Saved Group",
+                                                       "Highlight currently selected saved group of files")
+        menu_group_show_next = self.group_menu.Append(802, "Show Next Folder In Saved Group",
+                                                      "Highlight next folder for currently selected group of files")
+        menu_group_open = self.group_menu.Append(803, "Open Saved Group File..", "Open file listing group of files")
+        menu_group_save_as = self.group_menu.Append(805, "Save Group as Group File..",
+                                                    "Save file listing group of files")
+        self.group_menu.Append(806, kind=wx.ITEM_SEPARATOR)
+        menu_group_add = self.group_menu.Append(807, "Add to Saved Group",
+                                                "Add selected files to current file listing group of files")
+        menu_group_remove = self.group_menu.Append(808, "Remove from Saved Group",
+                                                   "Remove selected files to current file listing group of files")
+        self.group_menu.Append(811, kind=wx.ITEM_SEPARATOR)
+        self.group_menu.Append(812, "Recent Saved Groups", "Recently selected saved group files")
+        self.group_menu.Append(820, kind=wx.ITEM_SEPARATOR)
+        self.group_menu.Append(821, kind=wx.ITEM_SEPARATOR)
+
+        self.group_menu.Append(830, "Favorite Saved Groups", "Favorite selected saved group files")
+        self.group_menu.Append(831, kind=wx.ITEM_SEPARATOR)
+        self.group_menu.Append(832, kind=wx.ITEM_SEPARATOR)
+        menu_group_add_favorites = self.group_menu.Append(840, "Add Saved Group to Favorites", "Add Group to Favorites")
+        menu_group_remove_from_favorites = self.group_menu.Append(841, "Remove Saved Group from Favorites",
+                                                                  "Remove Group from Favorites")
+
+        self.group_menu.Append(850, kind=wx.ITEM_SEPARATOR)
+        menu_group_change_weather = self.group_menu.Append(851, "Change Weather for Entire Group..",
+                                                           "Change the weather file for all files in current group")
+        menu_group_run = self.group_menu.Append(852, "Run Group", "Run workflow on selected group")
+
+        self.menu_bar.Append(self.group_menu, "&Group")
+
         self.output_menu = wx.Menu()
         self.menu_bar.Append(self.output_menu, "&Output")
 
