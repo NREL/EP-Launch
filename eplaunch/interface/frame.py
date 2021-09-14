@@ -85,6 +85,8 @@ class EpLaunchFrame(wx.Frame):
         self.weather_menu = None
         self.weather_recent = None
         self.weather_favorites = None
+        self.current_group_file = None
+        self.current_group_list = []
         self.workflow_menu = None
         self.output_menu = None
         self.extra_output_menu = None
@@ -818,18 +820,24 @@ class EpLaunchFrame(wx.Frame):
 
         # Group Menu Defined
         self.group_menu = wx.Menu()
-        menu_group_show_first = self.group_menu.Append(801, "Show Saved Group",
+        menu_group_show_saved_group = self.group_menu.Append(801, "Show Saved Group",
                                                        "Highlight currently selected saved group of files")
-        menu_group_show_next = self.group_menu.Append(802, "Show Next Folder In Saved Group",
+        self.Bind(wx.EVT_MENU, self.handle_menu_group_show_saved_group, menu_group_show_saved_group)
+        menu_group_show_next_folder = self.group_menu.Append(802, "Show Next Folder In Saved Group",
                                                       "Highlight next folder for currently selected group of files")
+        self.Bind(wx.EVT_MENU, self.handle_menu_group_show_next_folder, menu_group_show_next_folder)
         menu_group_open = self.group_menu.Append(803, "Open Saved Group File..", "Open file listing group of files")
-        menu_group_save_as = self.group_menu.Append(805, "Save Group as Group File..",
-                                                    "Save file listing group of files")
+        self.Bind(wx.EVT_MENU, self.handle_menu_group_open, menu_group_open)
+        menu_group_save_as = self.group_menu.Append(805, "Save Selected Files as Group File..",
+                                                    "Save file containing a list of all selected files")
+        self.Bind(wx.EVT_MENU, self.handle_menu_group_save_as, menu_group_save_as)
         self.group_menu.Append(806, kind=wx.ITEM_SEPARATOR)
-        menu_group_add = self.group_menu.Append(807, "Add to Saved Group",
+        menu_group_add_to_saved_group = self.group_menu.Append(807, "Add to Saved Group",
                                                 "Add selected files to current file listing group of files")
-        menu_group_remove = self.group_menu.Append(808, "Remove from Saved Group",
+        self.Bind(wx.EVT_MENU, self.handle_menu_group_add_to_saved_group, menu_group_add_to_saved_group)
+        menu_group_remove_from_group = self.group_menu.Append(808, "Remove from Saved Group",
                                                    "Remove selected files to current file listing group of files")
+        self.Bind(wx.EVT_MENU, self.handle_menu_group_remove_from_group, menu_group_remove_from_group)
         self.group_menu.Append(811, kind=wx.ITEM_SEPARATOR)
         self.group_menu.Append(812, "Recent Saved Groups", "Recently selected saved group files")
         self.group_menu.Append(820, kind=wx.ITEM_SEPARATOR)
@@ -845,7 +853,6 @@ class EpLaunchFrame(wx.Frame):
         self.group_menu.Append(850, kind=wx.ITEM_SEPARATOR)
         menu_group_change_weather = self.group_menu.Append(851, "Change Weather for Entire Group..",
                                                            "Change the weather file for all files in current group")
-        menu_group_run = self.group_menu.Append(852, "Run Group", "Run workflow on selected group")
 
         self.menu_bar.Append(self.group_menu, "&Group")
         # disable the menu items that are just information
@@ -1222,6 +1229,106 @@ class EpLaunchFrame(wx.Frame):
     def handle_remove_current_weather_from_favorites_menu_selection(self, event):
         self.weather_favorites.remove_favorite(self.current_weather_file)
 
+    def handle_menu_group_save_as(self, event):
+        with wx.FileDialog(self, "Save group as group file", wildcard="EP-Launch 3 group files (*.epg3)|*.epg3",
+                           style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
+            if fileDialog.ShowModal() == wx.ID_CANCEL:
+                return  # the user changed their mind
+            pathname = fileDialog.GetPath()
+            self.current_group_file = pathname
+            self.current_group_list.clear()
+            try:
+                with open(pathname, 'w') as file:
+                    self.get_all_selected_files()
+                    for file_name in self.selected_files:
+                        full_path_name = os.path.join(self.selected_directory, file_name)
+                        file.write(full_path_name + "\n")
+                        self.current_group_list.append(full_path_name)
+            except IOError:
+                wx.LogError("Cannot save current data in file '%s'." % pathname)
+
+    def handle_menu_group_open(self, event):
+        with wx.FileDialog(self, "Open saved group file", wildcard="EP-Launch 3 group files (*.epg3)|*.epg3",
+                           style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fileDialog:
+
+            if fileDialog.ShowModal() == wx.ID_CANCEL:
+                return  # the user changed their mind
+
+            # Proceed loading the file chosen by the user
+            pathname = fileDialog.GetPath()
+            self.current_group_file = pathname
+            self.current_group_list.clear()
+            try:
+                with open(pathname, 'r') as file:
+                    self.current_group_list = file.read().splitlines()
+                    self.current_group_list.sort() # so that similar directories are adjacent in list
+            except IOError:
+                wx.LogError("Cannot open file '%s'." % pathname)
+            self.selections_from_current_group_list()
+
+    def selections_from_current_group_list(self):
+        self.control_file_list.SetFocus()
+        if self.selected_directory:
+            for file_with_path in self.current_group_list:
+                path, file = os.path.split(file_with_path)
+                if path == self.selected_directory:
+                    index = self.control_file_list.FindItem(0, file)
+                    if index != wx.NOT_FOUND:
+                        self.control_file_list.Select(index, 1)
+                        self.control_file_list.EnsureVisible(index)
+
+    def handle_menu_group_show_saved_group(self, event):
+        self.clear_selected_files()
+        if self.current_group_list:
+            self.selections_from_current_group_list()
+
+    def handle_menu_group_show_next_folder(self, event):
+        self.clear_selected_files()
+        next_folder = self.get_next_group_folder(self.selected_directory)
+        #STOPPED HERE
+
+    def get_next_group_folder(self, current_group_folder):
+        self.current_group_list.sort() # make sure the list is sorted so similar directories are adjacent in the list
+        found = False
+        for current_group_file in self.current_group_list:
+            path, file = os.path.split(current_group_file)
+            if current_group_folder == path:
+                found = True
+            else:
+                if found: # if previously found but curren path is does not match this is the next folder
+                    return path
+        return current_group_folder
+
+
+
+    def handle_menu_group_add_to_saved_group(self, event):
+        try:
+            with open(self.current_group_file, 'a') as file:  #append to the existing file
+                self.get_all_selected_files()
+                for file_name in self.selected_files:
+                    full_path_name = os.path.join(self.selected_directory, file_name)
+                    if full_path_name not in self.current_group_list: # make sure it is unique file
+                        file.write(full_path_name + "\n")
+                        self.current_group_list.append(full_path_name)
+            self.current_group_list.sort()  # so that similar directories are adjacent in list
+        except IOError:
+            wx.LogError("Cannot append current data in file '%s'." % self.current_group_file)
+
+    def handle_menu_group_remove_from_group(self, event):
+        self.get_all_selected_files()
+        for selected_file in self.selected_files:
+            full_path_selected_file = os.path.join(self.selected_directory, selected_file)
+            if full_path_selected_file in self.current_group_list:
+                self.current_group_list.remove(full_path_selected_file)
+        # rewrite the group file
+        try:
+            with open(self.current_group_file, 'w') as file:
+                for file_name in self.current_group_list:
+                    file.write(file_name + "\n")
+        except IOError:
+            wx.LogError("Cannot save current data in file '%s'." % self.current_group_file)
+
+
     def handle_tb_idf_editor(self, event):
         self.get_all_selected_files()
         for file_name in self.selected_files:
@@ -1401,7 +1508,11 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             home = os.path.expanduser("~")
             possible_directory_name = home
         else:
-            self.selected_directory = possible_directory_name
+            self.set_directory(possible_directory_name)
+
+    def set_directory(self, directory_name):
+        if directory_name:
+            self.selected_directory = directory_name
             real_path = os.path.abspath(self.selected_directory)
             self.directory_tree_control.SelectPath(real_path, True)
             self.directory_tree_control.ExpandPath(real_path)
@@ -1469,3 +1580,14 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                         break
                     self.selected_files.append(self.control_file_list.GetItem(list_index).Text)
         # print(self.selected_files)
+
+    def clear_selected_files(self):
+        if self.control_file_list.GetSelectedItemCount() > 0:
+            list_index = self.control_file_list.GetFirstSelected()
+            self.control_file_list.Select(list_index, 0)
+            while 1:
+                list_index = self.control_file_list.GetNextSelected(list_index)
+                if list_index == -1:
+                    break
+                self.control_file_list.Select(list_index, 0)
+        self.selected_file = []
