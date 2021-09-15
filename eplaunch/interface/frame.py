@@ -87,6 +87,8 @@ class EpLaunchFrame(wx.Frame):
         self.weather_favorites = None
         self.current_group_file = None
         self.current_group_list = []
+        self.group_recent = None
+        self.group_favorites = None
         self.workflow_menu = None
         self.output_menu = None
         self.extra_output_menu = None
@@ -842,13 +844,24 @@ class EpLaunchFrame(wx.Frame):
         self.group_menu.Append(812, "Recent Saved Groups", "Recently selected saved group files")
         self.group_menu.Append(820, kind=wx.ITEM_SEPARATOR)
         self.group_menu.Append(821, kind=wx.ITEM_SEPARATOR)
+        self.group_recent = FileNameMenus(self.group_menu, 820, 821, self.config, "/GroupMenu/Recent")
+        self.group_recent.retrieve_config()
+        for menu_item in self.group_recent.menu_items_for_files:
+            self.Bind(wx.EVT_MENU, self.handle_group_recent_menu_selection, menu_item)
 
         self.group_menu.Append(830, "Favorite Saved Groups", "Favorite selected saved group files")
         self.group_menu.Append(831, kind=wx.ITEM_SEPARATOR)
         self.group_menu.Append(832, kind=wx.ITEM_SEPARATOR)
+        self.group_favorites = FileNameMenus(self.group_menu, 831, 832, self.config, "/GroupMenu/Favorite")
+        self.group_favorites.retrieve_config()
+        for menu_item in self.group_favorites.menu_items_for_files:
+            self.Bind(wx.EVT_MENU, self.handle_group_favorites_menu_selection, menu_item)
+
         menu_group_add_favorites = self.group_menu.Append(840, "Add Saved Group to Favorites", "Add Group to Favorites")
+        self.Bind(wx.EVT_MENU, self.handle_add_current_group_to_favorites, menu_group_add_favorites)
         menu_group_remove_from_favorites = self.group_menu.Append(841, "Remove Saved Group from Favorites",
                                                                   "Remove Group from Favorites")
+        self.Bind(wx.EVT_MENU, self.handle_remove_current_group_from_favorites, menu_group_remove_from_favorites)
 
         self.group_menu.Append(850, kind=wx.ITEM_SEPARATOR)
         menu_group_change_weather = self.group_menu.Append(851, "Change Weather for Entire Group..",
@@ -1256,15 +1269,22 @@ class EpLaunchFrame(wx.Frame):
 
             # Proceed loading the file chosen by the user
             pathname = fileDialog.GetPath()
-            self.current_group_file = pathname
-            self.current_group_list.clear()
-            try:
-                with open(pathname, 'r') as file:
-                    self.current_group_list = file.read().splitlines()
-                    self.current_group_list.sort() # so that similar directories are adjacent in list
-            except IOError:
-                wx.LogError("Cannot open file '%s'." % pathname)
-            self.selections_from_current_group_list()
+            self.open_group_file_and_select(pathname)
+
+    def open_group_file_and_select(self, pathname):
+        self.current_group_file = pathname
+        self.group_recent.add_recent(self.current_group_file)
+        for menu_item in self.group_recent.menu_items_for_files:
+            self.Bind(wx.EVT_MENU, self. handle_group_recent_menu_selection, menu_item)
+        self.current_group_list.clear()
+        try:
+            with open(pathname, 'r') as file:
+                self.current_group_list = file.read().splitlines()
+                self.current_group_list.sort() # so that similar directories are adjacent in list
+        except IOError:
+            wx.LogError("Cannot open file '%s'." % pathname)
+        self.clear_selected_files()
+        self.selections_from_current_group_list()
 
     def selections_from_current_group_list(self):
         self.control_file_list.SetFocus()
@@ -1333,6 +1353,25 @@ class EpLaunchFrame(wx.Frame):
         except IOError:
             wx.LogError("Cannot save current data in file '%s'." % self.current_group_file)
 
+    def handle_group_recent_menu_selection(self, event):
+        menu_item = self.group_menu.FindItemById(event.GetId())
+        self.group_recent.uncheck_other_items(menu_item)
+        real_path = os.path.abspath(menu_item.GetItemLabel())
+        self.open_group_file_and_select(real_path)
+
+    def handle_group_favorites_menu_selection(self, event):
+        menu_item = self.group_menu.FindItemById(event.GetId())
+        self.group_favorites.uncheck_other_items(menu_item)
+        real_path = os.path.abspath(menu_item.GetItemLabel())
+        self.open_group_file_and_select(real_path)
+
+    def handle_add_current_group_to_favorites(self, event):
+        self.group_favorites.add_favorite(self.current_group_file)
+        for menu_item in self.group_favorites.menu_items_for_files:
+            self.Bind(wx.EVT_MENU, self.handle_group_favorites_menu_selection, menu_item)
+
+    def handle_remove_current_group_from_favorites(self, event):
+        self.group_favorites.remove_favorite(self.current_group_file)
 
     def handle_tb_idf_editor(self, event):
         self.get_all_selected_files()
@@ -1529,6 +1568,8 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         self.folder_recent.save_config()
         self.weather_favorites.save_config()
         self.weather_recent.save_config()
+        self.group_favorites.save_config()
+        self.group_recent.save_config()
         self.save_workflow_directories_config()
         self.save_current_directory_config()
         self.save_selected_workflow_config()
