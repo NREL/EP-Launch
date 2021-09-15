@@ -1285,21 +1285,26 @@ class EpLaunchFrame(wx.Frame):
     def handle_menu_group_show_next_folder(self, event):
         self.clear_selected_files()
         next_folder = self.get_next_group_folder(self.selected_directory)
-        #STOPPED HERE
+        if next_folder and next_folder != self.selected_directory:
+            self.set_directory(next_folder)
+            if self.current_group_list:
+                self.selections_from_current_group_list()
 
     def get_next_group_folder(self, current_group_folder):
-        self.current_group_list.sort() # make sure the list is sorted so similar directories are adjacent in the list
-        found = False
-        for current_group_file in self.current_group_list:
-            path, file = os.path.split(current_group_file)
-            if current_group_folder == path:
-                found = True
-            else:
-                if found: # if previously found but curren path is does not match this is the next folder
-                    return path
-        return current_group_folder
-
-
+        if self.current_group_list:
+            self.current_group_list.sort() # make sure the list is sorted so similar directories are adjacent in the list
+            found = False
+            for current_group_file in self.current_group_list:
+                path, file = os.path.split(current_group_file)
+                if current_group_folder == path:
+                    found = True
+                else:
+                    if found: # if previously found but current path does not match this is the next folder
+                        return path
+        # if next item is not found just return the path of the first item in the group
+            return os.path.dirname(self.current_group_list[0])
+        else:
+            return current_group_folder
 
     def handle_menu_group_add_to_saved_group(self, event):
         try:
