@@ -868,10 +868,6 @@ class EpLaunchFrame(wx.Frame):
                                                                   "Remove Group from Favorites")
         self.Bind(wx.EVT_MENU, self.handle_remove_current_group_from_favorites, menu_group_remove_from_favorites)
 
-        self.group_menu.Append(850, kind=wx.ITEM_SEPARATOR)
-        menu_group_change_weather = self.group_menu.Append(851, "Change Weather for Entire Group..",
-                                                           "Change the weather file for all files in current group")
-
         self.menu_bar.Append(self.group_menu, "&Group")
         # disable the menu items that are just information
         self.menu_bar.Enable(812, False)
@@ -1261,7 +1257,11 @@ class EpLaunchFrame(wx.Frame):
                     for file_name in self.selected_files:
                         full_path_name = os.path.join(self.selected_directory, file_name)
                         file.write(full_path_name + "\n")
-                        self.current_group_list.append(full_path_name)
+                self.current_group_list.append(full_path_name)
+                self.group_recent.uncheck_all()
+                self.group_recent.add_recent(self.current_group_file)
+                self.group_favorites.uncheck_all()
+                self.group_favorites.put_checkmark_on_item(self.current_group_file)
             except IOError:
                 wx.LogError("Cannot save current data in file '%s'." % pathname)
 
@@ -1277,6 +1277,7 @@ class EpLaunchFrame(wx.Frame):
 
     def open_group_file_and_select(self, pathname):
         self.current_group_file = pathname
+        self.group_recent.uncheck_all()
         self.group_recent.add_recent(self.current_group_file)
         for menu_item in self.group_recent.menu_items_for_files:
             self.Bind(wx.EVT_MENU, self.handle_group_recent_menu_selection, menu_item)
@@ -1293,9 +1294,22 @@ class EpLaunchFrame(wx.Frame):
     def selections_from_current_group_list(self):
         self.control_file_list.SetFocus()
         if self.selected_directory:
+            one_in_current_folder = False
             for file_with_path in self.current_group_list:
                 path, file = os.path.split(file_with_path)
                 if path == self.selected_directory:
+                    index = self.control_file_list.FindItem(0, file)
+                    if index != wx.NOT_FOUND:
+                        self.control_file_list.Select(index, 1)
+                        self.control_file_list.EnsureVisible(index)
+                        one_in_current_folder = True
+        if not one_in_current_folder:
+            first_path, file = os.path.split(self.current_group_list[0])
+            self.directory_tree_control.SelectPath(first_path, True)
+            self.directory_tree_control.ExpandPath(first_path)
+            for file_with_path in self.current_group_list:
+                path, file = os.path.split(file_with_path)
+                if path == first_path:
                     index = self.control_file_list.FindItem(0, file)
                     if index != wx.NOT_FOUND:
                         self.control_file_list.Select(index, 1)
@@ -1360,15 +1374,21 @@ class EpLaunchFrame(wx.Frame):
 
     def handle_group_recent_menu_selection(self, event):
         menu_item = self.group_menu.FindItemById(event.GetId())
-        self.group_recent.uncheck_other_items(menu_item)
         real_path = os.path.abspath(menu_item.GetItemLabel())
         self.open_group_file_and_select(real_path)
+        self.group_recent.uncheck_all()
+        self.group_recent.put_checkmark_on_item(real_path)
+        self.group_favorites.uncheck_all()
+        self.group_favorites.put_checkmark_on_item(real_path)
 
     def handle_group_favorites_menu_selection(self, event):
         menu_item = self.group_menu.FindItemById(event.GetId())
-        self.group_favorites.uncheck_other_items(menu_item)
         real_path = os.path.abspath(menu_item.GetItemLabel())
         self.open_group_file_and_select(real_path)
+        self.group_recent.uncheck_all()
+        self.group_recent.put_checkmark_on_item(real_path)
+        self.group_favorites.uncheck_all()
+        self.group_favorites.put_checkmark_on_item(real_path)
 
     def handle_add_current_group_to_favorites(self, event):
         self.group_favorites.add_favorite(self.current_group_file)
