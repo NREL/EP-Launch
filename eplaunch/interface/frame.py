@@ -85,6 +85,7 @@ class EpLaunchFrame(wx.Frame):
         self.weather_menu = None
         self.weather_recent = None
         self.weather_favorites = None
+        self.group_menu = None
         self.current_group_file = None
         self.current_group_list = []
         self.group_recent = None
@@ -493,7 +494,8 @@ class EpLaunchFrame(wx.Frame):
             cur_wf = self.current_workflow.name
             for selected_file_name in self.selected_files:
                 for thread_id, t in self.workflow_threads.items():
-                    if t.file_name == selected_file_name and t.run_directory == sel_dir and t.workflow_instance.name() == cur_wf:
+                    if t.file_name == selected_file_name and t.run_directory == sel_dir and \
+                            t.workflow_instance.name() == cur_wf:
                         self.show_error_message('ERROR: This workflow/dir/file combination is already running')
                         return
                 new_uuid = str(uuid.uuid4())
@@ -602,7 +604,7 @@ class EpLaunchFrame(wx.Frame):
         # build control list view (top right)
         self.control_file_list_panel = wx.Panel(self.file_lists_splitter, wx.ID_ANY)
         self.control_file_list = wx.ListCtrl(self.control_file_list_panel, wx.ID_ANY,
-                                             style=wx.LC_HRULES | wx.LC_REPORT | wx.LC_VRULES)   # | wx.LC_SINGLE_SEL
+                                             style=wx.LC_HRULES | wx.LC_REPORT | wx.LC_VRULES)  # | wx.LC_SINGLE_SEL
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.handle_list_ctrl_selection, self.control_file_list)
         control_file_list_sizer = wx.BoxSizer(wx.VERTICAL)
         control_file_list_sizer.Add(self.control_file_list, 1, wx.EXPAND, 0)
@@ -823,10 +825,11 @@ class EpLaunchFrame(wx.Frame):
         # Group Menu Defined
         self.group_menu = wx.Menu()
         menu_group_show_saved_group = self.group_menu.Append(801, "Show Saved Group",
-                                                       "Highlight currently selected saved group of files")
+                                                             "Highlight currently selected saved group of files")
         self.Bind(wx.EVT_MENU, self.handle_menu_group_show_saved_group, menu_group_show_saved_group)
         menu_group_show_next_folder = self.group_menu.Append(802, "Show Next Folder In Saved Group",
-                                                      "Highlight next folder for currently selected group of files")
+                                                             "Highlight next folder for currently selected group of "
+                                                             "files")
         self.Bind(wx.EVT_MENU, self.handle_menu_group_show_next_folder, menu_group_show_next_folder)
         menu_group_open = self.group_menu.Append(803, "Open Saved Group File..", "Open file listing group of files")
         self.Bind(wx.EVT_MENU, self.handle_menu_group_open, menu_group_open)
@@ -835,10 +838,12 @@ class EpLaunchFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.handle_menu_group_save_as, menu_group_save_as)
         self.group_menu.Append(806, kind=wx.ITEM_SEPARATOR)
         menu_group_add_to_saved_group = self.group_menu.Append(807, "Add to Saved Group",
-                                                "Add selected files to current file listing group of files")
+                                                               "Add selected files to current file listing group of "
+                                                               "files")
         self.Bind(wx.EVT_MENU, self.handle_menu_group_add_to_saved_group, menu_group_add_to_saved_group)
         menu_group_remove_from_group = self.group_menu.Append(808, "Remove from Saved Group",
-                                                   "Remove selected files to current file listing group of files")
+                                                              "Remove selected files to current file listing group of "
+                                                              "files")
         self.Bind(wx.EVT_MENU, self.handle_menu_group_remove_from_group, menu_group_remove_from_group)
         self.group_menu.Append(811, kind=wx.ITEM_SEPARATOR)
         self.group_menu.Append(812, "Recent Saved Groups", "Recently selected saved group files")
@@ -1263,7 +1268,6 @@ class EpLaunchFrame(wx.Frame):
     def handle_menu_group_open(self, event):
         with wx.FileDialog(self, "Open saved group file", wildcard="EP-Launch 3 group files (*.epg3)|*.epg3",
                            style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fileDialog:
-
             if fileDialog.ShowModal() == wx.ID_CANCEL:
                 return  # the user changed their mind
 
@@ -1275,12 +1279,12 @@ class EpLaunchFrame(wx.Frame):
         self.current_group_file = pathname
         self.group_recent.add_recent(self.current_group_file)
         for menu_item in self.group_recent.menu_items_for_files:
-            self.Bind(wx.EVT_MENU, self. handle_group_recent_menu_selection, menu_item)
+            self.Bind(wx.EVT_MENU, self.handle_group_recent_menu_selection, menu_item)
         self.current_group_list.clear()
         try:
             with open(pathname, 'r') as file:
                 self.current_group_list = file.read().splitlines()
-                self.current_group_list.sort() # so that similar directories are adjacent in list
+                self.current_group_list.sort()  # so that similar directories are adjacent in list
         except IOError:
             wx.LogError("Cannot open file '%s'." % pathname)
         self.clear_selected_files()
@@ -1312,27 +1316,28 @@ class EpLaunchFrame(wx.Frame):
 
     def get_next_group_folder(self, current_group_folder):
         if self.current_group_list:
-            self.current_group_list.sort() # make sure the list is sorted so similar directories are adjacent in the list
+            # make sure the list is sorted so similar directories are adjacent in the list
+            self.current_group_list.sort()
             found = False
             for current_group_file in self.current_group_list:
                 path, file = os.path.split(current_group_file)
                 if current_group_folder == path:
                     found = True
                 else:
-                    if found: # if previously found but current path does not match this is the next folder
+                    if found:  # if previously found but current path does not match this is the next folder
                         return path
-        # if next item is not found just return the path of the first item in the group
+            # if next item is not found just return the path of the first item in the group
             return os.path.dirname(self.current_group_list[0])
         else:
             return current_group_folder
 
     def handle_menu_group_add_to_saved_group(self, event):
         try:
-            with open(self.current_group_file, 'a') as file:  #append to the existing file
+            with open(self.current_group_file, 'a') as file:  # append to the existing file
                 self.get_all_selected_files()
                 for file_name in self.selected_files:
                     full_path_name = os.path.join(self.selected_directory, file_name)
-                    if full_path_name not in self.current_group_list: # make sure it is unique file
+                    if full_path_name not in self.current_group_list:  # make sure it is unique file
                         file.write(full_path_name + "\n")
                         self.current_group_list.append(full_path_name)
             self.current_group_list.sort()  # so that similar directories are adjacent in list
@@ -1459,7 +1464,8 @@ class EpLaunchFrame(wx.Frame):
         else:
             pass
 
-    def handle_menu_help_docs(self, event):
+    @staticmethod
+    def handle_menu_help_docs(event):
         webbrowser.open(DOCS_URL)
 
     def handle_menu_help_about(self, event):
@@ -1615,6 +1621,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         self.selected_files = []
         # print(f"first selected file {self.selected_file}")
         # print(f"number of files selected {self.control_file_list.GetSelectedItemCount()}")
+        list_index = -1
         if self.control_file_list.GetSelectedItemCount() > 0:
             list_index = self.control_file_list.GetFirstSelected()
             self.selected_files = [self.control_file_list.GetItem(list_index).Text]
