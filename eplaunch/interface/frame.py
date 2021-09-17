@@ -1262,6 +1262,8 @@ class EpLaunchFrame(wx.Frame):
                 self.group_recent.add_recent(self.current_group_file)
                 self.group_favorites.uncheck_all()
                 self.group_favorites.put_checkmark_on_item(self.current_group_file)
+                for menu_item in self.group_recent.menu_items_for_files:
+                    self.Bind(wx.EVT_MENU, self.handle_group_recent_menu_selection, menu_item)
             except IOError:
                 wx.LogError("Cannot save current data in file '%s'." % pathname)
 
