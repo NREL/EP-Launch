@@ -801,7 +801,7 @@ class EpLaunchFrame(wx.Frame):
         self.workflow_menu = wx.Menu()
         self.option_version_menu = wx.Menu()
         self.workflow_menu.Append(self.MagicNumberWorkflowOffset - 2, "Version", self.option_version_menu)
-        self.workflow_menu.Append(self.MagicNumberWorkflowOffset - 1 , kind=wx.ITEM_SEPARATOR)
+        self.workflow_menu.Append(self.MagicNumberWorkflowOffset - 1, kind=wx.ITEM_SEPARATOR)
         self.menu_bar.Append(self.workflow_menu, "Wor&kflows")
 
         self.weather_menu = wx.Menu()
