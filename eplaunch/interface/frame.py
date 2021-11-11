@@ -68,6 +68,7 @@ class EpLaunchFrame(wx.Frame):
         self.current_workflow = None
         self.selected_directory = None
         self.selected_file = None
+        self.selected_files = []
         self.menu_output_toolbar = None
         self.status_bar = None
         self.raw_file_list = None
@@ -84,6 +85,11 @@ class EpLaunchFrame(wx.Frame):
         self.weather_menu = None
         self.weather_recent = None
         self.weather_favorites = None
+        self.group_menu = None
+        self.current_group_file = None
+        self.current_group_list = []
+        self.group_recent = None
+        self.group_favorites = None
         self.workflow_menu = None
         self.output_menu = None
         self.extra_output_menu = None
@@ -268,9 +274,10 @@ class EpLaunchFrame(wx.Frame):
             return
 
         if self.previous_selected_directory == self.selected_directory:
-            previous_selected_file = self.selected_file
+            self.get_all_selected_files()
+            previous_selected_files = self.selected_files
         else:
-            previous_selected_file = None
+            previous_selected_files = []
 
         # self.current_cache **should** be available, but this function gets called from lots of places so I'm not sure
         cache_file = CacheFile(self.selected_directory)
@@ -335,7 +342,7 @@ class EpLaunchFrame(wx.Frame):
         self.control_file_list.DeleteAllItems()
         for i, row in enumerate(control_list_rows):
             self.control_file_list.Append(row)
-            if row[0] == previous_selected_file:
+            if row[0] in previous_selected_files:
                 self.control_file_list.Focus(i)
                 self.control_file_list.Select(i)
         for i in range(self.control_file_list.GetColumnCount()):
@@ -439,7 +446,7 @@ class EpLaunchFrame(wx.Frame):
             cur_tool = self.output_toolbar.GetToolByPos(tool_num)
             cur_id = cur_tool.GetId()
             self.output_toolbar.EnableTool(cur_id, False)
-        self.output_toolbar.Realize()
+        # self.output_toolbar.Realize()
 
     def enable_existing_output_toolbar_buttons(self, path_no_ext):
         number_of_tools = self.output_toolbar.GetToolsCount()
@@ -448,7 +455,7 @@ class EpLaunchFrame(wx.Frame):
             cur_id = cur_tool.GetId()
             if os.path.exists(path_no_ext + cur_tool.GetLabel()):
                 self.output_toolbar.EnableTool(cur_id, True)
-        self.output_toolbar.Realize()
+        # self.output_toolbar.Realize()
 
     def get_current_selected_context(self):
         current_selected_context = None
@@ -481,30 +488,32 @@ class EpLaunchFrame(wx.Frame):
                 self.Bind(wx.EVT_MENU, self.handle_specific_documentation_menu, specific_documentation_menu)
 
     def run_workflow(self, weather_file_to_use):
-        if self.selected_directory and self.selected_file and self.current_workflow:
+        self.get_all_selected_files()
+        if self.selected_directory and self.selected_files and self.current_workflow:
             sel_dir = self.selected_directory
-            sel_file = self.selected_file
             cur_wf = self.current_workflow.name
-            for thread_id, t in self.workflow_threads.items():
-                if t.file_name == sel_file and t.run_directory == sel_dir and t.workflow_instance.name() == cur_wf:
-                    self.show_error_message('ERROR: This workflow/dir/file combination is already running')
-                    return
-            new_uuid = str(uuid.uuid4())
-            self.status_bar.SetStatusText('Starting workflow', i=0)
-            new_instance = self.current_workflow.workflow_class()
-            new_instance.register_standard_output_callback(
-                new_uuid,
-                self.callback_intermediary
-            )
-            this_weather = ''
-            if weather_file_to_use != self.DD_Only_String:
-                this_weather = weather_file_to_use
-            self.workflow_threads[new_uuid] = WorkflowThread(
-                new_uuid, self, new_instance, self.selected_directory, self.selected_file,
-                {'weather': this_weather, 'workflow location': self.current_workflow.workflow_directory}
-            )
-            self.workflow_output_dialogs[new_uuid] = self.make_and_show_output_dialog(new_uuid)
-            self.workflow_output_dialogs[new_uuid].update_output("*** STARTING WORKFLOW ***")
+            for selected_file_name in self.selected_files:
+                for thread_id, t in self.workflow_threads.items():
+                    if t.file_name == selected_file_name and t.run_directory == sel_dir and \
+                            t.workflow_instance.name() == cur_wf:
+                        self.show_error_message('ERROR: This workflow/dir/file combination is already running')
+                        return
+                new_uuid = str(uuid.uuid4())
+                self.status_bar.SetStatusText('Starting workflow', i=0)
+                new_instance = self.current_workflow.workflow_class()
+                new_instance.register_standard_output_callback(
+                    new_uuid,
+                    self.callback_intermediary
+                )
+                this_weather = ''
+                if weather_file_to_use != self.DD_Only_String:
+                    this_weather = weather_file_to_use
+                self.workflow_threads[new_uuid] = WorkflowThread(
+                    new_uuid, self, new_instance, self.selected_directory, selected_file_name,
+                    {'weather': this_weather, 'workflow location': self.current_workflow.workflow_directory}
+                )
+                self.workflow_output_dialogs[new_uuid] = self.make_and_show_output_dialog(new_uuid)
+                self.workflow_output_dialogs[new_uuid].update_output("*** STARTING WORKFLOW ***")
         else:
             self.show_error_message('ERROR: Make sure you select a workflow, directory and a file')
         self.update_num_processes_status()
@@ -550,7 +559,7 @@ class EpLaunchFrame(wx.Frame):
     def enable_disable_idf_editor_button(self):
         file_name_no_ext, extension = os.path.splitext(self.selected_file)
         self.primary_toolbar.EnableTool(self.tb_idf_editor_id, extension.upper() == ".IDF")
-        self.output_toolbar.Realize()
+        self.primary_toolbar.Realize()
 
     def show_first_time_welcome(self):
         # we don't want to try to show the window during testing!!
@@ -595,7 +604,7 @@ class EpLaunchFrame(wx.Frame):
         # build control list view (top right)
         self.control_file_list_panel = wx.Panel(self.file_lists_splitter, wx.ID_ANY)
         self.control_file_list = wx.ListCtrl(self.control_file_list_panel, wx.ID_ANY,
-                                             style=wx.LC_HRULES | wx.LC_REPORT | wx.LC_VRULES | wx.LC_SINGLE_SEL)
+                                             style=wx.LC_HRULES | wx.LC_REPORT | wx.LC_VRULES)  # | wx.LC_SINGLE_SEL
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.handle_list_ctrl_selection, self.control_file_list)
         control_file_list_sizer = wx.BoxSizer(wx.VERTICAL)
         control_file_list_sizer.Add(self.control_file_list, 1, wx.EXPAND, 0)
@@ -813,6 +822,57 @@ class EpLaunchFrame(wx.Frame):
         self.menu_bar.Enable(403, False)
         self.menu_bar.Enable(406, False)
 
+        # Group Menu Defined
+        self.group_menu = wx.Menu()
+        menu_group_show_saved_group = self.group_menu.Append(801, "Show Saved Group",
+                                                             "Highlight currently selected saved group of files")
+        self.Bind(wx.EVT_MENU, self.handle_menu_group_show_saved_group, menu_group_show_saved_group)
+        menu_group_show_next_folder = self.group_menu.Append(802, "Show Next Folder In Saved Group",
+                                                             "Highlight next folder for currently selected group of "
+                                                             "files")
+        self.Bind(wx.EVT_MENU, self.handle_menu_group_show_next_folder, menu_group_show_next_folder)
+        menu_group_open = self.group_menu.Append(803, "Open Saved Group File..", "Open file listing group of files")
+        self.Bind(wx.EVT_MENU, self.handle_menu_group_open, menu_group_open)
+        menu_group_save_as = self.group_menu.Append(805, "Save Selected Files as Group File..",
+                                                    "Save file containing a list of all selected files")
+        self.Bind(wx.EVT_MENU, self.handle_menu_group_save_as, menu_group_save_as)
+        self.group_menu.Append(806, kind=wx.ITEM_SEPARATOR)
+        menu_group_add_to_saved_group = self.group_menu.Append(807, "Add to Saved Group",
+                                                               "Add selected files to current file listing group of "
+                                                               "files")
+        self.Bind(wx.EVT_MENU, self.handle_menu_group_add_to_saved_group, menu_group_add_to_saved_group)
+        menu_group_remove_from_group = self.group_menu.Append(808, "Remove from Saved Group",
+                                                              "Remove selected files to current file listing group of "
+                                                              "files")
+        self.Bind(wx.EVT_MENU, self.handle_menu_group_remove_from_group, menu_group_remove_from_group)
+        self.group_menu.Append(811, kind=wx.ITEM_SEPARATOR)
+        self.group_menu.Append(812, "Recent Saved Groups", "Recently selected saved group files")
+        self.group_menu.Append(820, kind=wx.ITEM_SEPARATOR)
+        self.group_menu.Append(821, kind=wx.ITEM_SEPARATOR)
+        self.group_recent = FileNameMenus(self.group_menu, 820, 821, self.config, "/GroupMenu/Recent")
+        self.group_recent.retrieve_config()
+        for menu_item in self.group_recent.menu_items_for_files:
+            self.Bind(wx.EVT_MENU, self.handle_group_recent_menu_selection, menu_item)
+
+        self.group_menu.Append(830, "Favorite Saved Groups", "Favorite selected saved group files")
+        self.group_menu.Append(831, kind=wx.ITEM_SEPARATOR)
+        self.group_menu.Append(832, kind=wx.ITEM_SEPARATOR)
+        self.group_favorites = FileNameMenus(self.group_menu, 831, 832, self.config, "/GroupMenu/Favorite")
+        self.group_favorites.retrieve_config()
+        for menu_item in self.group_favorites.menu_items_for_files:
+            self.Bind(wx.EVT_MENU, self.handle_group_favorites_menu_selection, menu_item)
+
+        menu_group_add_favorites = self.group_menu.Append(840, "Add Saved Group to Favorites", "Add Group to Favorites")
+        self.Bind(wx.EVT_MENU, self.handle_add_current_group_to_favorites, menu_group_add_favorites)
+        menu_group_remove_from_favorites = self.group_menu.Append(841, "Remove Saved Group from Favorites",
+                                                                  "Remove Group from Favorites")
+        self.Bind(wx.EVT_MENU, self.handle_remove_current_group_from_favorites, menu_group_remove_from_favorites)
+
+        self.menu_bar.Append(self.group_menu, "&Group")
+        # disable the menu items that are just information
+        self.menu_bar.Enable(812, False)
+        self.menu_bar.Enable(830, False)
+
         self.output_menu = wx.Menu()
         self.menu_bar.Append(self.output_menu, "&Output")
 
@@ -883,22 +943,31 @@ class EpLaunchFrame(wx.Frame):
         self.Destroy()
 
     def handle_out_tb_button(self, event):
-        full_path_name = os.path.join(self.selected_directory, self.selected_file)
-        tb_button = self.output_toolbar.FindById(event.GetId())
-        output_file_name = self.file_name_manipulator.replace_extension_with_suffix(full_path_name, tb_button.Label)
-        self.external_runner.run_program_by_extension(output_file_name)
+        self.get_all_selected_files()
+        for file_name in self.selected_files:
+            full_path_name = os.path.join(self.selected_directory, file_name)
+            tb_button = self.output_toolbar.FindById(event.GetId())
+            if os.path.exists(full_path_name):
+                output_file_name = self.file_name_manipulator.replace_extension_with_suffix(full_path_name,
+                                                                                            tb_button.Label)
+                if os.path.exists(output_file_name):
+                    self.external_runner.run_program_by_extension(output_file_name)
 
-    def handle_list_ctrl_selection(self, event):
-        self.selected_file = event.Item.Text
-        self.update_output_file_status()
-        if Platform.get_current_platform() == Platform.WINDOWS:
-            self.enable_disable_idf_editor_button()
+    def handle_list_ctrl_selection(self, _):
+        old_selected_file = self.selected_file
+        selected_file_index = self.control_file_list.GetFirstSelected()
+        self.selected_file = self.control_file_list.GetItem(selected_file_index).Text
+        if old_selected_file != self.selected_file:
+            self.update_output_file_status()
+            if Platform.get_current_platform() == Platform.WINDOWS:
+                self.enable_disable_idf_editor_button()
 
     def handle_menu_file_quit(self, event):
         self.Close()
 
     def handle_run_workflow(self, event):
-        if not self.current_workflow or not self.selected_file or not self.selected_directory:
+        self.get_all_selected_files()
+        if not self.current_workflow or not self.selected_files or not self.selected_directory:
             return  # error
         self.folder_recent.add_recent(self.directory_tree_control.GetPath())
         for menu_item in self.folder_recent.menu_items_for_files:
@@ -910,11 +979,12 @@ class EpLaunchFrame(wx.Frame):
         )
         weather_file_to_use = False
         if self.current_workflow.uses_weather:
-            if self.selected_file in files_in_current_workflow:
-                cached_file_info = files_in_current_workflow[self.selected_file]
-                if CacheFile.ParametersKey in cached_file_info:
-                    if CacheFile.WeatherFileKey in cached_file_info[CacheFile.ParametersKey]:
-                        weather_file_to_use = cached_file_info[CacheFile.ParametersKey][CacheFile.WeatherFileKey]
+            for selected_file_name in self.selected_files:
+                if selected_file_name in files_in_current_workflow:
+                    cached_file_info = files_in_current_workflow[selected_file_name]
+                    if CacheFile.ParametersKey in cached_file_info:
+                        if CacheFile.WeatherFileKey in cached_file_info[CacheFile.ParametersKey]:
+                            weather_file_to_use = cached_file_info[CacheFile.ParametersKey][CacheFile.WeatherFileKey]
             if not weather_file_to_use:
                 w = WeatherDialog(self, title='Weather File Selection')
                 recent_files = [x.ItemLabel for x in self.weather_recent.menu_items_for_files]
@@ -928,11 +998,12 @@ class EpLaunchFrame(wx.Frame):
                         weather_file_to_use = self.DD_Only_String
                     else:
                         weather_file_to_use = w.selected_weather_file
-            self.current_cache.add_config(
-                self.current_workflow.name,
-                self.selected_file,
-                {'weather': weather_file_to_use}
-            )
+            for selected_file_name in self.selected_files:
+                self.current_cache.add_config(
+                    self.current_workflow.name,
+                    selected_file_name,
+                    {'weather': weather_file_to_use}
+                )
             self.update_file_lists()
         self.run_workflow(weather_file_to_use)
         self.update_output_file_status()
@@ -1071,7 +1142,8 @@ class EpLaunchFrame(wx.Frame):
             self.update_output_toolbar()
 
     def handle_select_new_weather(self, event):
-        if not self.selected_file:
+        self.get_all_selected_files()
+        if not self.selected_files:
             self.show_error_message("Select a file first before trying to assign a weather option")
             return
         if not self.current_workflow.uses_weather:
@@ -1091,11 +1163,12 @@ class EpLaunchFrame(wx.Frame):
                 filename = w.selected_weather_file
         # update the frame variable, update cache, and refresh the file listing
         self.current_weather_file = filename
-        self.current_cache.add_config(
-            self.current_workflow.name,
-            self.selected_file,
-            {'weather': self.current_weather_file}
-        )
+        for selected_file_name in self.selected_files:
+            self.current_cache.add_config(
+                self.current_workflow.name,
+                selected_file_name,
+                {'weather': self.current_weather_file}
+            )
         self.update_file_lists()
         # update recent and favorites if we chose an actual file
         if w.selected_weather_file:
@@ -1133,11 +1206,13 @@ class EpLaunchFrame(wx.Frame):
     def handle_weather_recent_menu_selection(self, event):
         menu_item = self.weather_menu.FindItemById(event.GetId())
         self.current_weather_file = menu_item.GetItemLabel()
-        self.current_cache.add_config(
-            self.current_workflow.name,
-            self.selected_file,
-            {'weather': self.current_weather_file}
-        )
+        self.get_all_selected_files()
+        for selected_file_name in self.selected_files:
+            self.current_cache.add_config(
+                self.current_workflow.name,
+                selected_file_name,
+                {'weather': self.current_weather_file}
+            )
         self.update_file_lists()
         self.weather_recent.uncheck_all()
         self.weather_recent.put_checkmark_on_item(self.current_weather_file)
@@ -1147,11 +1222,13 @@ class EpLaunchFrame(wx.Frame):
     def handle_weather_favorites_menu_selection(self, event):
         menu_item = self.weather_menu.FindItemById(event.GetId())
         self.current_weather_file = menu_item.GetItemLabel()
-        self.current_cache.add_config(
-            self.current_workflow.name,
-            self.selected_file,
-            {'weather': self.current_weather_file}
-        )
+        self.get_all_selected_files()
+        for selected_file_name in self.selected_files:
+            self.current_cache.add_config(
+                self.current_workflow.name,
+                selected_file_name,
+                {'weather': self.current_weather_file}
+            )
         self.update_file_lists()
         self.weather_recent.uncheck_all()
         self.weather_recent.put_checkmark_on_item(self.current_weather_file)
@@ -1166,37 +1243,202 @@ class EpLaunchFrame(wx.Frame):
     def handle_remove_current_weather_from_favorites_menu_selection(self, event):
         self.weather_favorites.remove_favorite(self.current_weather_file)
 
+    def handle_menu_group_save_as(self, event):
+        with wx.FileDialog(self, "Save group as group file", wildcard="EP-Launch 3 group files (*.epg3)|*.epg3",
+                           style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
+            if fileDialog.ShowModal() == wx.ID_CANCEL:
+                return  # the user changed their mind
+            pathname = fileDialog.GetPath()
+            self.current_group_file = pathname
+            self.current_group_list.clear()
+            try:
+                with open(pathname, 'w') as file:
+                    self.get_all_selected_files()
+                    for file_name in self.selected_files:
+                        full_path_name = os.path.join(self.selected_directory, file_name)
+                        file.write(full_path_name + "\n")
+                self.current_group_list.append(full_path_name)
+                self.group_recent.uncheck_all()
+                self.group_recent.add_recent(self.current_group_file)
+                self.group_favorites.uncheck_all()
+                self.group_favorites.put_checkmark_on_item(self.current_group_file)
+                for menu_item in self.group_recent.menu_items_for_files:
+                    self.Bind(wx.EVT_MENU, self.handle_group_recent_menu_selection, menu_item)
+            except IOError:
+                wx.LogError("Cannot save current data in file '%s'." % pathname)
+
+    def handle_menu_group_open(self, event):
+        with wx.FileDialog(self, "Open saved group file", wildcard="EP-Launch 3 group files (*.epg3)|*.epg3",
+                           style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fileDialog:
+            if fileDialog.ShowModal() == wx.ID_CANCEL:
+                return  # the user changed their mind
+
+            # Proceed loading the file chosen by the user
+            pathname = fileDialog.GetPath()
+            self.open_group_file_and_select(pathname)
+
+    def open_group_file_and_select(self, pathname):
+        self.current_group_file = pathname
+        self.group_recent.uncheck_all()
+        self.group_recent.add_recent(self.current_group_file)
+        for menu_item in self.group_recent.menu_items_for_files:
+            self.Bind(wx.EVT_MENU, self.handle_group_recent_menu_selection, menu_item)
+        self.current_group_list.clear()
+        try:
+            with open(pathname, 'r') as file:
+                self.current_group_list = file.read().splitlines()
+                self.current_group_list.sort()  # so that similar directories are adjacent in list
+        except IOError:
+            wx.LogError("Cannot open file '%s'." % pathname)
+        self.clear_selected_files()
+        self.selections_from_current_group_list()
+
+    def selections_from_current_group_list(self):
+        self.control_file_list.SetFocus()
+        if self.selected_directory:
+            one_in_current_folder = False
+            for file_with_path in self.current_group_list:
+                path, file = os.path.split(file_with_path)
+                if path == self.selected_directory:
+                    index = self.control_file_list.FindItem(0, file)
+                    if index != wx.NOT_FOUND:
+                        self.control_file_list.Select(index, 1)
+                        self.control_file_list.EnsureVisible(index)
+                        one_in_current_folder = True
+        if not one_in_current_folder:
+            first_path, file = os.path.split(self.current_group_list[0])
+            self.directory_tree_control.SelectPath(first_path, True)
+            self.directory_tree_control.ExpandPath(first_path)
+            for file_with_path in self.current_group_list:
+                path, file = os.path.split(file_with_path)
+                if path == first_path:
+                    index = self.control_file_list.FindItem(0, file)
+                    if index != wx.NOT_FOUND:
+                        self.control_file_list.Select(index, 1)
+                        self.control_file_list.EnsureVisible(index)
+
+    def handle_menu_group_show_saved_group(self, event):
+        self.clear_selected_files()
+        if self.current_group_list:
+            self.selections_from_current_group_list()
+
+    def handle_menu_group_show_next_folder(self, event):
+        self.clear_selected_files()
+        next_folder = self.get_next_group_folder(self.selected_directory)
+        if next_folder and next_folder != self.selected_directory:
+            self.set_directory(next_folder)
+            if self.current_group_list:
+                self.selections_from_current_group_list()
+
+    def get_next_group_folder(self, current_group_folder):
+        if self.current_group_list:
+            # make sure the list is sorted so similar directories are adjacent in the list
+            self.current_group_list.sort()
+            found = False
+            for current_group_file in self.current_group_list:
+                path, file = os.path.split(current_group_file)
+                if current_group_folder == path:
+                    found = True
+                else:
+                    if found:  # if previously found but current path does not match this is the next folder
+                        return path
+            # if next item is not found just return the path of the first item in the group
+            return os.path.dirname(self.current_group_list[0])
+        else:
+            return current_group_folder
+
+    def handle_menu_group_add_to_saved_group(self, event):
+        try:
+            with open(self.current_group_file, 'a') as file:  # append to the existing file
+                self.get_all_selected_files()
+                for file_name in self.selected_files:
+                    full_path_name = os.path.join(self.selected_directory, file_name)
+                    if full_path_name not in self.current_group_list:  # make sure it is unique file
+                        file.write(full_path_name + "\n")
+                        self.current_group_list.append(full_path_name)
+            self.current_group_list.sort()  # so that similar directories are adjacent in list
+        except IOError:
+            wx.LogError("Cannot append current data in file '%s'." % self.current_group_file)
+
+    def handle_menu_group_remove_from_group(self, event):
+        self.get_all_selected_files()
+        for selected_file in self.selected_files:
+            full_path_selected_file = os.path.join(self.selected_directory, selected_file)
+            if full_path_selected_file in self.current_group_list:
+                self.current_group_list.remove(full_path_selected_file)
+        # rewrite the group file
+        try:
+            with open(self.current_group_file, 'w') as file:
+                for file_name in self.current_group_list:
+                    file.write(file_name + "\n")
+        except IOError:
+            wx.LogError("Cannot save current data in file '%s'." % self.current_group_file)
+
+    def handle_group_recent_menu_selection(self, event):
+        menu_item = self.group_menu.FindItemById(event.GetId())
+        real_path = os.path.abspath(menu_item.GetItemLabel())
+        self.open_group_file_and_select(real_path)
+        self.group_recent.uncheck_all()
+        self.group_recent.put_checkmark_on_item(real_path)
+        self.group_favorites.uncheck_all()
+        self.group_favorites.put_checkmark_on_item(real_path)
+
+    def handle_group_favorites_menu_selection(self, event):
+        menu_item = self.group_menu.FindItemById(event.GetId())
+        real_path = os.path.abspath(menu_item.GetItemLabel())
+        self.open_group_file_and_select(real_path)
+        self.group_recent.uncheck_all()
+        self.group_recent.put_checkmark_on_item(real_path)
+        self.group_favorites.uncheck_all()
+        self.group_favorites.put_checkmark_on_item(real_path)
+
+    def handle_add_current_group_to_favorites(self, event):
+        self.group_favorites.add_favorite(self.current_group_file)
+        for menu_item in self.group_favorites.menu_items_for_files:
+            self.Bind(wx.EVT_MENU, self.handle_group_favorites_menu_selection, menu_item)
+
+    def handle_remove_current_group_from_favorites(self, event):
+        self.group_favorites.remove_favorite(self.current_group_file)
+
     def handle_tb_idf_editor(self, event):
-        full_path_name = os.path.join(self.selected_directory, self.selected_file)
-        energyplus_root_path, _ = os.path.split(self.current_workflow.workflow_directory)
-        self.external_runner.run_idf_editor(full_path_name, energyplus_root_path)
+        self.get_all_selected_files()
+        for file_name in self.selected_files:
+            full_path_name = os.path.join(self.selected_directory, file_name)
+            energyplus_root_path, _ = os.path.split(self.current_workflow.workflow_directory)
+            self.external_runner.run_idf_editor(full_path_name, energyplus_root_path)
 
     def handle_tb_text_editor(self, event):
-        full_path_name = os.path.join(self.selected_directory, self.selected_file)
-        self.external_runner.run_text_editor(full_path_name)
+        self.get_all_selected_files()
+        for file_name in self.selected_files:
+            full_path_name = os.path.join(self.selected_directory, file_name)
+            self.external_runner.run_text_editor(full_path_name)
 
     def handle_tb_refresh(self, event):
         self.handle_dir_selection_changed(event)
 
     def handle_output_menu_item(self, event):
-        full_path_name = os.path.join(self.selected_directory, self.selected_file)
         menu_item = self.output_menu.FindItemById(event.GetId())
-        output_file_name = self.file_name_manipulator.replace_extension_with_suffix(full_path_name,
-                                                                                    menu_item.GetItemLabel())
-        if os.path.exists(output_file_name):
-            self.external_runner.run_program_by_extension(output_file_name)
-        else:
-            self.show_error_message('File cannot be found: \"%s\"' % output_file_name)
+        self.get_all_selected_files()
+        for file_name in self.selected_files:
+            full_path_name = os.path.join(self.selected_directory, file_name)
+            output_file_name = self.file_name_manipulator.replace_extension_with_suffix(full_path_name,
+                                                                                        menu_item.GetItemLabel())
+            if os.path.exists(output_file_name):
+                self.external_runner.run_program_by_extension(output_file_name)
+            else:
+                self.show_error_message('File cannot be found: \"%s\"' % output_file_name)
 
     def handle_extra_output_menu_item(self, event):
-        full_path_name = os.path.join(self.selected_directory, self.selected_file)
         menu_item = self.extra_output_menu.FindItemById(event.GetId())
-        output_file_name = self.file_name_manipulator.replace_extension_with_suffix(full_path_name,
-                                                                                    menu_item.GetItemLabel())
-        if os.path.exists(output_file_name):
-            self.external_runner.run_program_by_extension(output_file_name)
-        else:
-            self.show_error_message('File cannot be found: \"%s\"' % output_file_name)
+        self.get_all_selected_files()
+        for file_name in self.selected_files:
+            full_path_name = os.path.join(self.selected_directory, file_name)
+            output_file_name = self.file_name_manipulator.replace_extension_with_suffix(full_path_name,
+                                                                                        menu_item.GetItemLabel())
+            if os.path.exists(output_file_name):
+                self.external_runner.run_program_by_extension(output_file_name)
+            else:
+                self.show_error_message('File cannot be found: \"%s\"' % output_file_name)
 
     def handle_specific_version_menu(self, event):
         if self.any_threads_running():
@@ -1244,7 +1486,8 @@ class EpLaunchFrame(wx.Frame):
         else:
             pass
 
-    def handle_menu_help_docs(self, event):
+    @staticmethod
+    def handle_menu_help_docs(event):
         webbrowser.open(DOCS_URL)
 
     def handle_menu_help_about(self, event):
@@ -1337,7 +1580,11 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             home = os.path.expanduser("~")
             possible_directory_name = home
         else:
-            self.selected_directory = possible_directory_name
+            self.set_directory(possible_directory_name)
+
+    def set_directory(self, directory_name):
+        if directory_name:
+            self.selected_directory = directory_name
             real_path = os.path.abspath(self.selected_directory)
             self.directory_tree_control.SelectPath(real_path, True)
             self.directory_tree_control.ExpandPath(real_path)
@@ -1349,6 +1596,8 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         self.folder_recent.save_config()
         self.weather_favorites.save_config()
         self.weather_recent.save_config()
+        self.group_favorites.save_config()
+        self.group_recent.save_config()
         self.save_workflow_directories_config()
         self.save_current_directory_config()
         self.save_selected_workflow_config()
@@ -1389,3 +1638,31 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         # save menu items to configuration file
         for count, workflow_directory in enumerate(self.workflow_directories):
             self.config.Write("/WorkflowDirectories/Path-{:02d}".format(count), workflow_directory)
+
+    def get_all_selected_files(self):
+        self.selected_files = []
+        # print(f"first selected file {self.selected_file}")
+        # print(f"number of files selected {self.control_file_list.GetSelectedItemCount()}")
+        list_index = -1
+        if self.control_file_list.GetSelectedItemCount() > 0:
+            list_index = self.control_file_list.GetFirstSelected()
+            self.selected_files = [self.control_file_list.GetItem(list_index).Text]
+        if self.control_file_list.GetSelectedItemCount() > 1:
+            if list_index > -1:
+                while 1:
+                    list_index = self.control_file_list.GetNextSelected(list_index)
+                    if list_index == -1:
+                        break
+                    self.selected_files.append(self.control_file_list.GetItem(list_index).Text)
+        # print(self.selected_files)
+
+    def clear_selected_files(self):
+        if self.control_file_list.GetSelectedItemCount() > 0:
+            list_index = self.control_file_list.GetFirstSelected()
+            self.control_file_list.Select(list_index, 0)
+            while 1:
+                list_index = self.control_file_list.GetNextSelected(list_index)
+                if list_index == -1:
+                    break
+                self.control_file_list.Select(list_index, 0)
+        self.selected_file = []
