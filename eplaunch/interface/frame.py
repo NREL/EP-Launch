@@ -422,7 +422,7 @@ class EpLaunchFrame(wx.Frame):
     def refresh_workflow_context_menu(self):
         for menu_item in self.option_version_menu.GetMenuItems():
             self.option_version_menu.Remove(menu_item)
-        for index, context in enumerate(self.list_of_contexts):
+        for index, context in enumerate(sorted(self.list_of_contexts)):
             specific_context_menu = self.option_version_menu.Append(710 + index, context, kind=wx.ITEM_RADIO)
             self.Bind(wx.EVT_MENU, self.handle_specific_version_menu, specific_context_menu)
 
@@ -799,6 +799,9 @@ class EpLaunchFrame(wx.Frame):
         self.menu_bar.Enable(304, False)
 
         self.workflow_menu = wx.Menu()
+        self.option_version_menu = wx.Menu()
+        self.workflow_menu.Append(self.MagicNumberWorkflowOffset - 2, "Version", self.option_version_menu)
+        self.workflow_menu.Append(self.MagicNumberWorkflowOffset - 1 , kind=wx.ITEM_SEPARATOR)
         self.menu_bar.Append(self.workflow_menu, "Wor&kflows")
 
         self.weather_menu = wx.Menu()
@@ -840,8 +843,6 @@ class EpLaunchFrame(wx.Frame):
         self.menu_bar.Append(self.output_menu, "&Output")
 
         options_menu = wx.Menu()
-        self.option_version_menu = wx.Menu()
-        options_menu.Append(71, "Version", self.option_version_menu)
         menu_option_workflow_directories = options_menu.Append(
             72, "Workflow Directories...", 'Select directories where workflows are located'
         )
@@ -1026,10 +1027,11 @@ class EpLaunchFrame(wx.Frame):
         self.current_workflow = self.work_flows[event.Selection]
         target_menu_item_id = self.MagicNumberWorkflowOffset + self.workflow_choice.GetSelection()
         for menu_item in self.workflow_menu.GetMenuItems():
-            if menu_item.Id == target_menu_item_id:
-                menu_item.Check(True)
-            else:
-                menu_item.Check(False)
+            if menu_item.Id >= self.MagicNumberWorkflowOffset:
+                if menu_item.Id == target_menu_item_id:
+                    menu_item.Check(True)
+                else:
+                    menu_item.Check(False)
         self.update_workflow_dependent_gui_items(event.String)
 
     def handle_tb_hide_all_files_pane(self, event):
@@ -1260,7 +1262,8 @@ class EpLaunchFrame(wx.Frame):
         self.workflow_choice.SetSize(self.workflow_choice.GetBestSize())
         self.primary_toolbar.Realize()
         for menu_item in self.workflow_menu.GetMenuItems():
-            self.workflow_menu.Remove(menu_item)
+            if menu_item.GetId() >= self.MagicNumberWorkflowOffset:
+                self.workflow_menu.Remove(menu_item)
         for index, wf in enumerate(self.work_flows):
             wf_menu_item = self.workflow_menu.Append(
                 self.MagicNumberWorkflowOffset + index,
