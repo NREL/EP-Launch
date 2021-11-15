@@ -1478,7 +1478,7 @@ class EpLaunchFrame(wx.Frame):
     def handle_tb_explorer(self, event):
         current_platform = Platform.get_current_platform()
         if current_platform == Platform.WINDOWS:  # pragma: no cover
-            os.system('start "{}"'.format(self.selected_directory))
+            os.startfile('{}'.format(self.selected_directory))
         elif current_platform == Platform.LINUX:
             os.system('xdg-open "{}"'.format(self.selected_directory))
         elif current_platform == Platform.MAC:  # pragma: no cover

@@ -17,6 +17,9 @@ class TestVersion(unittest.TestCase):
         self.assertEqual(self.v.numeric_version_from_string("8.6-dfjsuy"), 80600)
         self.assertEqual(self.v.numeric_version_from_string("8.4.2-dfjsuy"), 80400)
         self.assertEqual(self.v.numeric_version_from_string("7.12.13"), 71200)
+        self.assertEqual(self.v.numeric_version_from_string("22.1"), 220100)
+        self.assertEqual(self.v.numeric_version_from_string("28.8.3"), 280800)
+        self.assertEqual(self.v.numeric_version_from_string("25.25.25"), 252500)
 
     def test_line_with_no_comment(self):
         self.assertEqual(self.v.line_with_no_comment(" object, ! this is a comment"), "object,")
