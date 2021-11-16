@@ -30,3 +30,6 @@ nose==1.3.7
 
 # for packaging up EP-Launch, you'll need pyinstaller:
 pyinstaller==4.1
+
+# for docs to build properly, we need to pin docutils
+docutils==0.16
