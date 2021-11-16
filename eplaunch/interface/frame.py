@@ -17,6 +17,7 @@ from eplaunch.interface.weather_dialog import WeatherDialog
 from eplaunch.interface.welcome_dialog import WelcomeDialog
 from eplaunch.interface.workflow_output_dialog import Dialog as OutputDialog
 from eplaunch.interface.workflow_processing import event_result, WorkflowThread
+from eplaunch.interface.viewer_dialog import ViewerDialog
 from eplaunch.utilities.cache import CacheFile
 from eplaunch.utilities.crossplatform import Platform
 from eplaunch.utilities.exceptions import EPLaunchDevException, EPLaunchFileException
@@ -57,7 +58,8 @@ class EpLaunchFrame(wx.Frame):
         # Set up instances of supporting classes
         self.support = FrameSupport()
         self.locate_workflows = LocateWorkflows()
-        self.external_runner = EPLaunchExternalPrograms()
+        self.external_runner = EPLaunchExternalPrograms(self.config)
+        self.external_runner.retrieve_application_viewer_overrides_config()
         self.file_name_manipulator = FileNameManipulation()
 
         # initialize these here (and early) in the constructor to hush up the compiler messages
@@ -251,6 +253,7 @@ class EpLaunchFrame(wx.Frame):
     def update_control_list_columns(self):
         self.control_file_list.DeleteAllColumns()
         self.control_file_list.AppendColumn(_("File Name"), format=wx.LIST_FORMAT_LEFT, width=-1)
+        self.control_file_list.AppendColumn(_("Stale"), format=wx.LIST_FORMAT_LEFT, width=-1)
         if not self.current_workflow:
             return
         if self.current_workflow.uses_weather:
@@ -320,6 +323,10 @@ class EpLaunchFrame(wx.Frame):
             row = [file_name]
             # if it in the cache then the listview row can include additional data
             if file_name in files_in_current_workflow:
+                if self.is_file_stale(file_name):
+                    row.append('*')
+                else:
+                    row.append('')
                 cached_file_info = files_in_current_workflow[file_name]
                 if self.current_workflow.uses_weather:
                     if CacheFile.ParametersKey in cached_file_info:
@@ -361,6 +368,22 @@ class EpLaunchFrame(wx.Frame):
         self.raw_file_list.SetColumnWidth(1, -1)
 
         self.previous_selected_directory = self.selected_directory
+
+    def is_file_stale(self, input_file_name):
+        input_file_name_path = os.path.join(self.selected_directory, input_file_name)
+        if os.path.exists(input_file_name_path):
+            input_file_date = os.path.getmtime(input_file_name_path)
+            suffixes = self.current_workflow.output_suffixes
+            if '.err' in suffixes:  # for energyplus workflows just use the err file
+                suffixes = ['.err']
+            file_name_no_ext, _ = os.path.splitext(input_file_name)
+            for suffix in suffixes:
+                full_output_file_path = os.path.join(self.selected_directory, file_name_no_ext + suffix)
+                if os.path.exists(full_output_file_path):
+                    output_file_date = os.path.getmtime(full_output_file_path)
+                    if output_file_date < input_file_date:
+                        return True
+        return False
 
     def update_num_processes_status(self):
         self.status_bar.SetStatusText("Currently %s processes running" % len(self.workflow_threads), i=2)
@@ -406,7 +429,7 @@ class EpLaunchFrame(wx.Frame):
     def refresh_workflow_context_menu(self):
         for menu_item in self.option_version_menu.GetMenuItems():
             self.option_version_menu.Remove(menu_item)
-        for index, context in enumerate(self.list_of_contexts):
+        for index, context in enumerate(sorted(self.list_of_contexts)):
             specific_context_menu = self.option_version_menu.Append(710 + index, context, kind=wx.ITEM_RADIO)
             self.Bind(wx.EVT_MENU, self.handle_specific_version_menu, specific_context_menu)
 
@@ -785,6 +808,9 @@ class EpLaunchFrame(wx.Frame):
         self.menu_bar.Enable(304, False)
 
         self.workflow_menu = wx.Menu()
+        self.option_version_menu = wx.Menu()
+        self.workflow_menu.Append(self.MagicNumberWorkflowOffset - 2, "Version", self.option_version_menu)
+        self.workflow_menu.Append(self.MagicNumberWorkflowOffset - 1, kind=wx.ITEM_SEPARATOR)
         self.menu_bar.Append(self.workflow_menu, "Wor&kflows")
 
         self.weather_menu = wx.Menu()
@@ -877,8 +903,6 @@ class EpLaunchFrame(wx.Frame):
         self.menu_bar.Append(self.output_menu, "&Output")
 
         options_menu = wx.Menu()
-        self.option_version_menu = wx.Menu()
-        options_menu.Append(71, "Version", self.option_version_menu)
         menu_option_workflow_directories = options_menu.Append(
             72, "Workflow Directories...", 'Select directories where workflows are located'
         )
@@ -894,6 +918,9 @@ class EpLaunchFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.handle_menu_option_hold_dialog, menu_settings_keep_open)
         self.menu_output_toolbar = options_menu.Append(761, "<workspacename> Output Toolbar...")
         self.Bind(wx.EVT_MENU, self.handle_menu_output_toolbar, self.menu_output_toolbar)
+        menu_option_viewers = options_menu.Append(73, "Viewers...", 'Select which viewer applications are used for '
+                                                                    'different types of files')
+        self.Bind(wx.EVT_MENU, self.handle_menu_option_viewers, menu_option_viewers)
         self.menu_bar.Append(options_menu, "&Settings")
 
         self.help_menu = wx.Menu()
@@ -1071,10 +1098,11 @@ class EpLaunchFrame(wx.Frame):
         self.current_workflow = self.work_flows[event.Selection]
         target_menu_item_id = self.MagicNumberWorkflowOffset + self.workflow_choice.GetSelection()
         for menu_item in self.workflow_menu.GetMenuItems():
-            if menu_item.Id == target_menu_item_id:
-                menu_item.Check(True)
-            else:
-                menu_item.Check(False)
+            if menu_item.Id >= self.MagicNumberWorkflowOffset:
+                if menu_item.Id == target_menu_item_id:
+                    menu_item.Check(True)
+                else:
+                    menu_item.Check(False)
         self.update_workflow_dependent_gui_items(event.String)
 
     def handle_tb_hide_all_files_pane(self, event):
@@ -1112,6 +1140,23 @@ class EpLaunchFrame(wx.Frame):
             self.update_workflow_dependent_gui_items(previous_workflow_name)
 
         workflow_dir_dialog.Destroy()
+
+    def handle_menu_option_viewers(self, event):
+        if self.current_workflow:
+            output_suffixes = self.current_workflow.output_suffixes
+        else:
+            output_suffixes = []
+        viewer_dialog = ViewerDialog(None)
+        # print(f"initial viewer overrides {self.external_runner.application_viewers}")
+        viewer_dialog.initialize_ui(list_of_suffixes=output_suffixes,
+                                    dict_of_viewer_overrides=self.external_runner.viewer_overrides)
+        return_value = viewer_dialog.ShowModal()
+        if return_value == ViewerDialog.CLOSE_SIGNAL_CANCEL:
+            return
+        else:
+            self.external_runner.viewer_overrides = viewer_dialog.viewer_overrides
+            # print(f"final viewer overrides {self.external_runner.application_viewers}")
+        viewer_dialog.Destroy()
 
     def handle_menu_output_toolbar(self, event):
 
@@ -1459,7 +1504,8 @@ class EpLaunchFrame(wx.Frame):
         self.workflow_choice.SetSize(self.workflow_choice.GetBestSize())
         self.primary_toolbar.Realize()
         for menu_item in self.workflow_menu.GetMenuItems():
-            self.workflow_menu.Remove(menu_item)
+            if menu_item.GetId() >= self.MagicNumberWorkflowOffset:
+                self.workflow_menu.Remove(menu_item)
         for index, wf in enumerate(self.work_flows):
             wf_menu_item = self.workflow_menu.Append(
                 self.MagicNumberWorkflowOffset + index,
@@ -1603,6 +1649,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         self.save_selected_workflow_config()
         self.save_window_size()
         self.save_selected_version_config()
+        self.external_runner.save_application_viewer_overrides_config()
         if self.keep_dialog_open:
             self.config.Write("/ActiveWindow/KeepDialogOpen", "TRUE")
         else:
