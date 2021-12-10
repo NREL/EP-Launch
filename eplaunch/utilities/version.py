@@ -1,5 +1,6 @@
 import json
 import os
+import requests
 
 
 class Version:
@@ -106,3 +107,13 @@ class Version:
                 if current_version:
                     return True, current_version, self.numeric_version_from_string(current_version)
         return False, '', 0
+
+    def check_github_energyplus_release(self):
+        repo_url = f'https://api.github.com/repos/NREL/energyplus/releases'
+        response = requests.get(repo_url)
+        data = response.json()
+        # print(json.dumps(data, indent=4))
+        for release in data:
+            if not release["prerelease"]:
+                print(release["tag_name"])
+
