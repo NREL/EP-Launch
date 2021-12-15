@@ -60,7 +60,7 @@ class Version:
             out_string = in_string.strip()
         return out_string
 
-    def numeric_version_from_string(self, string_version):
+    def numeric_version_from_string(self, string_version, override_patch=True):
         # if the version string has sha1 hash at the end remove it
         words = string_version.split("-")
         # the rest of the version number should just be separated by periods
@@ -68,15 +68,16 @@ class Version:
         numeric_version = 0
         parts = parts[:3]
         # overwrite the patch number with a zero, or append a zero patch number
-        if len(parts) == 3:
-            parts[2] = 0
+        if override_patch:
+            if len(parts) == 3:
+                parts[2] = 0
         if len(parts) == 2:
             parts.append("0")
         for part in parts:
             numeric_version = numeric_version * 100 + int(part)
         return numeric_version
 
-    def numeric_version_from_dash_string(self, string_version):
+    def numeric_version_from_dash_string(self, string_version, override_patch=True):
         # remove leading 'V' if included
         if string_version[0] == 'V':
             string_version = string_version[1:]
@@ -84,8 +85,9 @@ class Version:
         parts = string_version.split("-")
         numeric_version = 0
         # overwrite the patch number with a zero, or append a zero patch number
-        if len(parts) == 3:
-            parts[2] = 0
+        if override_patch:
+            if len(parts) == 3:
+                parts[2] = 0
         if len(parts) == 2:
             parts.append("0")
         for part in parts:
@@ -127,13 +129,14 @@ class Version:
         for release in releases:
             if release[0] == 'v':
                 release = release[1:]
-            numeric = self.numeric_version_from_string(release)
+            numeric = self.numeric_version_from_string(release, False)
             if numeric > highest_numeric:
                 highest_string = release
                 highest_numeric = numeric
         return highest_string, highest_numeric
 
     def versions_from_contexts(self, list_of_contexts):
+        # in this case the list of context is a list of strings in the form 'EnergyPlus-9.4.0-998c4b761e'
         versions = []
         for context in list_of_contexts:
             parts = context.split("-")
