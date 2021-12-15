@@ -20,6 +20,12 @@ class TestVersion(unittest.TestCase):
         self.assertEqual(self.v.numeric_version_from_string("22.1"), 220100)
         self.assertEqual(self.v.numeric_version_from_string("28.8.3"), 280800)
         self.assertEqual(self.v.numeric_version_from_string("25.25.25"), 252500)
+        self.assertEqual(self.v.numeric_version_from_string("1.2-a765aae"), 10200)
+        self.assertEqual(self.v.numeric_version_from_string("1.2.0"), 10200)
+        self.assertEqual(self.v.numeric_version_from_string("2.3.0"), 20300)
+        self.assertEqual(self.v.numeric_version_from_string("13.4.0"), 130400)
+        self.assertEqual(self.v.numeric_version_from_string("13.4.7"), 130400)
+        self.assertEqual(self.v.numeric_version_from_string("13.4.7", False), 130407)
 
     def test_line_with_no_comment(self):
         self.assertEqual(self.v.line_with_no_comment(" object, ! this is a comment"), "object,")
@@ -77,23 +83,6 @@ class TestVersion(unittest.TestCase):
         self.assertEqual('', version_string)
         self.assertEqual('', version_number)
 
-    def test_numeric_version_from_string(self):
-        dash_string = '1.2-a765aae'
-        numeric = self.v.numeric_version_from_string(dash_string)
-        self.assertEqual(numeric, 10200)  # even though it has a zero appended, it comes back an integer
-        dash_string = '1.2.0'
-        numeric = self.v.numeric_version_from_string(dash_string)
-        self.assertEqual(numeric, 10200)
-        dash_string = '2.3.0'
-        numeric = self.v.numeric_version_from_string(dash_string)
-        self.assertEqual(numeric, 20300)
-        dash_string = '13.4.0'
-        numeric = self.v.numeric_version_from_string(dash_string)
-        self.assertEqual(numeric, 130400)
-        dash_string = '13.4.7'
-        numeric = self.v.numeric_version_from_string(dash_string, False)
-        self.assertEqual(numeric, 130407)
-
     def test_numeric_version_from_dash_string(self):
         dash_string = 'V0-2'
         numeric = self.v.numeric_version_from_dash_string(dash_string)
@@ -146,4 +135,3 @@ class TestVersion(unittest.TestCase):
         contexts = ['EnergyPlus-9.4.0-998c4b761e', 'NotEP-9.5.0-767867676', 'EnergyPlus-9.3.0-1212112']
         versions = self.v.versions_from_contexts(contexts)
         self.assertEqual(versions, ['9.4.0', '9.3.0'])
-

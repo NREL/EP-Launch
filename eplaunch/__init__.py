@@ -5,4 +5,3 @@
 NAME = "EP-Launch"
 EP_LAUNCH_VERSION = "3.1.0"
 DOCS_URL = "https://ep-launch.readthedocs.io/en/latest/"
-

@@ -1582,7 +1582,6 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     def periodic_check_updates(self):
         pass
 
-
     def handle_menu_help_check_updates(self, event):
         v = Version()
         v.check_for_energyplus_updates(self.list_of_contexts)
