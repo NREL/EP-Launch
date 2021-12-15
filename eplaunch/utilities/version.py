@@ -109,11 +109,10 @@ class Version:
         return False, '', 0
 
     def check_github_energyplus_release(self):
-        repo_url = f'https://api.github.com/repos/NREL/energyplus/releases'
+        repo_url = r'https://api.github.com/repos/NREL/energyplus/releases'
         response = requests.get(repo_url)
         data = response.json()
         # print(json.dumps(data, indent=4))
         for release in data:
             if not release["prerelease"]:
                 print(release["tag_name"])
-
