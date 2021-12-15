@@ -1595,10 +1595,10 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         text = f"""
         Newest Installed EnergyPlus Version: {newest_installed_energyplus}
         Lastest Available EnergyPlus Version: {energyplus_latest_release}
-        
+
         Installed EP-Launch Version: {EP_LAUNCH_VERSION}
         Lastest Available EP-Launch Version: {eplaunch_latest_release}
-        
+
         Open web sites to download latest versions?
         """
         with wx.MessageDialog(self, text, 'Check for EnergyPlus and EP-Launch Updates',

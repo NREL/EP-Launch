@@ -139,11 +139,11 @@ class TestVersion(unittest.TestCase):
         self.assertEqual(latest, '22.1.0')
 
     def test_versions_from_contexts(self):
-        contexts = ['EnergyPlus-9.4.0-998c4b761e',]
+        contexts = ['EnergyPlus-9.4.0-998c4b761e', ]
         versions = self.v.versions_from_contexts(contexts)
-        self.assertEqual(versions, ['9.4.0',])
+        self.assertEqual(versions, ['9.4.0', ])
 
-        contexts = ['EnergyPlus-9.4.0-998c4b761e','NotEP-9.5.0-767867676', 'EnergyPlus-9.3.0-1212112']
+        contexts = ['EnergyPlus-9.4.0-998c4b761e', 'NotEP-9.5.0-767867676', 'EnergyPlus-9.3.0-1212112']
         versions = self.v.versions_from_contexts(contexts)
-        self.assertEqual(versions, ['9.4.0','9.3.0'])
+        self.assertEqual(versions, ['9.4.0', '9.3.0'])
 
