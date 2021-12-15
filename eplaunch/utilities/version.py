@@ -108,15 +108,16 @@ class Version:
                     return True, current_version, self.numeric_version_from_string(current_version)
         return False, '', 0
 
-    def get_github_energyplus_list_of_releases(self):
-        repo_url = r'https://api.github.com/repos/NREL/energyplus/releases'
-        response = requests.get(repo_url, timeout=0.5)
+    def get_github_list_of_releases(self, repo_url):
+        # repo_url = r'https://api.github.com/repos/NREL/energyplus/releases'
+        response = requests.get(repo_url, timeout=2)
         data = response.json()
         # print(json.dumps(data, indent=4))
         releases = []
         for release in data:
             if not release["prerelease"]:
-                print(release["tag_name"])
+                #
+                # print(release["tag_name"])
                 releases.append(release["tag_name"])
         return releases
 
@@ -126,9 +127,16 @@ class Version:
         for release in releases:
             if release[0] == 'v':
                 release = release[1:]
-                numeric = self.numeric_version_from_string(releases)
-                if numeric > highest_numeric:
-                    highest_string = release
-                    highest_numeric = numeric
+            numeric = self.numeric_version_from_string(release)
+            if numeric > highest_numeric:
+                highest_string = release
+                highest_numeric = numeric
         return highest_string, highest_numeric
 
+    def versions_from_contexts(self, list_of_contexts):
+        versions = []
+        for context in list_of_contexts:
+            parts = context.split("-")
+            if parts[0] == "EnergyPlus":
+                versions.append(parts[1])
+        return versions

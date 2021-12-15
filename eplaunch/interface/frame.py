@@ -1581,12 +1581,23 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
     def handle_menu_help_check_updates(self, event):
         version = Version()
+        energyplus_releases = version.get_github_list_of_releases(
+            r'https://api.github.com/repos/NREL/energyplus/releases')
+        energyplus_latest_release, _ = version.latest_release(energyplus_releases)
+
+        ep_launch_releases = version.get_github_list_of_releases(
+            r'https://api.github.com/repos/NREL/ep-launch/releases')
+        eplaunch_latest_release, _ = version.latest_release(ep_launch_releases)
+
+        version_contexts = version.versions_from_contexts(self.list_of_contexts)
+        newest_installed_energyplus, _ = version.latest_release(version_contexts)
+
         text = f"""
-        Newest Installed EnergyPlus Version: {EP_LAUNCH_VERSION}
-        Lastest Available EnergyPlus Version: {EP_LAUNCH_VERSION}
+        Newest Installed EnergyPlus Version: {newest_installed_energyplus}
+        Lastest Available EnergyPlus Version: {energyplus_latest_release}
         
         Installed EP-Launch Version: {EP_LAUNCH_VERSION}
-        Lastest Available EP-Launch Version: {EP_LAUNCH_VERSION}
+        Lastest Available EP-Launch Version: {eplaunch_latest_release}
         
         Open web sites to download latest versions?
         """
