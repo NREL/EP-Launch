@@ -8,7 +8,7 @@ from gettext import gettext as _
 import wx
 from pubsub import pub
 
-from eplaunch import VERSION, DOCS_URL
+from eplaunch import EP_LAUNCH_VERSION, DOCS_URL
 from eplaunch.interface import workflow_directories_dialog
 from eplaunch.interface.externalprograms import EPLaunchExternalPrograms
 from eplaunch.interface.filenamemenus import FileNameMenus
@@ -23,6 +23,7 @@ from eplaunch.utilities.crossplatform import Platform
 from eplaunch.utilities.exceptions import EPLaunchDevException, EPLaunchFileException
 from eplaunch.utilities.filenamemanipulation import FileNameManipulation
 from eplaunch.utilities.locateworkflows import LocateWorkflows
+from eplaunch.utilities.version import Version
 from eplaunch.workflows import manager as workflow_manager
 
 
@@ -590,7 +591,7 @@ class EpLaunchFrame(wx.Frame):
         if not welcome_already_shown:  # it's never been shown
             WelcomeDialog(self, title='Welcome!').ShowModal()
             self.config.Write('/ActiveWindow/WelcomeAlreadyShown', 'True')
-            self.config.Write('/ActiveWindow/LatestWelcomeVersionShown', VERSION)
+            self.config.Write('/ActiveWindow/LatestWelcomeVersionShown', EP_LAUNCH_VERSION)
 
     def show_error_message(self, message):
         return wx.MessageBox(message, self.GetTitle() + ' Error', wx.OK | wx.ICON_ERROR)
@@ -929,6 +930,7 @@ class EpLaunchFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.handle_menu_help_docs, menu_help_docs)
         self.help_menu.AppendSeparator()
         menu_help_check_updates = self.help_menu.Append(617, "Check for EnergyPlus and EP-Launch Updates")
+        self.Bind(wx.EVT_MENU, self.handle_menu_help_check_updates, menu_help_check_updates)
         self.help_menu.AppendSeparator()
         menu_help_about = self.help_menu.Append(615, "About EP-Launch")
         self.Bind(wx.EVT_MENU, self.handle_menu_help_about, menu_help_about)
@@ -1540,10 +1542,10 @@ class EpLaunchFrame(wx.Frame):
         webbrowser.open(DOCS_URL)
 
     def handle_menu_help_about(self, event):
-        text = """
+        text = f"""
 EP-Launch
 
-Version %s
+Version {EP_LAUNCH_VERSION}
 Copyright (c) 2018-2021, Alliance for Sustainable Energy, LLC  and GARD Analytics, Inc
 
 Redistribution and use in source and binary forms, with or without
@@ -1573,9 +1575,27 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
 OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-""" % VERSION
+"""
         with wx.MessageDialog(self, text, 'About EP-Launch', wx.OK | wx.ICON_INFORMATION) as dlg:
             dlg.ShowModal()
+
+    def handle_menu_help_check_updates(self, event):
+        version = Version()
+        text = f"""
+        Newest Installed EnergyPlus Version: {EP_LAUNCH_VERSION}
+        Lastest Available EnergyPlus Version: {EP_LAUNCH_VERSION}
+        
+        Installed EP-Launch Version: {EP_LAUNCH_VERSION}
+        Lastest Available EP-Launch Version: {EP_LAUNCH_VERSION}
+        
+        Open web sites to download latest versions?
+        """
+        with wx.MessageDialog(self, text, 'Check for EnergyPlus and EP-Launch Updates',
+                              wx.YES_NO | wx.NO_DEFAULT | wx.ICON_INFORMATION) as dlg:
+            result = dlg.ShowModal()
+            if result == wx.ID_YES:
+                webbrowser.open(r"https://github.com/NREL/EnergyPlus/releases")
+                webbrowser.open(r"https://github.com/NREL/EP-Launch/releases")
 
     # Retrieve Config Functions
 
