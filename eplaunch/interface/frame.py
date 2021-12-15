@@ -927,6 +927,9 @@ class EpLaunchFrame(wx.Frame):
         self.help_menu.AppendSeparator()
         menu_help_docs = self.help_menu.Append(613, "EP-Launch Documentation")
         self.Bind(wx.EVT_MENU, self.handle_menu_help_docs, menu_help_docs)
+        self.help_menu.AppendSeparator()
+        menu_help_check_updates = self.help_menu.Append(617, "Check for EnergyPlus and EP-Launch Updates")
+        self.help_menu.AppendSeparator()
         menu_help_about = self.help_menu.Append(615, "About EP-Launch")
         self.Bind(wx.EVT_MENU, self.handle_menu_help_about, menu_help_about)
         self.menu_bar.Append(self.help_menu, "&Help")
@@ -1541,7 +1544,7 @@ class EpLaunchFrame(wx.Frame):
 EP-Launch
 
 Version %s
-Copyright (c) 2018, Alliance for Sustainable Energy, LLC  and GARD Analytics, Inc
+Copyright (c) 2018-2021, Alliance for Sustainable Energy, LLC  and GARD Analytics, Inc
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
