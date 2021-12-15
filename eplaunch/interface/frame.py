@@ -1579,25 +1579,21 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         with wx.MessageDialog(self, text, 'About EP-Launch', wx.OK | wx.ICON_INFORMATION) as dlg:
             dlg.ShowModal()
 
+    def periodic_check_updates(self):
+        pass
+
+
     def handle_menu_help_check_updates(self, event):
-        version = Version()
-        energyplus_releases = version.get_github_list_of_releases(
-            r'https://api.github.com/repos/NREL/energyplus/releases')
-        energyplus_latest_release, _ = version.latest_release(energyplus_releases)
-
-        ep_launch_releases = version.get_github_list_of_releases(
-            r'https://api.github.com/repos/NREL/ep-launch/releases')
-        eplaunch_latest_release, _ = version.latest_release(ep_launch_releases)
-
-        version_contexts = version.versions_from_contexts(self.list_of_contexts)
-        newest_installed_energyplus, _ = version.latest_release(version_contexts)
+        v = Version()
+        v.check_for_energyplus_updates(self.list_of_contexts)
+        v.check_for_ep_launch_updates()
 
         text = f"""
-        Newest Installed EnergyPlus Version: {newest_installed_energyplus}
-        Lastest Available EnergyPlus Version: {energyplus_latest_release}
+        Newest Installed EnergyPlus Version: {v.newest_installed_energyplus}
+        Lastest Available EnergyPlus Version: {v.energyplus_latest_release}
 
-        Installed EP-Launch Version: {EP_LAUNCH_VERSION}
-        Lastest Available EP-Launch Version: {eplaunch_latest_release}
+        Installed EP-Launch Version: {v.ep_launch_version}
+        Lastest Available EP-Launch Version: {v.ep_launch_latest_release}
 
         Open web sites to download latest versions?
         """

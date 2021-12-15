@@ -13,4 +13,5 @@ class EpLaunchApplication(wx.App):
         self.frame_ep_launch = EpLaunchFrame(None, wx.ID_ANY, "")
         self.SetTopWindow(self.frame_ep_launch)
         self.frame_ep_launch.Show()
+        self.frame_ep_launch.periodic_check_updates()
         return True
