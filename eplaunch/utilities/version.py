@@ -132,10 +132,11 @@ class Version:
         # print(json.dumps(data, indent=4))
         releases = []
         for release in data:
-            if not release["prerelease"]:
-                #
-                # print(release["tag_name"])
-                releases.append(release["tag_name"])
+            if 'prerelease' in release:
+                if not release["prerelease"]:
+                    # print(release["tag_name"])
+                    if 'tag_name' in release:
+                        releases.append(release["tag_name"])
         return releases
 
     def latest_release(self, releases):
