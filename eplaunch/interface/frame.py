@@ -1587,7 +1587,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         if dateLastCheckedString:
             self.dateLastChecked = datetime.date.fromisoformat(dateLastCheckedString)
         today = datetime.date.today()
-        if (today - self.dateLastChecked) > datetime.timedelta(days=30): # check every 30 days
+        if (today - self.dateLastChecked) > datetime.timedelta(days=30):  # check every 30 days
             self.dateLastChecked = datetime.date.today()
             self.handle_menu_help_check_updates(wx.wxEVT_ANY, show_only_if_updatable=True)
 
