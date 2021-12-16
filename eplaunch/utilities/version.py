@@ -1,6 +1,6 @@
 import json
 import os
-import requests
+from requests import get
 
 from eplaunch import EP_LAUNCH_VERSION
 
@@ -127,7 +127,7 @@ class Version:
     @staticmethod
     def get_github_list_of_releases(repo_url):
         # repo_url = r'https://api.github.com/repos/NREL/energyplus/releases'
-        response = requests.get(repo_url, timeout=2)
+        response = get(repo_url, timeout=2)
         data = response.json()
         # print(json.dumps(data, indent=4))
         releases = []
