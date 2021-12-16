@@ -2,7 +2,7 @@ import webbrowser
 
 import wx
 
-from eplaunch import DOCS_URL, VERSION
+from eplaunch import DOCS_URL, EP_LAUNCH_VERSION
 
 
 # wx callbacks need an event argument even though we usually don't use it, so the next line disables that check
@@ -16,7 +16,7 @@ class WelcomeDialog(wx.Dialog):
         this_border = 12
         self.panel = wx.Panel(self, wx.ID_ANY)
 
-        title = wx.StaticText(self.panel, wx.ID_ANY, 'Welcome to EP-Launch ' + VERSION)
+        title = wx.StaticText(self.panel, wx.ID_ANY, 'Welcome to EP-Launch ' + EP_LAUNCH_VERSION)
         message = """
 EP-Launch has been around for many years as a part of the EnergyPlus distribution.
 Starting with the 3.0 release, it has changed drastically, completely redesigned and rewritten.

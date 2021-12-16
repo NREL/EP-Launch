@@ -3,12 +3,13 @@ import json
 import os
 import uuid
 import webbrowser
+import datetime
 from gettext import gettext as _
 
 import wx
 from pubsub import pub
 
-from eplaunch import VERSION, DOCS_URL
+from eplaunch import EP_LAUNCH_VERSION, DOCS_URL
 from eplaunch.interface import workflow_directories_dialog
 from eplaunch.interface.externalprograms import EPLaunchExternalPrograms
 from eplaunch.interface.filenamemenus import FileNameMenus
@@ -23,6 +24,7 @@ from eplaunch.utilities.crossplatform import Platform
 from eplaunch.utilities.exceptions import EPLaunchDevException, EPLaunchFileException
 from eplaunch.utilities.filenamemanipulation import FileNameManipulation
 from eplaunch.utilities.locateworkflows import LocateWorkflows
+from eplaunch.utilities.version import Version
 from eplaunch.workflows import manager as workflow_manager
 
 
@@ -104,6 +106,7 @@ class EpLaunchFrame(wx.Frame):
         self.workflow_directories = None
         self.previous_selected_directory = None
         self.tb_weather = None
+        self.dateLastChecked = None
         self.keep_dialog_open = self.config.Read("/ActiveWindow/KeepDialogOpen", '')
         if self.keep_dialog_open == '':
             self.keep_dialog_open = False
@@ -590,7 +593,7 @@ class EpLaunchFrame(wx.Frame):
         if not welcome_already_shown:  # it's never been shown
             WelcomeDialog(self, title='Welcome!').ShowModal()
             self.config.Write('/ActiveWindow/WelcomeAlreadyShown', 'True')
-            self.config.Write('/ActiveWindow/LatestWelcomeVersionShown', VERSION)
+            self.config.Write('/ActiveWindow/LatestWelcomeVersionShown', EP_LAUNCH_VERSION)
 
     def show_error_message(self, message):
         return wx.MessageBox(message, self.GetTitle() + ' Error', wx.OK | wx.ICON_ERROR)
@@ -927,6 +930,10 @@ class EpLaunchFrame(wx.Frame):
         self.help_menu.AppendSeparator()
         menu_help_docs = self.help_menu.Append(613, "EP-Launch Documentation")
         self.Bind(wx.EVT_MENU, self.handle_menu_help_docs, menu_help_docs)
+        self.help_menu.AppendSeparator()
+        menu_help_check_updates = self.help_menu.Append(617, "Check for EnergyPlus and EP-Launch Updates")
+        self.Bind(wx.EVT_MENU, self.handle_menu_help_check_updates, menu_help_check_updates)
+        self.help_menu.AppendSeparator()
         menu_help_about = self.help_menu.Append(615, "About EP-Launch")
         self.Bind(wx.EVT_MENU, self.handle_menu_help_about, menu_help_about)
         self.menu_bar.Append(self.help_menu, "&Help")
@@ -1537,11 +1544,11 @@ class EpLaunchFrame(wx.Frame):
         webbrowser.open(DOCS_URL)
 
     def handle_menu_help_about(self, event):
-        text = """
+        text = f"""
 EP-Launch
 
-Version %s
-Copyright (c) 2018, Alliance for Sustainable Energy, LLC  and GARD Analytics, Inc
+Version {EP_LAUNCH_VERSION}
+Copyright (c) 2018-2021, Alliance for Sustainable Energy, LLC  and GARD Analytics, Inc
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -1570,12 +1577,50 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
 OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-""" % VERSION
+"""
         with wx.MessageDialog(self, text, 'About EP-Launch', wx.OK | wx.ICON_INFORMATION) as dlg:
             dlg.ShowModal()
 
-    # Retrieve Config Functions
+    def periodic_check_updates(self):
+        self.dateLastChecked = datetime.date.today()
+        dateLastCheckedString = self.config.Read('/ActiveWindow/UpdatesLastCheckedDate', '')
+        if dateLastCheckedString:
+            self.dateLastChecked = datetime.date.fromisoformat(dateLastCheckedString)
+        today = datetime.date.today()
+        if (today - self.dateLastChecked) > datetime.timedelta(days=30):  # check every 30 days
+            self.dateLastChecked = datetime.date.today()
+            self.handle_menu_help_check_updates(wx.wxEVT_ANY, show_only_if_updatable=True)
 
+    def save_update_date_config(self):
+        if self.dateLastChecked:
+            self.config.Write('/ActiveWindow/UpdatesLastCheckedDate', self.dateLastChecked.isoformat())
+
+    def handle_menu_help_check_updates(self, event, show_only_if_updatable=False):
+        v = Version()
+        should_update_energyplus = v.check_for_energyplus_updates(self.list_of_contexts)
+        should_update_ep_launch = v.check_for_ep_launch_updates()
+        show_dialog = should_update_ep_launch or should_update_energyplus
+        self.dateLastChecked = datetime.date.today()
+        if not show_only_if_updatable:
+            show_dialog = True
+        if show_dialog:
+            text = f"""
+            Newest Installed EnergyPlus Version: {v.newest_installed_energyplus}
+            Lastest Available EnergyPlus Version: {v.energyplus_latest_release}
+
+            Installed EP-Launch Version: {v.ep_launch_version}
+            Lastest Available EP-Launch Version: {v.ep_launch_latest_release}
+
+            Open web sites to download latest versions?
+            """
+            with wx.MessageDialog(self, text, 'Check for EnergyPlus and EP-Launch Updates',
+                                  wx.YES_NO | wx.NO_DEFAULT | wx.ICON_INFORMATION) as dlg:
+                result = dlg.ShowModal()
+                if result == wx.ID_YES:
+                    webbrowser.open(r"https://github.com/NREL/EnergyPlus/releases")
+                    webbrowser.open(r"https://github.com/NREL/EP-Launch/releases")
+
+    # Retrieve Config Functions
     def retrieve_workflow_directories_config(self):
         count_directories = self.config.ReadInt("/WorkflowDirectories/Count", 0)
         list_of_directories = []
@@ -1650,6 +1695,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         self.save_window_size()
         self.save_selected_version_config()
         self.external_runner.save_application_viewer_overrides_config()
+        self.save_update_date_config()
         if self.keep_dialog_open:
             self.config.Write("/ActiveWindow/KeepDialogOpen", "TRUE")
         else:

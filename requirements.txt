@@ -33,3 +33,7 @@ pyinstaller==4.1
 
 # for docs to build properly, we need to pin docutils
 docutils==0.16
+
+wxPython~=4.0.6
+requests~=2.22.0
+setuptools~=40.8.0
