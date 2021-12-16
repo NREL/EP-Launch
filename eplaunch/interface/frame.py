@@ -1586,17 +1586,17 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         v = Version()
         should_update_energyplus = v.check_for_energyplus_updates(self.list_of_contexts)
         should_update_ep_launch = v.check_for_ep_launch_updates()
-        show_dialog =  should_update_ep_launch or should_update_ep_launch
+        show_dialog = should_update_ep_launch or should_update_energyplus
         if not show_only_if_updatable:
             show_dialog = True
         if show_dialog:
             text = f"""
             Newest Installed EnergyPlus Version: {v.newest_installed_energyplus}
             Lastest Available EnergyPlus Version: {v.energyplus_latest_release}
-        
+
             Installed EP-Launch Version: {v.ep_launch_version}
             Lastest Available EP-Launch Version: {v.ep_launch_latest_release}
-        
+
             Open web sites to download latest versions?
             """
             with wx.MessageDialog(self, text, 'Check for EnergyPlus and EP-Launch Updates',

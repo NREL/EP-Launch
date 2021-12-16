@@ -107,8 +107,9 @@ class TestVersion(unittest.TestCase):
 
     def test_get_get_github_list_of_releases(self):
         repo_url = r'https://api.github.com/repos/NREL/energyplus/releases'
-        releases = self.v.get_github_list_of_releases(repo_url)
-        self.assertTrue(len(releases) > 0)
+        releases, ok = self.v.get_github_list_of_releases(repo_url)
+        if ok:
+            self.assertTrue(len(releases) > 0)
 
     def test_latest_release(self):
         releases = ['1.2.1', '1.3.2', '1.4.3']

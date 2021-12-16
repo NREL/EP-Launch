@@ -127,6 +127,7 @@ class Version:
     @staticmethod
     def get_github_list_of_releases(repo_url):
         # repo_url = r'https://api.github.com/repos/NREL/energyplus/releases'
+        ok = False
         response = get(repo_url, timeout=2)
         data = response.json()
         # print(json.dumps(data, indent=4))
@@ -137,7 +138,8 @@ class Version:
                     # print(release["tag_name"])
                     if 'tag_name' in release:
                         releases.append(release["tag_name"])
-        return releases
+                        ok = True
+        return releases, ok
 
     def latest_release(self, releases):
         highest_numeric = -1
@@ -162,7 +164,7 @@ class Version:
         return versions
 
     def check_for_ep_launch_updates(self):
-        ep_launch_releases = self.get_github_list_of_releases(
+        ep_launch_releases, _ = self.get_github_list_of_releases(
             r'https://api.github.com/repos/NREL/ep-launch/releases')
         self.ep_launch_latest_release, release_number = self.latest_release(ep_launch_releases)
         self.ep_launch_version = EP_LAUNCH_VERSION
@@ -171,7 +173,7 @@ class Version:
         return self.is_ep_launch_updatable
 
     def check_for_energyplus_updates(self, list_of_contexts):
-        energyplus_releases = self.get_github_list_of_releases(
+        energyplus_releases, _ = self.get_github_list_of_releases(
             r'https://api.github.com/repos/NREL/energyplus/releases')
         self.energyplus_latest_release, release_number = self.latest_release(energyplus_releases)
         version_contexts = self.versions_from_contexts(list_of_contexts)
