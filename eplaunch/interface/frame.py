@@ -3,6 +3,7 @@ import json
 import os
 import uuid
 import webbrowser
+import datetime
 from gettext import gettext as _
 
 import wx
@@ -105,6 +106,7 @@ class EpLaunchFrame(wx.Frame):
         self.workflow_directories = None
         self.previous_selected_directory = None
         self.tb_weather = None
+        self.dateLastChecked = None
         self.keep_dialog_open = self.config.Read("/ActiveWindow/KeepDialogOpen", '')
         if self.keep_dialog_open == '':
             self.keep_dialog_open = False
@@ -1580,13 +1582,25 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             dlg.ShowModal()
 
     def periodic_check_updates(self):
-        self.handle_menu_help_check_updates(wx.wxEVT_ANY, show_only_if_updatable=True)
+        self.dateLastChecked = datetime.date.today()
+        dateLastCheckedString = self.config.Read('/ActiveWindow/UpdatesLastCheckedDate', '')
+        if dateLastCheckedString:
+            self.dateLastChecked = datetime.date.fromisoformat(dateLastCheckedString)
+        today = datetime.date.today()
+        if (today - self.dateLastChecked) > datetime.timedelta(days=30): # check every 30 days
+            self.dateLastChecked = datetime.date.today()
+            self.handle_menu_help_check_updates(wx.wxEVT_ANY, show_only_if_updatable=True)
+
+    def save_update_date_config(self):
+        if self.dateLastChecked:
+            self.config.Write('/ActiveWindow/UpdatesLastCheckedDate', self.dateLastChecked.isoformat())
 
     def handle_menu_help_check_updates(self, event, show_only_if_updatable=False):
         v = Version()
         should_update_energyplus = v.check_for_energyplus_updates(self.list_of_contexts)
         should_update_ep_launch = v.check_for_ep_launch_updates()
         show_dialog = should_update_ep_launch or should_update_energyplus
+        self.dateLastChecked = datetime.date.today()
         if not show_only_if_updatable:
             show_dialog = True
         if show_dialog:
@@ -1681,6 +1695,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         self.save_window_size()
         self.save_selected_version_config()
         self.external_runner.save_application_viewer_overrides_config()
+        self.save_update_date_config()
         if self.keep_dialog_open:
             self.config.Write("/ActiveWindow/KeepDialogOpen", "TRUE")
         else:
