@@ -167,6 +167,7 @@ class Version:
         self.ep_launch_version = EP_LAUNCH_VERSION
         cur_version_number = self.numeric_version_from_string(self.ep_launch_version, override_patch=False)
         self.is_ep_launch_updatable = release_number > cur_version_number
+        return self.is_ep_launch_updatable
 
     def check_for_energyplus_updates(self, list_of_contexts):
         energyplus_releases = self.get_github_list_of_releases(
@@ -174,3 +175,5 @@ class Version:
         self.energyplus_latest_release, release_number = self.latest_release(energyplus_releases)
         version_contexts = self.versions_from_contexts(list_of_contexts)
         self.newest_installed_energyplus, install_number = self.latest_release(version_contexts)
+        self.is_energyplus_updatable = release_number > install_number
+        return self.is_energyplus_updatable

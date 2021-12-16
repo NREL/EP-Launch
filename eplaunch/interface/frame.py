@@ -1580,31 +1580,33 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             dlg.ShowModal()
 
     def periodic_check_updates(self):
-        pass
+        self.handle_menu_help_check_updates(wx.wxEVT_ANY, show_only_if_updatable=True)
 
-    def handle_menu_help_check_updates(self, event):
+    def handle_menu_help_check_updates(self, event, show_only_if_updatable=False):
         v = Version()
-        v.check_for_energyplus_updates(self.list_of_contexts)
-        v.check_for_ep_launch_updates()
-
-        text = f"""
-        Newest Installed EnergyPlus Version: {v.newest_installed_energyplus}
-        Lastest Available EnergyPlus Version: {v.energyplus_latest_release}
-
-        Installed EP-Launch Version: {v.ep_launch_version}
-        Lastest Available EP-Launch Version: {v.ep_launch_latest_release}
-
-        Open web sites to download latest versions?
-        """
-        with wx.MessageDialog(self, text, 'Check for EnergyPlus and EP-Launch Updates',
-                              wx.YES_NO | wx.NO_DEFAULT | wx.ICON_INFORMATION) as dlg:
-            result = dlg.ShowModal()
-            if result == wx.ID_YES:
-                webbrowser.open(r"https://github.com/NREL/EnergyPlus/releases")
-                webbrowser.open(r"https://github.com/NREL/EP-Launch/releases")
+        should_update_energyplus = v.check_for_energyplus_updates(self.list_of_contexts)
+        should_update_ep_launch = v.check_for_ep_launch_updates()
+        show_dialog =  should_update_ep_launch or should_update_ep_launch
+        if not show_only_if_updatable:
+            show_dialog = True
+        if show_dialog:
+            text = f"""
+            Newest Installed EnergyPlus Version: {v.newest_installed_energyplus}
+            Lastest Available EnergyPlus Version: {v.energyplus_latest_release}
+        
+            Installed EP-Launch Version: {v.ep_launch_version}
+            Lastest Available EP-Launch Version: {v.ep_launch_latest_release}
+        
+            Open web sites to download latest versions?
+            """
+            with wx.MessageDialog(self, text, 'Check for EnergyPlus and EP-Launch Updates',
+                                  wx.YES_NO | wx.NO_DEFAULT | wx.ICON_INFORMATION) as dlg:
+                result = dlg.ShowModal()
+                if result == wx.ID_YES:
+                    webbrowser.open(r"https://github.com/NREL/EnergyPlus/releases")
+                    webbrowser.open(r"https://github.com/NREL/EP-Launch/releases")
 
     # Retrieve Config Functions
-
     def retrieve_workflow_directories_config(self):
         count_directories = self.config.ReadInt("/WorkflowDirectories/Count", 0)
         list_of_directories = []
