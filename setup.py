@@ -23,7 +23,9 @@ setup(
     tests_require=['nose'],
     keywords='energyplus',
     include_package_data=True,
-    install_requires=['wxpython', 'pypubsub'],
+    install_requires=['wxpython', 'pypubsub',
+                      # Temporary until wxpython fixes it
+                      'attrdict3'],
     entry_points={
         'console_scripts': ['eplaunch3=eplaunch.runner:main'],
     },
