@@ -124,6 +124,7 @@ class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
         )
         self.assertTrue(len(self.workflow_manager.workflows) > 0)
         self.assertEqual('', warning_text)
+        self.assertEqual(1, len(self.workflow_manager.workflow_instances('theseWorkflows')))
 
     def test_exception_calling_workflow(self):
         file_contents = """
@@ -145,3 +146,13 @@ class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
         )
         self.assertTrue(len(self.workflow_manager.workflows) == 0)
         self.assertIn('Unexpected error', warning_text)
+
+    def test_reset_works_with_invalid_context(self):
+        self.workflow_manager.instantiate_all_workflows(disable_builtins=False, skip_error=True)
+        self.assertTrue(len(self.workflow_manager.workflows) > 0)
+        self.workflow_manager.reset_workflow_array('fake_context')
+        self.assertTrue(len(self.workflow_manager.workflows) == 0)
+
+    def test_empty_auto_locator(self):
+        self.workflow_manager.locate_all_workflows()
+        self.assertEqual(0, len(self.workflow_manager.auto_found_workflow_dirs))

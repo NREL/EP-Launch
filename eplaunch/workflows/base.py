@@ -86,10 +86,10 @@ class BaseEPLaunchWorkflow1(object):
         raise NotImplementedError("main function needs to be implemented in derived workflow class")
 
     def abort(self):
-        if self._process:
+        if self._process:  # pragma: no cover  # not getting caught by coverage tools, not sure why
             self._process.kill()
 
-    def execute_for_callback(self, cmd, cwd):
+    def execute_for_callback(self, cmd, cwd):  # pragma: no cover  # not getting caught by coverage tools, not sure why
         self._process = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, universal_newlines=True)
         for stdout_line in iter(self._process.stdout.readline, ""):
             yield stdout_line.strip()

@@ -34,7 +34,7 @@ class WorkflowManager:
         for search_root in current_search_roots:
             for search_name in search_names:
                 eplus_folder_matches = search_root.glob(search_name)
-                for ep_folder in eplus_folder_matches:
+                for ep_folder in eplus_folder_matches:  # pragma: no cover, would have to install into system folders
                     ep_workflow_dir = ep_folder / 'workflows'
                     if ep_workflow_dir.exists():
                         self.auto_found_workflow_dirs.append(ep_workflow_dir)
@@ -64,9 +64,9 @@ class WorkflowManager:
             # I tried regexes, and they worked using online Python regex testers, but using the same patterns
             # and strings in here resulting in false responses...bogus.  So here I go, manually chopping up a string
             # re_dots = re.compile('(?P<version>(\d.\d.\d))')
-            if Platform.get_current_platform() == Platform.WINDOWS:
+            if Platform.get_current_platform() == Platform.WINDOWS:  # pragma: no cover, skipping platform specifics
                 energyplus_uc_search_string = 'ENERGYPLUSV'
-            else:
+            else:  # pragma: no cover, skipping platform specifics
                 energyplus_uc_search_string = 'ENERGYPLUS.'
             if energyplus_uc_search_string in sanitized_directory_upper_case:
                 dir_is_eplus = True

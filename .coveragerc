@@ -1,25 +1,9 @@
 [run]
-source =
-        eplaunch
+source = eplaunch
 
+[report]
 omit =
-        /usr/*
-        /tmp/*
-        /private/*
-        .tox/*
-        *.pyenv*
-        *.venv*
-        */AppData/*
-        setup.py
-        eplaunch/runner.py
-        eplaunch/interface/application.py
-        eplaunch/interface/command_line_dialog.py
-        eplaunch/interface/externalprograms.py
-        eplaunch/interface/filenamemenus.py
-        eplaunch/interface/frame.py
-        eplaunch/interface/viewer_dialog.py
-        eplaunch/interface/workflow_directories_dialog.py
-        eplaunch/interface/workflow_output_dialog.py
-        eplaunch/interface/workflow_processing.py
-        eplaunch/workflows/default/*
-        eplaunch/workflows/workflow_tester.py
+    */eplaunch/interface/*
+    */eplaunch/tk_runner.py
+    *eplaunch/workflows/default/*
+    */eplaunch/workflows/workflow_tester.py
