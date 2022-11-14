@@ -3,21 +3,20 @@ import json
 import os
 import uuid
 import webbrowser
-from gettext import gettext as _
 
 import wx
 from pubsub import pub
 
 from eplaunch import VERSION, DOCS_URL
 from eplaunch.interface import workflow_directories_dialog
-from eplaunch.interface.externalprograms import EPLaunchExternalPrograms
+from eplaunch.interface.delete_externalprograms import EPLaunchExternalPrograms
 from eplaunch.interface.filenamemenus import FileNameMenus
 from eplaunch.interface.frame_support import FrameSupport
-from eplaunch.interface.weather_dialog import WeatherDialog
+from eplaunch.interface.dialog_weather import WeatherDialog
 from eplaunch.interface.welcome_dialog import WelcomeDialog
 from eplaunch.interface.workflow_output_dialog import Dialog as OutputDialog
-from eplaunch.interface.workflow_processing import event_result, WorkflowThread
-from eplaunch.interface.viewer_dialog import ViewerDialog
+from eplaunch.interface.workflow_thread import event_result, WorkflowThread
+from eplaunch.interface.dialog_external_viewers import ViewerDialog
 from eplaunch.utilities.cache import CacheFile
 from eplaunch.utilities.crossplatform import Platform
 from eplaunch.utilities.exceptions import EPLaunchDevException, EPLaunchFileException
@@ -41,7 +40,7 @@ class EpLaunchFrame(wx.Frame):
         wx.Frame.__init__(self, *args, **kwargs)
 
         # Set the title!
-        self.SetTitle(_("EP-Launch"))
+        self.SetTitle("EP-Launch")
 
         # don't forget the icon!
         dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -251,15 +250,13 @@ class EpLaunchFrame(wx.Frame):
         self.output_toolbar.Realize()
 
     def update_control_list_columns(self):
-        self.control_file_list.DeleteAllColumns()
-        self.control_file_list.AppendColumn(_("File Name"), format=wx.LIST_FORMAT_LEFT, width=-1)
-        self.control_file_list.AppendColumn(_("Stale"), format=wx.LIST_FORMAT_LEFT, width=-1)
         if not self.current_workflow:
             return
+        column_list = []
         if self.current_workflow.uses_weather:
-            self.control_file_list.AppendColumn(_("Weather"), format=wx.LIST_FORMAT_LEFT, width=-1)
-        for current_column in self.current_workflow.columns:
-            self.control_file_list.AppendColumn(_(current_column), format=wx.LIST_FORMAT_LEFT, width=-1)
+            column_list.append("Weather")
+        column_list.extend(self.current_workflow.columns)
+        self.
 
     def update_file_lists(self):
 
@@ -637,9 +634,9 @@ class EpLaunchFrame(wx.Frame):
         self.raw_file_list_panel = wx.Panel(self.file_lists_splitter, wx.ID_ANY)
         self.raw_file_list = wx.ListCtrl(self.raw_file_list_panel, wx.ID_ANY,
                                          style=wx.LC_HRULES | wx.LC_REPORT | wx.LC_VRULES)
-        self.raw_file_list.AppendColumn(_("File Name"), format=wx.LIST_FORMAT_LEFT, width=-1)
-        self.raw_file_list.AppendColumn(_("Date Modified"), format=wx.LIST_FORMAT_LEFT, width=-1)
-        self.raw_file_list.AppendColumn(_("Size"), format=wx.LIST_FORMAT_RIGHT, width=-1)
+        self.raw_file_list.AppendColumn("File Name", format=wx.LIST_FORMAT_LEFT, width=-1)
+        self.raw_file_list.AppendColumn("Date Modified", format=wx.LIST_FORMAT_LEFT, width=-1)
+        self.raw_file_list.AppendColumn("Size", format=wx.LIST_FORMAT_RIGHT, width=-1)
         raw_file_list_sizer = wx.BoxSizer(wx.VERTICAL)
         raw_file_list_sizer.Add(self.raw_file_list, 1, wx.EXPAND, 0)
         self.raw_file_list_panel.SetSizer(raw_file_list_sizer)

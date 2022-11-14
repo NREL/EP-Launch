@@ -1,7 +1,9 @@
-import gettext
-
 from eplaunch.interface.application import EpLaunchApplication
 
-gettext.install("app")  # replace with the appropriate catalog name
-app = EpLaunchApplication(0)
-app.MainLoop()
+
+def main():
+    EpLaunchApplication(0).MainLoop()
+
+
+if __name__ == "__main__":
+    main()

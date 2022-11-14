@@ -78,7 +78,7 @@ class BaseEPLaunchWorkflow1(object):
         """
         self._callback(self.my_id, message)
 
-    def main(self, run_directory, file_name, args):
+    def main(self, run_directory, file_name, args) -> EPLaunchWorkflowResponse1:
         """
         The actual running operation for the workflow, should check self.abort periodically to allow exiting
         :return: Must return an EPLaunchWorkflowResponse1 instance

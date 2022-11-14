@@ -1,6 +1,8 @@
 import json
 import os
+from pathlib import Path
 import time
+from typing import List
 
 from eplaunch.utilities.exceptions import EPLaunchFileException
 
@@ -11,7 +13,7 @@ except ImportError:  # pragma: no cover
     JSONDecodeError = ValueError
 
 #: This is used as the mutex queue, the list of unique directories being altered at a given time
-cache_files_currently_updating_or_writing = []
+cache_files_currently_updating_or_writing: List[Path] = []
 
 
 class CacheFile(object):
@@ -26,7 +28,7 @@ class CacheFile(object):
 
     - The worker should call the ok_to_continue() function, which will check the mutex and then wait a predetermined
       amount of time for the mutex to clear, or fail.
-    - The worker should check the return value of this function and if False, fail.  If True, it should setup a block
+    - The worker should check the return value of this function and if False, fail.  If True, it should set up a block
       on the directory by adding the current directory to the cache_files_currently_updating_or_writing array
     - The worker can then proceed to read the cache, modify ir, and write to disk
     - The worker must then release the mutex by removing the current directory from the list
@@ -52,13 +54,13 @@ class CacheFile(object):
         if debug:  # pragma: no cover
             print("%s: %s" % (self.file_path, message))
 
-    def __init__(self, working_directory):
+    def __init__(self, working_directory: Path):
         """
         Constructor for this class, stores the local file path and initializes the workflow_state
 
         :param working_directory:
         """
-        self.file_path = os.path.join(working_directory, self.FileName)
+        self.file_path = working_directory / self.FileName
         self._print("Created cache file")
         self.workflow_state = None
 
@@ -115,7 +117,7 @@ class CacheFile(object):
         immediately returns.  If the current directory is blocked, it will attempt to check over a certain amount of
         time, at a tight interval, to wait on the mutex to be unlocked.  Ultimately if it can't pass, it returns False.
 
-        :return: True or False, whether it it safe to write to this cache
+        :return: True or False, whether it is safe to write to this cache
         """
         self._print("Checking if its ok to continue")
         if self.file_path not in cache_files_currently_updating_or_writing:
