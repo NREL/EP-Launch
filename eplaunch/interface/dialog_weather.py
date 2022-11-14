@@ -103,7 +103,7 @@ class TkWeatherDialog(Toplevel):
             self._tk_var_epw_path.set(response)
             self._epw_set = True
 
-    def _weather_type_changed(self,  *_):
+    def _weather_type_changed(self, *_):
         status = ACTIVE if self._tk_var_weather_type.get() == self.WEATHER_TYPE_EPW else DISABLED
         self.btn_epw['state'] = status
         if self.options_favorite:

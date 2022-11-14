@@ -1,44 +1,29 @@
-name: Unit Tests
+name: Run Tests
 
 on: [push]
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
   unit_tests:
     strategy:
       matrix:
-        include:
-          - os: ubuntu-18.04
-            wxpython: https://extras.wxpython.org/wxPython4/extras/linux/gtk2/ubuntu-18.04/wxPython-4.1.0-cp37-cp37m-linux_x86_64.whl
-            python: xvfb-run python3
-            pip_arg: ""
-          - os: ubuntu-20.04
-            wxpython: https://extras.wxpython.org/wxPython4/extras/linux/gtk2/ubuntu-18.04/wxPython-4.1.0-cp37-cp37m-linux_x86_64.whl
-            python: xvfb-run python3
-            pip_arg: ""
-          - os: macos-10.15
-            wxpython: wxpython
-            python: python3
-            pip_arg: ""
-          - os: windows-2019
-            wxpython: wxpython
-            python: python
-            pip_arg: --user
-
+        os: [ windows-latest, macos-11, ubuntu-20.04, ubuntu-22.04 ]  # macos-12 is not playing well with Tk
     runs-on: ${{ matrix.os }}
-
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python 3.7
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.7
-    - name: Install Pip Dependencies
-      shell: bash
-      run: pip install ${{ matrix.pip_arg }} coveralls nose ${{ matrix.wxpython }}
-    - name: Run Tests
-      shell: bash
-      run: ${{ matrix.python }} setup.py nosetests
-    - name: Upload Coverage Results
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: coveralls --service=github
+      - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8  # v2
+      - name: Set up Python 3.8
+        uses: actions/setup-python@b55428b1882923874294fa556849718a1d7f2ca5  # v4.2.0
+        with:
+          python-version: 3.8
+      - name: Install Pip Dependencies
+        run: pip install -r requirements.txt
+      - name: Run Tests
+        run: nosetests
+      - name: Coveralls
+        if: ${{ matrix.os == 'ubuntu-22.04' }}
+        run: coveralls --service=github
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

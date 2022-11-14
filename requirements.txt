@@ -1,3 +1,6 @@
 # for running tests, you'll need the nose and coverage packages
 coverage==6.5.0
 nose
+
+# for building wheels, mostly from github, but it's fine
+wheel

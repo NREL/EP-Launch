@@ -1,24 +1,23 @@
-from collections import deque
-from configparser import ConfigParser
 from datetime import datetime
 from fnmatch import fnmatch
-from importlib import util as import_util
-from inspect import getmembers, isclass
-from json import dumps, loads
+
+
+from json import dumps
 from mimetypes import guess_type
 from pathlib import Path
 from platform import system
 from queue import Queue
-from string import ascii_uppercase
+
 from subprocess import Popen
 from tkinter import Tk, PhotoImage, StringVar, Menu, DISABLED, OptionMenu, Frame, Label, Button, NSEW, \
     SUNKEN, S, LEFT, BOTH, messagebox, END, Toplevel, TOP, BooleanVar, ACTIVE, LabelFrame, RIGHT, EW, PanedWindow, NS
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Dict, List, Optional, Tuple
 from uuid import uuid4
 from webbrowser import open as open_web
 
 from eplaunch import NAME, VERSION, DOCS_URL
 from eplaunch.utilities.exceptions import EPLaunchFileException
+from eplaunch.interface.config import ConfigManager
 from eplaunch.interface.widget_dir_list import DirListScrollableFrame
 from eplaunch.interface.widget_file_list import FileListScrollableFrame
 from eplaunch.interface.dialog_external_viewers import TkViewerDialog
@@ -27,332 +26,9 @@ from eplaunch.interface.dialog_workflow_dirs import TkWorkflowsDialog
 from eplaunch.interface.dialog_output import TkOutputDialog
 from eplaunch.interface.workflow_thread import WorkflowThread
 from eplaunch.utilities.cache import CacheFile
-from eplaunch.utilities.crossplatform import Platform
 from eplaunch.workflows.base import EPLaunchWorkflowResponse1
-
-# from eplaunch.utilities.exceptions import EPLaunchDevException
-
-
-class Workflow:
-    def __init__(self, workflow_class, name, context, output_suffixes, file_types, columns,
-                 directory, description, is_energyplus, uses_weather, version_id):
-        self.workflow_class = workflow_class
-        self.name = name
-        self.context = context
-        self.output_suffixes = output_suffixes
-        self.file_types = file_types
-        self.columns = columns
-        self.workflow_directory = directory
-        self.description = description
-        self.is_energyplus = is_energyplus
-        self.uses_weather = uses_weather
-        self.version_id = version_id
-        self.output_toolbar_order = None
-
-    def __str__(self) -> str:
-        return f"Workflow {self.context}:{self.name}"
-
-
-class WorkflowManager:
-    def __init__(self):
-        self.current_workflow: Optional[Workflow] = None
-        self.threads = {}
-        self.workflow_directories: List[Path] = []
-        self.auto_found_workflow_dirs: List[Path] = []
-        self.workflows: List[Workflow] = []
-        self.workflow_contexts = set()
-
-    def workflow_instances(self, workflow_context: str) -> List:
-        return [x for x in self.workflows if x.context == workflow_context]
-
-    def locate_all_workflows(self):
-        self.auto_found_workflow_dirs = [Path('/eplus/installs/EnergyPlus-22-1-0/workflows')]
-        # then search for e+ workflows
-        search_roots: Dict[str, List[Path]] = {
-            Platform.WINDOWS: [Path(f"{c}:\\") for c in ascii_uppercase],
-            Platform.LINUX: [Path('/usr/local/bin/'), Path('/tmp/')],
-            Platform.MAC: [Path('/Applications/'), Path('/tmp/')],
-            Platform.UNKNOWN: [],
-        }
-        current_search_roots = search_roots[Platform.get_current_platform()]
-        search_names = ["EnergyPlus*", "energyplus*", "EP*", "ep*", "E+*", "e+*"]
-        for search_root in current_search_roots:
-            for search_name in search_names:
-                eplus_folder_matches = search_root.glob(search_name)
-                for ep_folder in eplus_folder_matches:
-                    ep_workflow_dir = ep_folder / 'workflows'
-                    if ep_workflow_dir.exists():
-                        self.auto_found_workflow_dirs.append(ep_workflow_dir)
-
-    def instantiate_all_workflows(self, disable_builtins=False, skip_error: bool = False) -> str:
-        this_file_directory_path = Path(__file__).parent.resolve()
-        this_project_root_dir = this_file_directory_path.parent
-        built_in_workflow_dir = this_project_root_dir / 'workflows' / 'default'
-        all_workflow_directories = self.workflow_directories
-        if disable_builtins:
-            # don't add built-in default workflows
-            pass
-        elif built_in_workflow_dir not in all_workflow_directories and built_in_workflow_dir.exists():
-            # add the built-in directory if it exists
-            all_workflow_directories.append(built_in_workflow_dir)
-
-        self.workflows = []
-        self.workflow_contexts.clear()
-        warnings = []
-        for i, workflow_directory in enumerate(all_workflow_directories):
-            sanitized_directory_upper_case = str(workflow_directory).upper().replace('-', '.').replace('\\', '/')
-            version_id = None
-            dir_is_eplus = False
-            # I tried regexes, and they worked using online Python regex testers, but using the same patterns
-            # and strings in here resulting in false responses...bogus.  So here I go, manually chopping up a string
-            # re_dots = re.compile('(?P<version>(\d.\d.\d))')
-            if Platform.get_current_platform() == Platform.WINDOWS:
-                energyplus_uc_search_string = 'ENERGYPLUSV'
-            else:
-                energyplus_uc_search_string = 'ENERGYPLUS.'
-            if energyplus_uc_search_string in sanitized_directory_upper_case:
-                dir_is_eplus = True
-                trailing_string = sanitized_directory_upper_case[
-                                  sanitized_directory_upper_case.index(energyplus_uc_search_string) + 11:
-                                  ]
-                if '/' in trailing_string:
-                    version_id = trailing_string[:trailing_string.index('/')]
-
-            modules = []
-            for this_file_path in workflow_directory.glob('*.py'):
-                if this_file_path.name == '__init__.py':
-                    continue
-                module_spec = import_util.spec_from_file_location(('workflow_module_%s' % i), this_file_path)
-                this_module = import_util.module_from_spec(module_spec)
-                try:
-                    modules.append([this_file_path, this_module])
-                    module_spec.loader.exec_module(this_module)
-                except ImportError as ie:
-                    # this error generally means they have a bad workflow class or something
-                    warnings.append(
-                        f"Import error occurred on workflow file {str(this_file_path)}: {ie.msg}"
-                    )
-                    continue
-                except SyntaxError as se:
-                    # syntax errors are, well, syntax errors in the Python code itself
-                    warnings.append(
-                        f"Syntax error occurred on workflow file {str(this_file_path)}, line {se.lineno}: {se.msg}"
-                    )
-                    continue
-                except Exception as e:  # pragma: no cover
-                    # there's always the potential of some other unforeseen thing going on when a workflow is executed
-                    warnings.append(
-                        f"Unexpected error occurred trying to import workflow: {str(this_file_path)}: {str(e)}"
-                    )
-                    continue
-
-            for module_file_path, this_module in modules:
-                class_members = getmembers(this_module, isclass)
-                for this_class in class_members:
-                    this_class_name, this_class_type = this_class
-                    # so right here, we could check issubclass, but this also matches the BaseEPLaunchWorkflow1, which
-                    # is imported in each workflow class.  No need to do that.  For now, I'm going to check the direct
-                    # parent class of this class to verify we only get direct descendants.  We can evaluate this later.
-                    # if issubclass(this_class_type, BaseEPLaunchWorkflow1):
-                    num_inheritance = len(this_class_type.__bases__)
-                    base_class_name = this_class_type.__bases__[0].__name__
-                    workflow_base_class_name = 'BaseEPLaunchWorkflow1'
-                    if num_inheritance == 1 and workflow_base_class_name in base_class_name:
-                        try:
-                            # we've got a good match, grab more data and get ready to load this into the Detail class
-                            workflow_instance = this_class_type()
-                            workflow_name = workflow_instance.name()
-                            workflow_file_types = workflow_instance.get_file_types()
-                            workflow_output_suffixes = workflow_instance.get_output_suffixes()
-                            workflow_columns = workflow_instance.get_interface_columns()
-                            workflow_context = workflow_instance.context()
-                            workflow_weather = workflow_instance.uses_weather()
-
-                            file_type_string = "("
-                            first = True
-                            for file_type in workflow_file_types:
-                                if first:
-                                    first = False
-                                else:
-                                    file_type_string += ", "
-                                file_type_string += file_type
-                            file_type_string += ")"
-
-                            description = f"{workflow_name} {file_type_string}"
-                            self.workflow_contexts.add(workflow_context)
-
-                            self.workflows.append(
-                                Workflow(
-                                    this_class_type,
-                                    workflow_name,
-                                    workflow_context,
-                                    workflow_output_suffixes,
-                                    workflow_file_types,
-                                    workflow_columns,
-                                    workflow_directory,
-                                    description,
-                                    dir_is_eplus,
-                                    workflow_weather,
-                                    version_id
-                                )
-                            )
-                        except NotImplementedError as nme:
-                            warnings.append(
-                                f"Import error for file \"{module_file_path}\"; class: \"{this_class_name}\"; error: "
-                                f"\"{str(nme)}\" "
-                            )
-                        except Exception as e:
-                            # there's always the potential of some other thing going on when a workflow is executed
-                            warnings.append(
-                                f"Unexpected error in file \"{module_file_path}\"; class: \"{this_class_name}\"; error:"
-                                f" \"{str(e)}\" "
-                            )
-                            continue
-
-        self.workflows.sort(key=lambda w: w.description)
-        warning_message = ''
-        if skip_error:
-            pass
-        elif len(warnings) > 0:
-            warning_message = 'Errors occurred during workflow importing! \n'
-            warning_message += 'Address these issues or remove the workflow directory in the settings \n'
-            for warning in warnings:
-                warning_message += '\n - ' + str(warning)
-        return warning_message
-
-    def reset_workflow_array(self, filter_context=None):
-        self.instantiate_all_workflows()
-        if filter_context:
-            self.workflows = [w for w in self.workflows if w.context == filter_context]
-
-
-class ConfigManager:
-    def __init__(self):
-        # specify configuration settings here
-        self.keep_dialog_open: bool = True
-        self.cur_workflow_name: str = ''
-        self.cur_workflow_context: str = ''
-        self.cur_directory: str = ''
-        self.cur_filename: str = ''
-        self.welcome_shown: bool = False
-        self.latest_welcome_shown: str = ''
-        self.height: int = -1
-        self.width: int = -1
-        self.x: int = -1
-        self.y: int = -1
-        self.workflow_directories: List[Path] = []
-        self.folders_recent: deque[Optional[Path]] = deque(maxlen=5)
-        self.folders_favorite: List[Path] = []
-        self.weathers_recent: deque[Optional[Path]] = deque(maxlen=5)
-        self.weathers_favorite: List[Path] = []
-        self.groups_recent: List[str] = []
-        self.groups_favorite: List[str] = []
-        self.viewer_overrides: Dict[str, Path] = {}
-
-    def load(self):
-        # load the config from the file on disk
-        config_file_path = Path.home() / '.EP-Launch'
-        if not config_file_path.exists():
-            pass  # just use the default values
-        else:
-            contents = config_file_path.read_text()
-            if contents == '':
-                pass  # just use the default values, something is wrong
-            else:
-                if contents[0] == '[':
-                    # we have an INI style file, read a few things
-                    parser = ConfigParser()
-                    parser.read(config_file_path)
-
-                    def parse(x1: str, x2: str, default: Any):
-                        if x1 in parser and x2 in parser[x1]:
-                            return parser[x1][x2]
-                        return default
-                    self.keep_dialog_open = parse('ActiveWindow', 'KeepDialogOpen', self.keep_dialog_open)
-                    self.cur_workflow_name = parse('ActiveWindow', 'SelectedWorkflow', self.cur_workflow_name)
-                    self.cur_workflow_context = parse('ActiveWindow', 'CurrentContext', self.cur_workflow_context)
-                    self.cur_directory = parse('ActiveWindow', 'CurrentDirectory', self.cur_directory)
-                    self.cur_filename = parse('ActiveWindow', 'CurrentFileName', self.cur_filename)
-                    self.welcome_shown = parse('ActiveWindow', 'WelcomeAlreadyShown', self.welcome_shown)
-                    self.latest_welcome_shown = parse(
-                        'ActiveWindow', 'LatestWelcomeVersionShown', self.latest_welcome_shown
-                    )
-                    self.height = parse('ActiveWindow', 'height', self.height)
-                    self.width = parse('ActiveWindow', 'width', self.width)
-                    self.x = parse('ActiveWindow', 'x', self.x)
-                    self.y = parse('ActiveWindow', 'y', self.y)
-                    # TODO: Attempt to read in these:
-                    # self.workflow_directories: List[str] = []  /WorkflowDirectories/Path-##=/foo/bar
-                    # self.folders_recent: List[str] = []  /FolderMenu/Recent/Path-##=/foo/bar
-                    # self.folders_favorite: List[str] = []  /FolderMenu/Favorite/Path-##=/foo/bar
-                    # self.weathers_recent: List[str] = []  /WeatherMenu/Recent/Path-##=/foo/bar
-                    # self.weathers_favorite: List[str] = []  /WeatherMenu/Favorite/Path-##=/foo/bar
-                    # self.groups_recent: List[str] = []  /GroupMenu/Recent/Path-##=/foo/bar
-                    # self.groups_favorite: List[str] = []  /GroupMenu/Favorite/Path-##=/foo/bar
-                    # this is different: /ViewerOverrides/Path-##=/foo/bar, /ViewerOverrides/Ext-##=.py # verify ext
-                    # self.viewer_overrides: Dict[str, str] = {}
-
-                elif contents[0] == '{':
-                    # we have a JSON style file, read it
-                    config = loads(contents)
-                    self.keep_dialog_open = config.get('KeepDialogOpen', self.keep_dialog_open)
-                    self.cur_workflow_name = config.get('SelectedWorkflow', self.cur_workflow_name)
-                    self.cur_workflow_context = config.get('CurrentContext', self.cur_workflow_context)
-                    self.cur_directory = config.get('CurrentDirectory', self.cur_directory)
-                    self.cur_filename = config.get('CurrentFileName', self.cur_filename)
-                    self.welcome_shown = config.get('WelcomeAlreadyShown', self.welcome_shown)
-                    self.latest_welcome_shown = config.get('LatestWelcomeVersionShown', self.latest_welcome_shown)
-                    self.height = config.get('height', self.height)
-                    self.width = config.get('width', self.width)
-                    self.x = config.get('x', self.x)
-                    self.y = config.get('y', self.y)
-                    self.workflow_directories = [
-                        Path(p) for p in config.get('WorkflowDirectories', self.workflow_directories)
-                    ]
-                    recent_folders = config.get('RecentFolders', self.folders_recent)
-                    if recent_folders is not None:
-                        for string_path in recent_folders:
-                            self.folders_recent.appendleft(Path(string_path))
-                    self.folders_favorite = [Path(p) for p in config.get('FavoriteFolders', self.folders_favorite)]
-                    recent_weather = config.get('RecentWeather', self.weathers_recent)
-                    if recent_weather is not None:
-                        for string_path in recent_weather:
-                            self.weathers_recent.appendleft(Path(string_path))
-                    self.weathers_favorite = [Path(p) for p in config.get('FavoriteWeather', self.weathers_favorite)]
-                    self.groups_recent = config.get('RecentGroup', self.groups_recent)
-                    self.groups_favorite = config.get('FavoriteGroup', self.groups_favorite)
-                    self.viewer_overrides = {
-                        k: Path(v) for k, v in config.get('ViewerOverrides', self.viewer_overrides)
-                    }
-
-                else:
-                    pass  # Bad config saved file format?  Indicates a crash?
-
-    def save(self):
-        # save the config file to disk
-        output_dict = {
-            'KeepDialogOpen': self.keep_dialog_open,
-            'SelectedWorkflow': self.cur_workflow_name,
-            'CurrentContext': self.cur_workflow_context,
-            'CurrentDirectory': self.cur_directory,
-            'CurrentFileName': self.cur_filename,
-            'WelcomeAlreadyShown': self.welcome_shown,
-            'LatestWelcomeVersionShown': self.latest_welcome_shown,
-            'height': self.height,
-            'width': self.width,
-            'x': self.x,
-            'y': self.y,
-            'WorkflowDirectories': [str(p) for p in self.workflow_directories],
-            'RecentFolders': [str(p) for p in self.folders_recent if p is not None],
-            'FavoriteFolders': [str(p) for p in self.folders_favorite],
-            'RecentWeather': [str(p) for p in self.weathers_recent if p is not None],
-            'FavoriteWeather': [str(p) for p in self.weathers_favorite],
-            'RecentGroup': self.groups_recent,
-            'FavoriteGroup': self.groups_favorite,
-            'ViewerOverrides': {k: str(v) for k, v in self.viewer_overrides.items()},
-        }
-        config_file_path = Path.home() / '.EP-Launch'
-        config_file_path.write_text(dumps(output_dict, indent=2))
+from eplaunch.workflows.manager import WorkflowManager
+from eplaunch.workflows.workflow import Workflow
 
 
 class EPLaunchWindow(Tk):
@@ -406,6 +82,7 @@ class EPLaunchWindow(Tk):
         self.available_workflows: List[Workflow] = []
         self.refresh_workflow_context_menu(self.current_config.cur_workflow_context)
         self.repopulate_workflow_lists(self.current_config.cur_workflow_name)
+        self.repopulate_recent_weather_list()
 
         # finally set the initial directory and update the file listing
         self.initialize_directory_tree_from_config()
@@ -456,6 +133,19 @@ This dialog will only be shown once, but documentation is available in the Help 
         else:
             self._tk_var_workflow_context.set(all_available_contexts[0])
 
+    def repopulate_recent_weather_list(self):
+        # selected_recent_weather_string = self._tk_var_weather_recent.get()
+        self.option_workflow_instance['menu'].delete(0, END)
+        for w in self.current_config.weathers_recent:
+            weather_name = w.name
+            self.option_weather_recent['menu'].add_command(
+                label=weather_name,
+                command=lambda weather_path=w: self.recent_weather_changed(weather_path)
+            )
+
+    def recent_weather_changed(self, selected_weather_path: Path):
+        self._tk_var_weather_recent.set(str(selected_weather_path))
+
     def repopulate_workflow_lists(self, desired_selected_workflow_name: Optional[str] = None):
         if not self._tk_var_workflow_context.get():
             self.available_workflows = []
@@ -492,7 +182,7 @@ This dialog will only be shown once, but documentation is available in the Help 
                 new_workflow = w
                 break
         self.manager_workflows.current_workflow = new_workflow
-        s = ACTIVE if new_workflow.uses_weather else DISABLED
+        # s = ACTIVE if new_workflow.uses_weather else DISABLED
         # self.weather_button.configure(state=s)
         self.option_workflow_outputs['menu'].delete(0, END)
         s = ACTIVE if len(self.manager_workflows.current_workflow.output_suffixes) > 0 else DISABLED
@@ -972,7 +662,7 @@ This dialog will only be shown once, but documentation is available in the Help 
             self.current_cache.add_config(
                 self.manager_workflows.current_workflow.name,
                 selected_file_name,
-                {'weather': str(weather_file_to_use)}
+                {'weather': selected_recent_weather_string}
             )
         self._update_file_list()
 
