@@ -13,7 +13,9 @@ setup(
     description='Graphical Interface and Workflow Manager for EnergyPlus',
     url='https://github.com/NREL/EP-Launch',
     license='ModifiedBSD',
-    packages=['eplaunch', 'eplaunch/interface', 'eplaunch/utilities', 'eplaunch/workflows'],
+    packages=[
+        'eplaunch', 'eplaunch.interface', 'eplaunch.utilities', 'eplaunch.workflows', 'eplaunch.workflows.default'
+    ],
     package_data={"eplaunch.interface": ["*.png", "*.ico"]},
     include_package_data=True,
     long_description=readme_contents,

@@ -3,5 +3,5 @@
 # If you waste time on it, please add it here:
 # Total wasted time: 12 minutes
 NAME = "ep-launch"
-VERSION = "3.5.1"
+VERSION = "3.5.2"
 DOCS_URL = "https://ep-launch.readthedocs.io/en/latest/"
