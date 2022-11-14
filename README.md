@@ -24,7 +24,7 @@ The code coverage across platforms is collected on Coveralls.
 
 [![Releases](https://img.shields.io/github/workflow/status/NREL/EP-Launch/Release_to_PyPi?label=Releases&logo=github&style=for-the-badge)](https://github.com/NREL/EP-Launch/actions/workflows/pypi.yml)
 
-When a tag is created in the GitHub Repo, Github Actions builds a Python wheel and uploads it to PyPi.
+When a tag is created in the GitHub Repo, Github Actions builds a Python wheel and uploads it to PyPi: https://pypi.org/project/ep-launch/.
 The packages can be downloaded using standard `pip install ep-launch` commands.
 
 ## Development
