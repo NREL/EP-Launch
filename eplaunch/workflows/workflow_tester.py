@@ -90,15 +90,14 @@ class WorkflowTesting(object):
                         workflow_instance.get_output_suffixes()
                         print("   OK: Overridden get_output_suffixes() function execution works")
                     except Exception as e:
-                        print("ERROR: get_output_suffixes() function not overridden, or malfunctioning; reason: " + str(e))
+                        print(f"ERROR: get_output_suffixes() function not overridden, or malfunctioning; reason: {e}")
                         return 1
 
                     try:
                         workflow_instance.get_interface_columns()
                         print("   OK: Overridden get_interface_columns() function execution works")
                     except Exception as e:
-                        print(
-                            "ERROR: get_interface_columns() function not overridden, or malfunctioning; reason: " + str(e))
+                        print(f"ERROR: get_interface_columns() function not overridden, or malfunctioning; reason: {e}")
                         return 1
 
                     try:
