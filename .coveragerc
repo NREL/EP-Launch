@@ -5,5 +5,3 @@ source = eplaunch
 omit =
     */eplaunch/interface/*
     */eplaunch/tk_runner.py
-    *eplaunch/workflows/default/*
-    */eplaunch/workflows/workflow_tester.py

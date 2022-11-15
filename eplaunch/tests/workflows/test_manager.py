@@ -13,14 +13,14 @@ class TestGetWorkflows(unittest.TestCase):
         self.workflow_manager = WorkflowManager()
 
     def test_default_behavior_with_builtins(self):
-        warning_text = self.workflow_manager.instantiate_all_workflows(disable_builtins=False)
+        self.workflow_manager.instantiate_all_workflows(disable_builtins=False)
         self.assertTrue(len(self.workflow_manager.workflows) > 0)
-        self.assertEqual('', warning_text)
+        self.assertEqual(0, len(self.workflow_manager.warnings))
 
     def test_empty_workflow_response(self):
-        warning_text = self.workflow_manager.instantiate_all_workflows(disable_builtins=True)
+        self.workflow_manager.instantiate_all_workflows(disable_builtins=True)
         self.assertTrue(len(self.workflow_manager.workflows) == 0)
-        self.assertEqual('', warning_text)
+        self.assertEqual(0, len(self.workflow_manager.warnings))
 
     def test_valid_external_workflow(self):
         file_contents = """
@@ -37,11 +37,11 @@ class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
         """
         with open(os.path.join(self.extra_workflow_dir, 'valid_workflow.py'), 'w') as f:
             f.write(file_contents)
-        warning_text = self.workflow_manager.instantiate_all_workflows(
+        self.workflow_manager.instantiate_all_workflows(
             extra_workflow_dir=self.extra_workflow_dir, disable_builtins=True
         )
         self.assertTrue(len(self.workflow_manager.workflows) > 0)
-        self.assertEqual('', warning_text)
+        self.assertEqual(0, len(self.workflow_manager.warnings))
 
     def test_invalid_workflow_bad_syntax(self):
         # note that the name function has a syntax error with a missing trailing quote on the dummy string literal
@@ -59,11 +59,11 @@ class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
         """
         with open(os.path.join(self.extra_workflow_dir, 'bad_syntax_workflow.py'), 'w') as f:
             f.write(file_contents)
-        warning_text = self.workflow_manager.instantiate_all_workflows(
+        self.workflow_manager.instantiate_all_workflows(
             extra_workflow_dir=self.extra_workflow_dir, disable_builtins=True
         )
         self.assertTrue(len(self.workflow_manager.workflows) == 0)
-        self.assertNotEqual('', warning_text)
+        self.assertGreater(len(self.workflow_manager.warnings), 0)
 
     def test_invalid_workflow_bad_workflow(self):
         # note that the workflow imports a bad workflow base class
@@ -81,11 +81,11 @@ class SiteLocationWorkflow(UnknownWorkflowClass):
         """
         with open(os.path.join(self.extra_workflow_dir, 'bad_base_workflow.py'), 'w') as f:
             f.write(file_contents)
-        warning_text = self.workflow_manager.instantiate_all_workflows(
+        self.workflow_manager.instantiate_all_workflows(
             extra_workflow_dir=self.extra_workflow_dir, disable_builtins=True
         )
         self.assertTrue(len(self.workflow_manager.workflows) == 0)
-        self.assertNotEqual('', warning_text)
+        self.assertGreater(len(self.workflow_manager.warnings), 0)
 
     def test_incomplete_workflow(self):
         # note that the workflow does not implement all the abstract methods
@@ -96,11 +96,11 @@ class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
         """
         with open(os.path.join(self.extra_workflow_dir, 'incomplete_workflow.py'), 'w') as f:
             f.write(file_contents)
-        warning_text = self.workflow_manager.instantiate_all_workflows(
+        self.workflow_manager.instantiate_all_workflows(
             extra_workflow_dir=self.extra_workflow_dir, disable_builtins=True
         )
         self.assertTrue(len(self.workflow_manager.workflows) == 0)
-        self.assertNotEqual('', warning_text)
+        self.assertGreater(len(self.workflow_manager.warnings), 0)
 
     def test_energyplus_workflow(self):
         file_contents = """
@@ -119,11 +119,11 @@ class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
         os.makedirs(ep_workflow_dir)
         with open(os.path.join(ep_workflow_dir, 'bad_base_workflow.py'), 'w') as f:
             f.write(file_contents)
-        warning_text = self.workflow_manager.instantiate_all_workflows(
+        self.workflow_manager.instantiate_all_workflows(
             extra_workflow_dir=ep_workflow_dir, disable_builtins=True
         )
         self.assertTrue(len(self.workflow_manager.workflows) > 0)
-        self.assertEqual('', warning_text)
+        self.assertEqual(0, len(self.workflow_manager.warnings))
         self.assertEqual(1, len(self.workflow_manager.workflow_instances('theseWorkflows')))
 
     def test_exception_calling_workflow(self):
@@ -141,18 +141,18 @@ class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
         """
         with open(os.path.join(self.extra_workflow_dir, 'exception_workflow.py'), 'w') as f:
             f.write(file_contents)
-        warning_text = self.workflow_manager.instantiate_all_workflows(
+        self.workflow_manager.instantiate_all_workflows(
             extra_workflow_dir=self.extra_workflow_dir, disable_builtins=True
         )
         self.assertTrue(len(self.workflow_manager.workflows) == 0)
-        self.assertIn('Unexpected error', warning_text)
+        self.assertIn('Unexpected error', self.workflow_manager.warnings[0])
 
     def test_reset_works_with_invalid_context(self):
-        self.workflow_manager.instantiate_all_workflows(disable_builtins=False, skip_error=True)
+        self.workflow_manager.instantiate_all_workflows(disable_builtins=False)
         self.assertTrue(len(self.workflow_manager.workflows) > 0)
         self.workflow_manager.reset_workflow_array('fake_context')
         self.assertTrue(len(self.workflow_manager.workflows) == 0)
 
     def test_empty_auto_locator(self):
-        self.workflow_manager.locate_all_workflows()
+        self.workflow_manager.auto_find_workflow_directories()
         self.assertEqual(0, len(self.workflow_manager.auto_found_workflow_dirs))

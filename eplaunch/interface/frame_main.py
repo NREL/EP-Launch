@@ -24,7 +24,7 @@ from eplaunch.interface.dialog_external_viewers import TkViewerDialog
 from eplaunch.interface.dialog_weather import TkWeatherDialog
 from eplaunch.interface.dialog_workflow_dirs import TkWorkflowsDialog
 from eplaunch.interface.dialog_output import TkOutputDialog
-from eplaunch.interface.workflow_thread import WorkflowThread
+from eplaunch.workflows.workflow_thread import WorkflowThread
 from eplaunch.utilities.cache import CacheFile
 from eplaunch.workflows.base import EPLaunchWorkflowResponse1
 from eplaunch.workflows.manager import WorkflowManager
@@ -60,7 +60,7 @@ class EPLaunchWindow(Tk):
         self.manager_workflows = WorkflowManager()
 
         # try to find workflows in all the typical places, storing them in .located_workflows
-        self.manager_workflows.locate_all_workflows()
+        self.manager_workflows.auto_find_workflow_directories()
         # but now, if the saved configuration exists, use that as the list of directories to use moving forward
         # if the saved configuration doesn't have workflows, use the newly located list
         if self.current_config.workflow_directories:
@@ -68,7 +68,7 @@ class EPLaunchWindow(Tk):
         else:
             self.manager_workflows.workflow_directories = self.manager_workflows.auto_found_workflow_dirs
         # now that we have a list of workflows, instantiate any/all of them
-        self.manager_workflows.instantiate_all_workflows(skip_error=False)
+        self.manager_workflows.instantiate_all_workflows()  # TODO: Check self.manager_workflows.warnings
 
         # now do the basic build of the GUI - it will temporarily have some things blank, but we won't call update() yet
         self._gui_queue = Queue()
@@ -423,7 +423,7 @@ This dialog will only be shown once, but documentation is available in the Help 
 
     def _handle_workflow_dir_dialog(self):
         # refresh the list of workflows auto-found on the machine
-        self.manager_workflows.locate_all_workflows()
+        self.manager_workflows.auto_find_workflow_directories()
         # pass the newly found folders in, as well as the current active list of workflow directories
         auto_find_workflows = self.manager_workflows.auto_found_workflow_dirs
         current_workflows = self.manager_workflows.workflow_directories
@@ -432,7 +432,7 @@ This dialog will only be shown once, but documentation is available in the Help 
         if wf_dialog.exit_code == TkWorkflowsDialog.CLOSE_SIGNAL_CANCEL:
             return
         self.manager_workflows.workflow_directories = wf_dialog.list_of_directories
-        self.manager_workflows.instantiate_all_workflows(skip_error=False)
+        self.manager_workflows.instantiate_all_workflows()  # TODO: check self.manager_workflows.warnings
         self.current_config.workflow_directories = self.manager_workflows.workflow_directories
         self.refresh_workflow_context_menu(self.current_config.cur_workflow_context)
         self.repopulate_workflow_lists(self.current_config.cur_workflow_name)
