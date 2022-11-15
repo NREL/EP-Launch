@@ -28,7 +28,7 @@ class FileDetailsWorkflow1(BaseEPLaunchWorkflow1):
     def get_interface_columns(self):
         return [ColumnNames.FileType, ColumnNames.FileSize]
 
-    def main(self, run_directory, file_name, args):
+    def main(self, run_directory, file_name, args):  # pragma: no cover; unit tests can't execute this
         self.callback("In FileDetailsWorkflow1.main(), about to process file")
         file_path = os.path.join(run_directory, file_name)
         info = os.stat(file_path)

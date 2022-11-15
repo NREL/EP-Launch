@@ -35,7 +35,7 @@ class IDFDetailsWorkflow1(BaseEPLaunchWorkflow1):
             ColumnNames.NumZones
         ]
 
-    def main(self, run_directory, file_name, args):
+    def main(self, run_directory, file_name, args):  # pragma: no cover; unit tests can't execute this
         self.callback("In IDFDetailsWorkflow.main(), about to process file")
         file_path = os.path.join(run_directory, file_name)
         content = open(file_path).read()

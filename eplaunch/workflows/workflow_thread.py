@@ -39,7 +39,7 @@ class WorkflowThread(threading.Thread):
         workflow_response.id = self.id
         try:
             self.workflow_done_callback(workflow_response)
-        except RuntimeError:
+        except RuntimeError:  # pragma: no cover  -- this is an exceedingly odd case
             pass
             # print("Could not post finished event to the GUI, did the GUI get force closed?")
 
