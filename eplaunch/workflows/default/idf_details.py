@@ -1,5 +1,6 @@
 import os
 
+from eplaunch import NAME, VERSION
 from eplaunch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1
 
 
@@ -13,10 +14,10 @@ class ColumnNames:
 class IDFDetailsWorkflow1(BaseEPLaunchWorkflow1):
 
     def name(self):
-        return "IDF Details 1.0"
+        return "IDF Details"
 
     def context(self):
-        return "EPLaunch 2.9.2"
+        return f"{NAME} {VERSION}"
 
     def description(self):
         return "Retrieves IDF Details"
@@ -36,7 +37,7 @@ class IDFDetailsWorkflow1(BaseEPLaunchWorkflow1):
         ]
 
     def main(self, run_directory, file_name, args):  # pragma: no cover; unit tests can't execute this
-        self.callback("In IDFDetailsWorkflow.main(), about to process file")
+        self.callback(f"In {__class__}, about to process file: {file_name}")
         file_path = os.path.join(run_directory, file_name)
         content = open(file_path).read()
         new_lines = []
@@ -78,7 +79,7 @@ class IDFDetailsWorkflow1(BaseEPLaunchWorkflow1):
             elif obj.upper().startswith('VERSION,'):
                 version_fields = obj.split(',')
                 version_id = version_fields[1]
-        self.callback("Completed IDFDetailsWorkflow.main()")
+        self.callback(f"Completed {__class__}")
         return EPLaunchWorkflowResponse1(
             success=True,
             message='Parsed IDF information successfully',

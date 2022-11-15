@@ -1,5 +1,6 @@
 import os
 
+from eplaunch import NAME, VERSION
 from eplaunch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1
 
 
@@ -11,10 +12,10 @@ class ColumnNames:
 class FileDetailsWorkflow1(BaseEPLaunchWorkflow1):
 
     def name(self):
-        return "Get File Details 1.0"
+        return "Get File Details"
 
     def context(self):
-        return "EPLaunch 2.9.2"
+        return f"{NAME} {VERSION}"
 
     def description(self):
         return "Retrieves details about the file"
@@ -29,12 +30,12 @@ class FileDetailsWorkflow1(BaseEPLaunchWorkflow1):
         return [ColumnNames.FileType, ColumnNames.FileSize]
 
     def main(self, run_directory, file_name, args):  # pragma: no cover; unit tests can't execute this
-        self.callback("In FileDetailsWorkflow1.main(), about to process file")
+        self.callback(f"In {__class__}, about to process file: {file_name}")
         file_path = os.path.join(run_directory, file_name)
         info = os.stat(file_path)
         file_type = os.path.splitext(file_path)[1]
         file_size = round(info.st_size / 1024)
-        self.callback("Completed FileDetailsWorkflow1.main()")
+        self.callback(f"Completed {__class__}")
         return EPLaunchWorkflowResponse1(
             success=True,
             message='Parsed File data successfully',

@@ -1,5 +1,6 @@
 import os
 
+from eplaunch import NAME, VERSION
 from eplaunch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1
 
 
@@ -13,7 +14,7 @@ class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
         return "Get Site:Location"
 
     def context(self):
-        return "EPLaunch 2.9.2"
+        return f"{NAME} {VERSION}"
 
     def description(self):
         return "Retrieves the Site:Location name"
@@ -28,7 +29,7 @@ class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
         return [ColumnNames.Location]
 
     def main(self, run_directory, file_name, args):  # pragma: no cover; unit tests can't execute this
-        self.callback("In SiteLocationWorkflow.main(), about to process file")
+        self.callback(f"In {__class__}, about to process file: {file_name}")
         file_path = os.path.join(run_directory, file_name)
         content = open(file_path).read()
         new_lines = []
@@ -54,7 +55,7 @@ class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
                 message='Could not parse location object!',
                 column_data={ColumnNames.Location: '*unknown*'}
             )
-        self.callback("Completed SiteLocationWorkflow.main()")
+        self.callback(f"Completed {__class__}")
         return EPLaunchWorkflowResponse1(
             success=True,
             message='Parsed Location object successfully',

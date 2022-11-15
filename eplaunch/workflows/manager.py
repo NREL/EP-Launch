@@ -18,13 +18,15 @@ class WorkflowManager:
         self.workflows: List[Workflow] = []
         self.workflow_contexts: Set[str] = set()
         self.warnings: List[str] = []
+        self.auto_find_workflow_directories()
+        self.workflow_directories = self.auto_found_workflow_dirs
 
-    def workflow_instances(self, workflow_context: str) -> List:
+    def workflow_instances(self, workflow_context: str) -> List[Workflow]:
         return [x for x in self.workflows if x.context == workflow_context]
 
-    def auto_find_workflow_directories(self):
+    def auto_find_workflow_directories(self) -> None:
         """Locate the (EnergyPlus) workflow directories that are in predestined locations"""
-        self.auto_found_workflow_dirs = []   # Path('/eplus/installs/EnergyPlus-22-1-0/workflows')]
+        self.auto_found_workflow_dirs = []
         # then search for e+ workflows
         search_roots: Dict[str, List[Path]] = {
             Platform.WINDOWS: [Path(f"{c}:\\") for c in ascii_uppercase],
@@ -164,7 +166,7 @@ class WorkflowManager:
 
         self.workflows.sort(key=lambda w: w.description)
 
-    def reset_workflow_array(self, filter_context=None):
+    def reset_workflow_array(self, filter_context=None) -> None:
         self.instantiate_all_workflows()
         if filter_context:
             self.workflows = [w for w in self.workflows if w.context == filter_context]
