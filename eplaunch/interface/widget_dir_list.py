@@ -20,9 +20,9 @@ class DirListWidget(Treeview):
         # set up the initial directory listing
         this_file_dir = Path(__file__).parent.resolve()
         initial_root_path = Path(this_file_dir)
-        folder_icon_path = this_file_dir / 'folder_opened.png'
+        folder_icon_path = this_file_dir / 'resources' / 'folder_opened.png'
         self.root_folder_image = PhotoImage(file=folder_icon_path)
-        folder_closed_icon_path = this_file_dir / 'folder_closed.png'
+        folder_closed_icon_path = this_file_dir / 'resources' / 'folder_closed.png'
         self.non_root_folder_image = PhotoImage(file=folder_closed_icon_path)
         self.root_node = self.insert('', END, text=this_file_dir.anchor, open=True, image=self.root_folder_image)
         self.refresh_listing(initial_root_path)

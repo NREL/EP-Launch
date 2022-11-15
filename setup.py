@@ -16,7 +16,7 @@ setup(
     packages=[
         'eplaunch', 'eplaunch.interface', 'eplaunch.utilities', 'eplaunch.workflows', 'eplaunch.workflows.default'
     ],
-    package_data={"eplaunch.interface": ["*.png", "*.ico"]},
+    package_data={"eplaunch.interface": ["resources/*.png", "resources/*.ico"]},
     include_package_data=True,
     long_description=readme_contents,
     long_description_content_type='text/markdown',

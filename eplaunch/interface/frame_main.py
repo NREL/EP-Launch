@@ -38,7 +38,7 @@ class EPLaunchWindow(Tk):
         super().__init__()
         # do some basic form set up here
         self.title(NAME)
-        icon_path = Path(__file__).parent / 'main_icon.png'
+        icon_path = Path(__file__).parent / 'resources' / 'main_icon.png'
         image = PhotoImage(file=str(icon_path))
         self.iconphoto(True, image)
 
