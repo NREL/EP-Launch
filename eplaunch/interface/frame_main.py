@@ -1,7 +1,6 @@
 from datetime import datetime
 from fnmatch import fnmatch
 
-
 from json import dumps
 from mimetypes import guess_type
 from pathlib import Path
@@ -11,6 +10,7 @@ from queue import Queue
 from subprocess import Popen
 from tkinter import Tk, PhotoImage, StringVar, Menu, DISABLED, OptionMenu, Frame, Label, Button, NSEW, \
     SUNKEN, S, LEFT, BOTH, messagebox, END, Toplevel, TOP, BooleanVar, ACTIVE, LabelFrame, RIGHT, EW, PanedWindow, NS
+from tkinter.ttk import Combobox
 from typing import Dict, List, Optional, Tuple
 from uuid import uuid4
 from webbrowser import open as open_web
@@ -231,13 +231,15 @@ class EPLaunchWindow(Tk):
 
         lf = LabelFrame(container, text="File/Folder Actions")
         Label(lf, text="Open Output: ", justify=RIGHT).grid(row=0, column=0, **self.pad)
-        self.option_workflow_outputs = OptionMenu(lf, self._tk_var_output_suffix, '<output>')
+        self.option_workflow_outputs = Combobox(lf, textvariable=self._tk_var_output_suffix)
         self.option_workflow_outputs.grid(row=0, column=1, **self.pad)
+        self.option_workflow_outputs['state'] = 'readonly'
         self.button_open_output_file = Button(lf, text=u"\U0001f325 Open", command=self._open_output_file)
         self.button_open_output_file.grid(row=0, column=2, **self.pad)
-        Button(
-            lf, text=u"\U0001F5B9 Open Selected File in Text Editor", command=self._open_text_editor
-        ).grid(row=1, column=0, columnspan=3, sticky=EW, **self.pad)
+        self.button_open_in_text = Button(
+            lf, text=u"\U0001F5B9 Open Selected File in Text Editor", command=self._open_text_editor, state=DISABLED
+        )
+        self.button_open_in_text.grid(row=1, column=0, columnspan=3, sticky=EW, **self.pad)
         Button(
             lf, text=u"\U0001F5C0 Open Dir in File Browser", command=self._open_file_browser
         ).grid(row=2, column=0, columnspan=3, sticky=EW, **self.pad)
@@ -498,6 +500,8 @@ class EPLaunchWindow(Tk):
     def _callback_file_selection_changed(self, selected_file_names: List[str]) -> None:
         """This gets called back by the file listing widget when a selection changes"""
         self.current_file_selection = selected_file_names
+        status = ACTIVE if len(self.current_file_selection) > 0 else DISABLED
+        self.button_open_in_text['state'] = status
 
     # endregion
 
@@ -631,29 +635,21 @@ class EPLaunchWindow(Tk):
         self._update_file_list()
 
     def _repopulate_output_suffix_options(self):
-        self.option_workflow_outputs['menu'].delete(0, END)
         suffixes = sorted(self.workflow_manager.current_workflow.output_suffixes)
+        combobox_output_enabled = 'readonly' if len(suffixes) > 0 else 'disabled'
         output_enabled = ACTIVE if len(suffixes) > 0 else DISABLED
-        self.option_workflow_outputs.configure(state=output_enabled)
+        self.option_workflow_outputs.configure(state=combobox_output_enabled)
         self.button_open_output_file.configure(state=output_enabled)
-        self.option_workflow_outputs.configure(state=output_enabled)
-
-        # create a small nested function that can be called by the tkinter button.command
-        def set_output_suffix_var(_suffix):
-            self._tk_var_output_suffix.set(_suffix)
 
         # rebuild the option menu if applicable
+        current_selection = self._tk_var_output_suffix.get()
         if output_enabled == ACTIVE:
-            for output_enabled in suffixes:
-                suffix = output_enabled
-                self.option_workflow_outputs['menu'].add_command(
-                    label=suffix,
-                    command=lambda su=suffix: set_output_suffix_var(su)
-                )
-            set_output_suffix_var(suffixes[0])
-
+            self.option_workflow_outputs['values'] = suffixes
+            if current_selection not in suffixes:
+                self._tk_var_output_suffix.set(suffixes[0])
         else:
-            set_output_suffix_var('')
+            self.option_workflow_outputs['values'] = []
+            self._tk_var_output_suffix.set('')
 
     def _open_workflow_dir_dialog(self):
         # refresh the list of workflows auto-found on the machine
