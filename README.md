@@ -29,11 +29,9 @@ The packages can be downloaded using standard `pip install ep-launch` commands.
 
 ## Development
 
-This cross platform GUI application is built around the wxPython (Phoenix) framework.
-For details about all the nuances of installing this library, read through the requirements.txt file.
-Once you have wx installed, the only other dependency needed to run the program is `PyPubSub` via `pip install pypubsub`.
-The application can be run by executing the eplaunch/runner.py file.
+Basic development dependencies are installed with `pip install -r requirements.txt`.
+This cross platform GUI application is built around the tkinter framework, so no additional dependencies are needed for the GUI.
+The application can be run by executing the `eplaunch/tk_runner.py` file.
 
-To run the unit test suite, make sure to have nose and coverage installed via: `pip install nose coverage`.
-Then execute `setup.py nosetests`.
+To run the unit test suite, simply execute `nosetests`.
 Unit test results will appear in the console, and coverage results will be in a `cover` directory.
