@@ -1,7 +1,7 @@
 import os
 
-from eplaunch import NAME, VERSION
-from eplaunch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1
+from energyplus_launch import NAME, VERSION
+from energyplus_launch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1
 
 
 class ColumnNames:

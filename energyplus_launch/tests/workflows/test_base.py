@@ -1,6 +1,6 @@
 import unittest
 
-from eplaunch.workflows.base import EPLaunchWorkflowResponse1, BaseEPLaunchWorkflow1
+from energyplus_launch.workflows.base import EPLaunchWorkflowResponse1, BaseEPLaunchWorkflow1
 
 
 class TestWorkflowResponseConstruction(unittest.TestCase):

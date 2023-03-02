@@ -1,7 +1,7 @@
 [run]
-source = eplaunch
+source = energyplus_launch
 
 [report]
 omit =
-    */eplaunch/interface/*
-    */eplaunch/tk_runner.py
+    */energyplus_launch/interface/*
+    */energyplus_launch/tk_runner.py

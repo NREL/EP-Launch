@@ -3,7 +3,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from eplaunch.workflows.manager import WorkflowManager
+from energyplus_launch.workflows.manager import WorkflowManager
 
 
 class TestGetWorkflows(unittest.TestCase):
@@ -24,7 +24,7 @@ class TestGetWorkflows(unittest.TestCase):
 
     def test_valid_external_workflow(self):
         file_contents = """
-from eplaunch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1
+from energyplus_launch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1
 class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
     def name(self): return 'dummy'
     def context(self): return 'theseWorkflows'
@@ -46,7 +46,7 @@ class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
     def test_invalid_workflow_bad_syntax(self):
         # note that the name function has a syntax error with a missing trailing quote on the dummy string literal
         file_contents = """
-from eplaunch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1
+from energyplus_launch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1
 class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
     def name(self): return 'dummy
     def context(self): return 'theseWorkflows'
@@ -68,7 +68,7 @@ class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
     def test_invalid_workflow_bad_workflow(self):
         # note that the workflow imports a bad workflow base class
         file_contents = """
-from eplaunch.workflows.base import UnknownWorkflowClass, EPLaunchWorkflowResponse1
+from energyplus_launch.workflows.base import UnknownWorkflowClass, EPLaunchWorkflowResponse1
 class SiteLocationWorkflow(UnknownWorkflowClass):
     def name(self): return 'dummy'
     def context(self): return 'theseWorkflows'
@@ -90,7 +90,7 @@ class SiteLocationWorkflow(UnknownWorkflowClass):
     def test_incomplete_workflow(self):
         # note that the workflow does not implement all the abstract methods
         file_contents = """
-from eplaunch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1
+from energyplus_launch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1
 class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
     ...
         """
@@ -104,7 +104,7 @@ class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
 
     def test_energyplus_workflow(self):
         file_contents = """
-from eplaunch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1
+from energyplus_launch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1
 class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
     def name(self): return 'dummy'
     def context(self): return 'theseWorkflows'
@@ -128,7 +128,7 @@ class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
 
     def test_exception_calling_workflow(self):
         file_contents = """
-from eplaunch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1
+from energyplus_launch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1
 class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
     def name(self): return 'dummy'
     def context(self): raise Exception("WHAT HAPPENED!?")

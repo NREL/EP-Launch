@@ -31,7 +31,7 @@ The packages can be downloaded using standard `pip install ep-launch` commands.
 
 Basic development dependencies are installed with `pip install -r requirements.txt`.
 This cross platform GUI application is built around the tkinter framework, so no additional dependencies are needed for the GUI.
-The application can be run by executing the `eplaunch/tk_runner.py` file.
+The application can be run by executing the `energyplus_launch/tk_runner.py` file.
 
 To run the unit test suite, simply execute `nosetests`.
 Unit test results will appear in the console, and coverage results will be in a `cover` directory.

@@ -4,7 +4,7 @@ from pathlib import Path
 import time
 from typing import List
 
-from eplaunch.utilities.exceptions import EPLaunchFileException
+from energyplus_launch.utilities.exceptions import EPLaunchFileException
 
 # I'm trying to be good and catch specific exceptions, but the json library makes it difficult like this :-D
 try:

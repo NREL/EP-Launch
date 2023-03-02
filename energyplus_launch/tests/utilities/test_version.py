@@ -1,8 +1,8 @@
 import os
 import unittest
 
-from eplaunch.utilities.crossplatform import Platform
-from eplaunch.utilities.version import Version
+from energyplus_launch.utilities.crossplatform import Platform
+from energyplus_launch.utilities.version import Version
 
 
 class TestVersion(unittest.TestCase):

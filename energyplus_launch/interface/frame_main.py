@@ -15,20 +15,20 @@ from typing import Dict, List, Optional, Tuple
 from uuid import uuid4
 from webbrowser import open as open_web
 
-from eplaunch import NAME, VERSION, DOCS_URL
-from eplaunch.utilities.exceptions import EPLaunchFileException
-from eplaunch.interface.config import ConfigManager
-from eplaunch.interface.widget_dir_list import DirListScrollableFrame
-from eplaunch.interface.widget_file_list import FileListScrollableFrame
-from eplaunch.interface.dialog_external_viewers import TkViewerDialog
-from eplaunch.interface.dialog_weather import TkWeatherDialog
-from eplaunch.interface.dialog_workflow_dirs import TkWorkflowsDialog
-from eplaunch.interface.dialog_output import TkOutputDialog
-from eplaunch.workflows.workflow_thread import WorkflowThread
-from eplaunch.utilities.cache import CacheFile
-from eplaunch.workflows.base import EPLaunchWorkflowResponse1
-from eplaunch.workflows.manager import WorkflowManager
-from eplaunch.workflows.workflow import Workflow
+from energyplus_launch import NAME, VERSION, DOCS_URL
+from energyplus_launch.utilities.exceptions import EPLaunchFileException
+from energyplus_launch.interface.config import ConfigManager
+from energyplus_launch.interface.widget_dir_list import DirListScrollableFrame
+from energyplus_launch.interface.widget_file_list import FileListScrollableFrame
+from energyplus_launch.interface.dialog_external_viewers import TkViewerDialog
+from energyplus_launch.interface.dialog_weather import TkWeatherDialog
+from energyplus_launch.interface.dialog_workflow_dirs import TkWorkflowsDialog
+from energyplus_launch.interface.dialog_output import TkOutputDialog
+from energyplus_launch.workflows.workflow_thread import WorkflowThread
+from energyplus_launch.utilities.cache import CacheFile
+from energyplus_launch.workflows.base import EPLaunchWorkflowResponse1
+from energyplus_launch.workflows.manager import WorkflowManager
+from energyplus_launch.workflows.workflow import Workflow
 
 
 class EPLaunchWindow(Tk):

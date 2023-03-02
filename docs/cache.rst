@@ -97,7 +97,7 @@ Cache Module Auto-Documentation
 
 This is the auto-generated documentation of the Cache module that may provide a deeper understanding of the topics described above.
 
-.. automodule:: eplaunch.utilities.cache
+.. automodule:: energyplus_launch.utilities.cache
     :members:
     :undoc-members:
     :show-inheritance:

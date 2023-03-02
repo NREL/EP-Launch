@@ -1,4 +1,4 @@
-from eplaunch.interface.frame_main import EPLaunchWindow
+from energyplus_launch.interface.frame_main import EPLaunchWindow
 
 
 def main_gui():

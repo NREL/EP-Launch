@@ -6,8 +6,8 @@ import threading
 import time
 import unittest
 
-from eplaunch.utilities.cache import CacheFile as CF, cache_files_currently_updating_or_writing
-from eplaunch.utilities.exceptions import EPLaunchFileException
+from energyplus_launch.utilities.cache import CacheFile as CF, cache_files_currently_updating_or_writing
+from energyplus_launch.utilities.exceptions import EPLaunchFileException
 
 
 def create_workflow_file_in_dir(cache_file_path, create_root=True):

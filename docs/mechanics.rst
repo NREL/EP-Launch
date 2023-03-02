@@ -7,7 +7,7 @@ This document explains several parts of the operation and mechanics of the main 
 Frame Ownership and Management
 ------------------------------
 
-The app is generally launched using the ``eplaunch/runner.py`` script.  The script only does two core operations:
+The app is generally launched using the ``energyplus_launch/runner.py`` script.  The script only does two core operations:
 
 - Instantiation of the application, an instance of the ``EPLaunchApplication`` class
 - Execution of the main program loop, using the ``MainLoop`` function
