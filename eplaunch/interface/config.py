@@ -30,7 +30,7 @@ class ConfigManager:
 
     def load(self):
         # load the config from the file on disk
-        config_file_path = Path.home() / '.EP-Launch'
+        config_file_path = Path.home() / '.EP-Launch.json'
         if not config_file_path.exists():
             pass  # just use the default values
         else:
