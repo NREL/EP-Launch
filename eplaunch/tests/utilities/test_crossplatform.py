@@ -1,6 +1,6 @@
 import unittest
 
-from energyplus_launch.utilities.crossplatform import Platform
+from eplaunch.utilities.crossplatform import Platform
 
 
 class TestCrossPlatform(unittest.TestCase):

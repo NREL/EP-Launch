@@ -1,8 +1,8 @@
 from pathlib import Path
 from unittest import TestCase
 
-from energyplus_launch.workflows.workflow import Workflow
-from energyplus_launch.workflows.workflow_tester import main as tester
+from eplaunch.workflows.workflow import Workflow
+from eplaunch.workflows.workflow_tester import main as tester
 
 
 class TestWorkflow(TestCase):

@@ -6,12 +6,14 @@ from typing import Any, Dict, List, Optional
 
 
 class ConfigManager:
+    config_file_name = '.EP-Launch.json'
+
     def __init__(self):
         # specify configuration settings here
         self.keep_dialog_open: bool = True
         self.cur_workflow_name: str = ''
         self.cur_workflow_context: str = ''
-        self.cur_directory: str = ''
+        self.cur_directory: str = str(Path.home())  # default to the home directory
         # self.cur_filename: str = ''
         self.welcome_shown: bool = False
         self.latest_welcome_shown: str = ''
@@ -30,7 +32,7 @@ class ConfigManager:
 
     def load(self):
         # load the config from the file on disk
-        config_file_path = Path.home() / '.EP-Launch.json'
+        config_file_path = Path.home() / ConfigManager.config_file_name
         if not config_file_path.exists():
             pass  # just use the default values
         else:
@@ -135,5 +137,5 @@ class ConfigManager:
             'FavoriteGroup': self.groups_favorite,
             'ViewerOverrides': {k: str(v) for k, v in self.viewer_overrides.items()},
         }
-        config_file_path = Path.home() / '.EP-Launch'
+        config_file_path = Path.home() / ConfigManager.config_file_name
         config_file_path.write_text(dumps(output_dict, indent=2))

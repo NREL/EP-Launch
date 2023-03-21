@@ -40,7 +40,7 @@ Now that we know what methods need to be written, let's just write out a workflo
 For this example, a workflow named "dummy" will be written that operates on ".txt" files, and returns data in the "foo" column.
 Here's the entire code for the workflow, followed by commentary::
 
-    from energyplus_launch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1
+    from eplaunch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1
     class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
         def name(self):
             return 'foo'
@@ -133,7 +133,7 @@ This output was generated using the packaged tool.
 If running from the Python script, you would need to execute using Python, and ensure that the PYTHONPATH includes the folder where EPLaunch can be accessed.
 The command line, if run from the root of the repository would bee::
 
-    PYTHONPATH="." python3 energyplus_launch/workflows/workflow_tester.py /tmp/example_workflow.py
+    PYTHONPATH="." python3 eplaunch/workflows/workflow_tester.py /tmp/example_workflow.py
 
 The tester checks some basic file details, then loops over all classes encountered in the file and validates them.
 Note that classes found in the module include classes that are imported, so even though we only defined one workflow class, it checks four.

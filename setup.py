@@ -1,7 +1,7 @@
 from pathlib import Path
 from setuptools import setup
 
-from energyplus_launch import NAME, VERSION
+from eplaunch import NAME, VERSION
 
 
 readme_file = Path(__file__).parent.resolve() / 'README.md'
@@ -14,8 +14,7 @@ setup(
     url='https://github.com/NREL/EP-Launch',
     license='ModifiedBSD',
     packages=[
-        'energyplus_launch', 'energyplus_launch.interface', 'energyplus_launch.utilities',
-        'energyplus_launch.workflows', 'energyplus_launch.workflows.default'
+        'eplaunch', 'eplaunch.interface', 'eplaunch.utilities', 'eplaunch.workflows', 'eplaunch.workflows.default',
     ],
     package_data={"energyplus_launch.interface": ["resources/*.png", "resources/*.ico"]},
     include_package_data=True,
@@ -24,6 +23,6 @@ setup(
     author="Jason Glazer and Edwin Lee for the United States Department of Energy",
     install_requires=[],
     entry_points={
-        'console_scripts': ['energyplus_launch=energyplus_launch.tk_runner:main_gui']
+        'console_scripts': ['eplaunch=energyplus_launch.tk_runner:main_gui']
     }
 )

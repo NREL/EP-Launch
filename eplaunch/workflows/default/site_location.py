@@ -1,7 +1,7 @@
 import os
 
-from energyplus_launch import NAME, VERSION
-from energyplus_launch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1
+from eplaunch import NAME, VERSION
+from eplaunch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1
 
 
 class ColumnNames:
@@ -29,7 +29,7 @@ class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
         return [ColumnNames.Location]
 
     def main(self, run_directory, file_name, args):  # pragma: no cover; unit tests can't execute this
-        self.callback(f"In {__class__}, about to process file: {file_name}")
+        self.callback(f"In {type(self).__name__}, about to process file: {file_name}")
         file_path = os.path.join(run_directory, file_name)
         content = open(file_path).read()
         new_lines = []
@@ -55,7 +55,7 @@ class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
                 message='Could not parse location object!',
                 column_data={ColumnNames.Location: '*unknown*'}
             )
-        self.callback(f"Completed {__class__}")
+        self.callback(f"Completed {type(self).__name__}")
         return EPLaunchWorkflowResponse1(
             success=True,
             message='Parsed Location object successfully',

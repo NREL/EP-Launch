@@ -1,8 +1,8 @@
 import os
 import unittest
 
-from energyplus_launch.utilities.crossplatform import Platform
-from energyplus_launch.utilities.version import Version
+from eplaunch.utilities.crossplatform import Platform
+from eplaunch.utilities.version import Version
 
 
 class TestVersion(unittest.TestCase):
@@ -75,7 +75,7 @@ class TestVersion(unittest.TestCase):
         is_version_found, version_string, version_number = self.v.check_energyplus_version(file_path)
         self.assertFalse(is_version_found)
         self.assertEqual('', version_string)
-        self.assertEqual('', version_number)
+        self.assertEqual(0, version_number)
 
     def test_numeric_version_from_dash_string(self):
         dash_string = 'V0-2'

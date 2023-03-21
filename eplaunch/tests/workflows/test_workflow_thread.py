@@ -2,8 +2,8 @@ from os.path import join
 from tempfile import mkdtemp
 from unittest import TestCase
 
-from energyplus_launch.workflows.workflow_thread import WorkflowThread
-from energyplus_launch.workflows.base import EPLaunchWorkflowResponse1
+from eplaunch.workflows.workflow_thread import WorkflowThread
+from eplaunch.workflows.base import EPLaunchWorkflowResponse1
 
 
 class MockWorkflow:

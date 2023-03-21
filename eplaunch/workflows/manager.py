@@ -4,9 +4,9 @@ from typing import Dict, List, Optional, Set
 from importlib import util as import_util
 from inspect import getmembers, isclass
 
-from energyplus_launch.utilities.crossplatform import Platform
-from energyplus_launch.workflows.workflow import Workflow
-from energyplus_launch.workflows.workflow_thread import WorkflowThread
+from eplaunch.utilities.crossplatform import Platform
+from eplaunch.workflows.workflow import Workflow
+from eplaunch.workflows.workflow_thread import WorkflowThread
 
 
 class WorkflowManager:

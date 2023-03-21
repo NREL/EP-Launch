@@ -22,9 +22,9 @@ In real operation within EP-Launch, there are complications that make the operat
 - EP-Launch allows multiple workflows to be running, even within the same folder, and on the same file.
 - It is completely uncertain as to when workflows will complete, two workflows could complete in the same directory at essentially the same time.
 
-The full documentation of the CacheFile class is shown below: :ref:`Cache Module Auto-Documentation`.
+The full documentation of the CacheFile class is shown below: :ref:`CacheFile Class`.
 The GUI creates instances of this class to read or write cache data to disk.
-This list covers the important parts of the caching operation in EP-Launch:
+These are the important parts of the caching operation in EP-Launch:
 
 - When a new folder is selected, a CacheFile instance is created to read data from disk, then released.
 - When a workflow is run, a CacheFile in the current directory is opened and workflow parameters are written, including workflow name, weather file name, and other data.
@@ -92,12 +92,12 @@ Future Work
 Timestamps need to be added to the run data to easily check for stale results when input files are changed.
 
 
-Cache Module Auto-Documentation
--------------------------------
+CacheFile Class
+---------------
 
 This is the auto-generated documentation of the Cache module that may provide a deeper understanding of the topics described above.
 
-.. automodule:: energyplus_launch.utilities.cache
+.. automodule:: eplaunch.utilities.cache
     :members:
     :undoc-members:
     :show-inheritance:

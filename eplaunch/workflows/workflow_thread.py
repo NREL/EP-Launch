@@ -1,6 +1,6 @@
 import threading
 
-from energyplus_launch.workflows.base import EPLaunchWorkflowResponse1
+from eplaunch.workflows.base import EPLaunchWorkflowResponse1
 
 
 class WorkflowThread(threading.Thread):
