@@ -5,3 +5,4 @@ source = eplaunch
 omit =
     */eplaunch/interface/*
     */eplaunch/tk_runner.py
+    */eplaunch/__main__.py
