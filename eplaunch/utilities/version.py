@@ -4,6 +4,7 @@ from typing import Tuple
 
 # TODO: this built in eplaunch/utilities/version module should be removed, workflows should manage this themselves
 
+
 class Version:
 
     @staticmethod
@@ -37,7 +38,7 @@ class Version:
                         fields = hopeful_object.split(',')
                         return True, fields[1], Version.numeric_version_from_string(fields[1])
                     cur_line = f.readline()  # get the next line
-        except:
+        except:  # noqa: E722
             return False, '', 0
 
     @staticmethod
@@ -73,5 +74,5 @@ class Version:
                 data = json.load(readfile)
             current_version = data['Version']['Version 1']['version_identifier']
             return True, current_version, Version.numeric_version_from_string(current_version)
-        except:  # could be a file-not-found, a permission issue, a key error, a JSON exception.....
+        except:  # noqa: E722  # could be a file-not-found, a permission issue, a key error, a JSON exception.....
             return False, '', 0

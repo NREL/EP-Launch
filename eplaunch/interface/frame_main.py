@@ -15,7 +15,7 @@ from typing import Dict, List, Optional, Tuple
 from uuid import uuid4
 from webbrowser import open as open_web
 
-from eplaunch import NAME, VERSION, DOCS_URL
+from eplaunch import VERSION, DOCS_URL
 from eplaunch.utilities.exceptions import EPLaunchFileException
 from eplaunch.interface.config import ConfigManager
 from eplaunch.interface.widget_dir_list import DirListScrollableFrame
