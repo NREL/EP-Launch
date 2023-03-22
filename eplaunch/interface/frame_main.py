@@ -86,6 +86,8 @@ class EPLaunchWindow(Tk):
         self._repopulate_workflow_context_menu()
         self._repopulate_workflow_instance_menu()
         self._repopulate_recent_weather_list()
+        self._rebuild_recent_folder_menu()
+        self._rebuild_favorite_folder_menu()
         self._init = False
 
         # finally set the initial directory and update the file listing
@@ -147,7 +149,8 @@ class EPLaunchWindow(Tk):
         menubar.add_cascade(label="File", menu=menu_file)
 
         menu_folder = Menu(menubar, tearoff=False)
-        menu_folder.add_command(label="Recent", state=DISABLED)
+        self.menu_folder_recent = Menu(menu_folder, tearoff=False)
+        menu_folder.add_cascade(label="Recent", menu=self.menu_folder_recent)
         menu_folder.add_separator()
         self.menu_folder_favorites = Menu(menu_folder, tearoff=False)
         menu_folder.add_cascade(label="Favorites", menu=self.menu_folder_favorites)
@@ -374,7 +377,6 @@ class EPLaunchWindow(Tk):
         self._rebuild_favorite_folder_menu()
 
     def _rebuild_favorite_folder_menu(self):
-        # clear any menu items
         self.menu_folder_favorites.delete(0, END)
         for index, folder in enumerate(self.configuration.folders_favorite):
             self.menu_folder_favorites.add_command(
@@ -383,6 +385,18 @@ class EPLaunchWindow(Tk):
 
     def _handle_favorite_folder_selection(self, folder_index: int):
         self.configuration.cur_directory = self.configuration.folders_favorite[folder_index]
+        self.dir_tree.dir_list.refresh_listing(self.configuration.cur_directory)
+        self._update_file_list()
+
+    def _rebuild_recent_folder_menu(self):
+        self.menu_folder_recent.delete(0, END)
+        for index, folder in enumerate(self.configuration.folders_recent):
+            self.menu_folder_recent.add_command(
+                label=str(folder), command=lambda i=index: self._handle_recent_folder_selection(i)
+            )
+
+    def _handle_recent_folder_selection(self, folder_index: int):
+        self.configuration.cur_directory = self.configuration.folders_recent[folder_index]
         self.dir_tree.dir_list.refresh_listing(self.configuration.cur_directory)
         self._update_file_list()
 
@@ -417,6 +431,9 @@ class EPLaunchWindow(Tk):
     def _new_dir_selected(self, _: bool, selected_path: Path):
         self.previous_selected_directory = self.configuration.cur_directory
         self.configuration.cur_directory = selected_path
+        if selected_path not in self.configuration.folders_recent:
+            self.configuration.folders_recent.appendleft(selected_path)
+        self._rebuild_recent_folder_menu()
         self.current_cache = CacheFile(self.configuration.cur_directory)
         try:
             self._update_status_bar(f"Selected directory: {self.configuration.cur_directory}")

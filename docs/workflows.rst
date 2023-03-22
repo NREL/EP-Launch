@@ -103,15 +103,12 @@ Workflow Testing
 ----------------
 
 A standalone tool has been developed to allow users to test their workflows.
-This tool is available as a plain Python script in the repository, and a packaged executable for Linux.
-Windows and Mac executables will come soon.
-
 The script accepts one command line argument, the path to the workflow to test.
 Consider the workflow that was created for the example above.
 If we run that through the test script, this is the output::
 
-    ./EpLaunchWorkflowTester /tmp/example_workflow.py
-       OK: File path exists at: /tmp/example_workflow.py
+    $ energyplus_launch_workflow_tester /tmp/workflow.py
+       OK: File path exists at: /tmp/workflow.py
        OK: File ends with .py
        OK: Python import process completed successfully!
      INFO: Encountered class: "BaseEPLaunchWorkflow1", testing now...
@@ -122,13 +119,14 @@ If we run that through the test script, this is the output::
        OK: Basic inheritance checks out OK for class: SiteLocationWorkflow
        OK: Instantiation of derived class works
        OK: Overridden name() function execution works
+       OK: Overridden description() function execution works
        OK: Overridden get_file_types() function execution works
        OK: Overridden get_output_suffixes() function execution works
        OK: Overridden get_interface_columns() function execution works
        OK: Overridden context() function execution works
-       OK: Found 1 successful workflow imports
+       OK: Found 1 successful workflow imports:
+            SiteLocationWorkflow
 
-This output was generated using the packaged tool.
 
 If running from the Python script, you would need to execute using Python, and ensure that the PYTHONPATH includes the folder where EPLaunch can be accessed.
 The command line, if run from the root of the repository would bee::
