@@ -134,7 +134,7 @@ class WorkflowTesting(object):
             return 1
 
 
-def cli():
+def cli():  # pragma: no cover
     if len(sys.argv) != 2:
         print("Bad call to workflow_tester.cli, give one command line argument, the full path to a workflow file")
         return 2
