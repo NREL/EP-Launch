@@ -1,6 +1,6 @@
 from platform import system
 from tkinter import Tk, Toplevel, Label, Listbox, SINGLE, Variable, Entry, DISABLED, StringVar, Button, Frame, \
-    filedialog, E, EW, W, LEFT
+    filedialog, E, EW, W, LEFT, messagebox
 from typing import Dict, List, Optional
 from pathlib import Path
 
@@ -84,18 +84,18 @@ class TkViewerDialog(Toplevel):
     def _set_as_default(self):
         currently_selected = self._lb_extensions.curselection()
         if len(currently_selected) != 1:
-            # TODO: Error?
+            messagebox.showerror("Selection Error", "Must select one extension")
             return
         current_extension_index = currently_selected[0]
         current_extension = self.suffixes[current_extension_index]
         if current_extension in self.extension_to_viewer:
-            del self.extension_to_viewer[current_extension]
+            self.extension_to_viewer[current_extension] = None
         self._update_for_selected_extension()
 
     def _select_path(self):
         currently_selected = self._lb_extensions.curselection()
         if len(currently_selected) != 1:
-            # TODO: Error?
+            messagebox.showerror("Selection Error", "Must select one extension")
             return
         exe = "*.exe" if system() == "Windows" else "*"
         response = filedialog.askopenfilename(title="Specify Weather File", filetypes=(('Programs', exe),))
@@ -109,7 +109,7 @@ class TkViewerDialog(Toplevel):
     def _update_for_selected_extension(self, _=None):
         currently_selected = self._lb_extensions.curselection()
         if len(currently_selected) != 1:
-            # TODO: Error?
+            messagebox.showerror("Selection Error", "Must select one extension")
             return
         current_extension_index = currently_selected[0]
         current_extension = self.suffixes[current_extension_index]

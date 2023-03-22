@@ -1,3 +1,4 @@
+from pathlib import Path
 import threading
 
 from eplaunch.workflows.base import EPLaunchWorkflowResponse1
@@ -6,8 +7,8 @@ from eplaunch.workflows.base import EPLaunchWorkflowResponse1
 class WorkflowThread(threading.Thread):
     """Worker Thread Class."""
 
-    def __init__(self, identifier, workflow_instance,
-                 run_directory, file_name, main_args, done_callback):
+    def __init__(self, identifier: str, workflow_instance,
+                 run_directory: Path, file_name, main_args, done_callback):
         super().__init__()
         self._want_abort = 0
         self.id = identifier

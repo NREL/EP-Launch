@@ -13,7 +13,7 @@ class ConfigManager:
         self.keep_dialog_open: bool = True
         self.cur_workflow_name: str = ''
         self.cur_workflow_context: str = ''
-        self.cur_directory: str = str(Path.home())  # default to the home directory
+        self.cur_directory: Path = Path.home()  # default to the home directory
         # self.cur_filename: str = ''
         self.welcome_shown: bool = False
         self.latest_welcome_shown: str = ''
@@ -53,6 +53,8 @@ class ConfigManager:
                     self.cur_workflow_name = parse('ActiveWindow', 'SelectedWorkflow', self.cur_workflow_name)
                     self.cur_workflow_context = parse('ActiveWindow', 'CurrentContext', self.cur_workflow_context)
                     self.cur_directory = parse('ActiveWindow', 'CurrentDirectory', self.cur_directory)
+                    if isinstance(self.cur_directory, str):
+                        self.cur_directory = Path(self.cur_directory)
                     # self.cur_filename = parse('ActiveWindow', 'CurrentFileName', self.cur_filename)
                     self.welcome_shown = parse('ActiveWindow', 'WelcomeAlreadyShown', self.welcome_shown)
                     self.latest_welcome_shown = parse(
@@ -80,6 +82,8 @@ class ConfigManager:
                     self.cur_workflow_name = config.get('SelectedWorkflow', self.cur_workflow_name)
                     self.cur_workflow_context = config.get('CurrentContext', self.cur_workflow_context)
                     self.cur_directory = config.get('CurrentDirectory', self.cur_directory)
+                    if isinstance(self.cur_directory, str):
+                        self.cur_directory = Path(self.cur_directory)
                     # self.cur_filename = config.get('CurrentFileName', self.cur_filename)
                     self.welcome_shown = config.get('WelcomeAlreadyShown', self.welcome_shown)
                     self.latest_welcome_shown = config.get('LatestWelcomeVersionShown', self.latest_welcome_shown)
@@ -102,16 +106,15 @@ class ConfigManager:
                     self.weathers_favorite = [Path(p) for p in config.get('FavoriteWeather', self.weathers_favorite)]
                     self.groups_recent = config.get('RecentGroup', self.groups_recent)
                     self.groups_favorite = config.get('FavoriteGroup', self.groups_favorite)
-                    self.viewer_overrides = {
-                        k: Path(v) for k, v in config.get('ViewerOverrides', self.viewer_overrides)
-                    }
+                    for k, v in config.get('ViewerOverrides', self.viewer_overrides).items():
+                        self.viewer_overrides[k] = Path(v) if v else None
 
                 else:
                     pass  # Bad config saved file format?  Indicates a crash?
                 # fix up the current selected directory to initialize in case it doesn't exist (anymore)
                 if not self.cur_directory:
                     self.cur_directory = Path.home()
-                elif not Path(self.cur_directory).exists():
+                elif not self.cur_directory.exists():
                     self.cur_directory = Path.home()
 
     def save(self):
@@ -120,7 +123,7 @@ class ConfigManager:
             'KeepDialogOpen': self.keep_dialog_open,
             'SelectedWorkflow': self.cur_workflow_name,
             'CurrentContext': self.cur_workflow_context,
-            'CurrentDirectory': self.cur_directory,
+            'CurrentDirectory': str(self.cur_directory),
             # 'CurrentFileName': self.cur_filename,
             'WelcomeAlreadyShown': self.welcome_shown,
             'LatestWelcomeVersionShown': self.latest_welcome_shown,
@@ -135,7 +138,7 @@ class ConfigManager:
             'FavoriteWeather': [str(p) for p in self.weathers_favorite],
             'RecentGroup': self.groups_recent,
             'FavoriteGroup': self.groups_favorite,
-            'ViewerOverrides': {k: str(v) for k, v in self.viewer_overrides.items()},
+            'ViewerOverrides': {k: None if v is None else str(v) for k, v in self.viewer_overrides.items()},
         }
         config_file_path = Path.home() / ConfigManager.config_file_name
         config_file_path.write_text(dumps(output_dict, indent=2))

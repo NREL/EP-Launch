@@ -9,13 +9,14 @@ from queue import Queue
 
 from subprocess import Popen
 from tkinter import Tk, PhotoImage, StringVar, Menu, DISABLED, OptionMenu, Frame, Label, Button, NSEW, \
-    SUNKEN, S, LEFT, BOTH, messagebox, END, Toplevel, TOP, BooleanVar, ACTIVE, LabelFrame, RIGHT, EW, PanedWindow, NS
+    SUNKEN, S, LEFT, BOTH, messagebox, END, BooleanVar, ACTIVE, LabelFrame, RIGHT, EW, PanedWindow, NS
 from tkinter.ttk import Combobox
 from typing import Dict, List, Optional, Tuple
 from uuid import uuid4
 from webbrowser import open as open_web
 
 from eplaunch import VERSION, DOCS_URL
+from eplaunch.interface.dialog_generic import TkGenericDialog
 from eplaunch.utilities.exceptions import EPLaunchFileException
 from eplaunch.interface.config import ConfigManager
 from eplaunch.interface.widget_dir_list import DirListScrollableFrame
@@ -44,6 +45,7 @@ class EPLaunchWindow(Tk):
         self.iconphoto(True, image)
         self.pad = {'padx': 3, 'pady': 3}
         self.dd_only_string = '<No_Weather_File>'  # Can we change to just using blank?  It's fine for now.
+        self.generic_dialogs = TkGenericDialog(self.pad)
 
         # initialize variables which will track output dialogs
         self.dialog_counter: int = 0
@@ -54,7 +56,6 @@ class EPLaunchWindow(Tk):
         self.configuration.load()
 
         # initialize some dir/file selection variables
-        self.selected_directory: Optional[Path] = None
         self.previous_selected_directory: Optional[Path] = None
         self.current_file_selection: List[str] = []
         self.current_cache: Optional[CacheFile] = None
@@ -67,15 +68,9 @@ class EPLaunchWindow(Tk):
         # now that we have a list of workflows, instantiate any/all of them
         self.workflow_manager.instantiate_all_workflows()
         if len(self.workflow_manager.warnings) > 0:
-            t = Toplevel(self)
-            t.title('Workflow Processing Errors')
-            Label(t, justify=LEFT, text='\n'.join(self.workflow_manager.warnings)).pack(
-                side=TOP, expand=True, fill=BOTH, **self.pad
+            self.generic_dialogs.display(
+                self, 'Workflow Processing Errors', '\n'.join(self.workflow_manager.warnings)
             )
-            Button(t, text='OK', command=lambda: t.destroy()).pack(side=TOP, **self.pad)
-            t.grab_set()
-            t.transient(self)
-            self.wait_window(t)
 
         # set up the GUI update queue
         self._gui_queue = Queue()
@@ -87,13 +82,14 @@ class EPLaunchWindow(Tk):
 
         # start filling in the UI with contents, optionally from the previous config
         self.available_workflows: List[Workflow] = []  # stores workflows under the current context
+        self._init = True
         self._repopulate_workflow_context_menu()
         self._repopulate_workflow_instance_menu()
         self._repopulate_recent_weather_list()
+        self._init = False
 
         # finally set the initial directory and update the file listing
-        self.selected_directory = Path(self.configuration.cur_directory)
-        self.dir_tree.dir_list.refresh_listing(self.selected_directory)
+        self.dir_tree.dir_list.refresh_listing(self.configuration.cur_directory)
         self._update_file_list()
 
         # set the minimum size and redraw the app
@@ -153,11 +149,12 @@ class EPLaunchWindow(Tk):
         menu_folder = Menu(menubar, tearoff=False)
         menu_folder.add_command(label="Recent", state=DISABLED)
         menu_folder.add_separator()
-        menu_folder.add_command(label="Favorites", state=DISABLED)
+        self.menu_folder_favorites = Menu(menu_folder, tearoff=False)
+        menu_folder.add_cascade(label="Favorites", menu=self.menu_folder_favorites)
         menu_folder.add_command(
             label="Add Current Folder to Favorites", command=self.add_folder_to_favorites
         )
-        menu_folder.add_command(  # TODO: Only enable if current folder is in favorites
+        menu_folder.add_command(
             label="Remove Current Folder from Favorites", command=self.remove_folder_from_favorites
         )
         menubar.add_cascade(label="Folder", menu=menu_folder)
@@ -281,7 +278,7 @@ class EPLaunchWindow(Tk):
     # region main window run/close/update functions
 
     def run(self):
-        """Main entry point to execute the app main loop and register a close handler"""
+        """Main entry point to register a close handler and execute the app main loop"""
         self.protocol('WM_DELETE_WINDOW', self.window_close)
         self.mainloop()
 
@@ -312,8 +309,8 @@ class EPLaunchWindow(Tk):
 
     def _update_status_bar(self, message: str) -> None:
         """Updates all the status bar entries for current status and status by setting tk variables"""
-        if self.selected_directory:
-            self._tk_var_status_dir.set(str(self.selected_directory))
+        if self.configuration.cur_directory:
+            self._tk_var_status_dir.set(str(self.configuration.cur_directory))
         else:
             self._tk_var_status_dir.set('<No Directory>')
         if self.workflow_manager.current_workflow:
@@ -363,21 +360,49 @@ class EPLaunchWindow(Tk):
         self.file_list.tree.set_new_columns(column_list)
 
     def add_folder_to_favorites(self):
-        pass
+        if self.configuration.cur_directory in self.configuration.folders_favorite:
+            messagebox.showwarning("Favorite Selection", "Folder already exists in favorites, skipping")
+            return
+        self.configuration.folders_favorite.append(self.configuration.cur_directory)
+        self._rebuild_favorite_folder_menu()
 
     def remove_folder_from_favorites(self):
-        pass
+        if self.configuration.cur_directory not in self.configuration.folders_favorite:
+            messagebox.showwarning("Favorite Selection", "Folder is not in favorites, skipping")
+            return
+        self.configuration.folders_favorite.remove(self.configuration.cur_directory)
+        self._rebuild_favorite_folder_menu()
 
-    def _get_files_in_current_directory(self) -> List[Tuple[str, str, str, str]]:
+    def _rebuild_favorite_folder_menu(self):
+        # clear any menu items
+        self.menu_folder_favorites.delete(0, END)
+        for index, folder in enumerate(self.configuration.folders_favorite):
+            self.menu_folder_favorites.add_command(
+                label=str(folder), command=lambda i=index: self._handle_favorite_folder_selection(i)
+            )
+
+    def _handle_favorite_folder_selection(self, folder_index: int):
+        self.configuration.cur_directory = self.configuration.folders_favorite[folder_index]
+        self.dir_tree.dir_list.refresh_listing(self.configuration.cur_directory)
+        self._update_file_list()
+
+    def _get_files_in_current_directory(self, workflow_file_patterns: List[str]) -> List[Tuple[str, str, str, str]]:
         """
         Returns a list of file information for each file in the currently selected directory
+        :param workflow_file_patterns: List of file patterns that this workflow supports, for filtering
         :return: A list of tuples which each contain (file name, file type, file size, modified time) for each file
         """
         file_list = []
         # loop over all non-hidden files to retrieve data for each
-        for iter_path in self.selected_directory.glob('*'):
+        for iter_path in self.configuration.cur_directory.glob('*'):
             if iter_path.is_file() and not iter_path.name.startswith('.'):
                 base_name = iter_path.name
+                # check to see if this file type matches any of the workflow patterns
+                for file_type in workflow_file_patterns:
+                    if fnmatch(base_name, file_type):
+                        break  # breaks out of for loop, allowing processing to continue 3 lines down
+                else:  # if we never broke, we will hit this else block
+                    continue  # in which case, we want to skip this file, so continue the outer for loop
                 file_size = iter_path.stat().st_size
                 file_modified_time = iter_path.lstat().st_mtime
                 modified_time_string = str(datetime.fromtimestamp(file_modified_time).replace(microsecond=0))
@@ -390,12 +415,11 @@ class EPLaunchWindow(Tk):
         return file_list
 
     def _new_dir_selected(self, _: bool, selected_path: Path):
-        self.previous_selected_directory = self.selected_directory
-        self.selected_directory = selected_path
-        self.configuration.cur_directory = str(selected_path)
-        self.current_cache = CacheFile(self.selected_directory)
+        self.previous_selected_directory = self.configuration.cur_directory
+        self.configuration.cur_directory = selected_path
+        self.current_cache = CacheFile(self.configuration.cur_directory)
         try:
-            self._update_status_bar(f"Selected directory: {self.selected_directory}")
+            self._update_status_bar(f"Selected directory: {self.configuration.cur_directory}")
             self._update_file_list()
         except Exception as e:  # noqa -- status_bar and things may not exist during initialization, just ignore
             print(str(e))  # log it to the console for fun
@@ -406,16 +430,16 @@ class EPLaunchWindow(Tk):
     def _update_file_list(self):
         """Update the file listing widget by querying the directory and cache contents, try to reselect current files"""
         # If selected directory hasn't been set up yet then just carry on, this is only happening during app init
-        if not self.selected_directory:
+        if self._init or not self.configuration.cur_directory:
             return
 
         # If we aren't in a directory, just warn and abort, should not really be possible to get him after init
-        if not self.selected_directory.exists() or not self.selected_directory.is_dir():
-            self._update_status_bar(f"Bad directory selection: {self.selected_directory}")
+        if not self.configuration.cur_directory.exists() or not self.configuration.cur_directory.is_dir():
+            self._update_status_bar(f"Bad directory selection: {self.configuration.cur_directory}")
             return
 
         # If we are staying in the same directory, try to select the files that were previously selected
-        if self.previous_selected_directory == self.selected_directory:
+        if self.previous_selected_directory == self.configuration.cur_directory:
             previous_selected_files = self.current_file_selection
         else:
             previous_selected_files = []
@@ -434,17 +458,10 @@ class EPLaunchWindow(Tk):
         # then get the entire list of files in the current directory to build up the listview items
         # if they happen to match the filename in the workflow cache, then add that info to the row structure
         control_list_rows = []
-        files_in_dir = self._get_files_in_current_directory()
+        files_in_dir = self._get_files_in_current_directory(workflow_file_patterns)
         for file_structure in files_in_dir:
             # always add the columns to the raw list for all files
             file_name = file_structure[0]
-            # but only include this row if the file matches the workflow pattern
-            for file_type in workflow_file_patterns:
-                if fnmatch(file_name, file_type):
-                    break
-            else:
-                continue
-
             # listview row always includes the filename itself, so start the array with that
             row = [file_name]
             # if it in the cache then the listview row can include additional data
@@ -481,9 +498,17 @@ class EPLaunchWindow(Tk):
         self.file_list.tree.try_to_reselect(previous_selected_files)
 
     def _is_file_stale(self, input_file_name: str) -> Optional[bool]:
+        """
+        Returns a tri-state value trying to characterize whether the current file is "stale."
+        It tries to determine this based on the output suffixes of the current workflow.
+        If the current workflow does not include any output suffixes, "stale" cannot be determined.
+        If '.err' is in the output suffixes, this is the only suffix checked.
+
+        :returns: None if stale cannot be determined, True if it is stale, and False if not.
+        """
         if len(self.workflow_manager.current_workflow.output_suffixes) == 0:
             return None  # can't support stale without output suffixes
-        full_file_path = self.selected_directory / input_file_name
+        full_file_path = self.configuration.cur_directory / input_file_name
         if full_file_path.exists():
             input_file_date = full_file_path.lstat().st_mtime
             suffixes = self.workflow_manager.current_workflow.output_suffixes
@@ -491,7 +516,7 @@ class EPLaunchWindow(Tk):
                 suffixes = ['.err']
             file_name_no_ext = full_file_path.with_suffix('').name
             for suffix in suffixes:
-                tentative_output_file_path = self.selected_directory / (file_name_no_ext + suffix)
+                tentative_output_file_path = self.configuration.cur_directory / (file_name_no_ext + suffix)
                 if tentative_output_file_path.exists():
                     output_file_date = tentative_output_file_path.lstat().st_mtime
                     if output_file_date < input_file_date:
@@ -536,7 +561,7 @@ class EPLaunchWindow(Tk):
 
     def _set_weather_from_recent(self) -> None:
         current_index = self.option_weather_recent.current()
-        selected_recent_weather_string = self.configuration.weathers_recent[current_index]
+        selected_recent_weather_string = str(self.configuration.weathers_recent[current_index])
         for selected_file_name in self.current_file_selection:
             self.current_cache.add_config(
                 self.workflow_manager.current_workflow.name,
@@ -556,7 +581,7 @@ class EPLaunchWindow(Tk):
             weather_file_to_use = self.dd_only_string
         else:
             weather_file_to_use = dialog_weather.selected_weather_file
-            if not any([str(p) == str(weather_file_to_use) for p in self.configuration.weathers_recent]):
+            if weather_file_to_use not in self.configuration.weathers_recent:
                 self.configuration.weathers_recent.appendleft(weather_file_to_use)
                 self._repopulate_recent_weather_list(weather_file_to_use)
         for selected_file_name in self.current_file_selection:
@@ -633,12 +658,11 @@ class EPLaunchWindow(Tk):
                 new_workflow = w
                 break
         if new_workflow is None:
-            pass  # TODO: Error
+            messagebox.showerror("There was an unexpected error updating the workflow list, suggest restarting app.")
         # assign the current workflow instance in the workflow manager
         self.workflow_manager.current_workflow = new_workflow
         # update the weather buttons accordingly depending on if the workflow uses weather inputs
-        weather_enabled = ACTIVE if new_workflow.uses_weather else DISABLED
-        self.set_weather_widget_state(weather_enabled)
+        self.set_weather_widget_state(ACTIVE if new_workflow.uses_weather else DISABLED)
         # clear the output menu entirely, and set status conditionally
         self._repopulate_output_suffix_options()
         # now that the workflow has been set, repopulate the file list columns and the file list itself
@@ -664,6 +688,9 @@ class EPLaunchWindow(Tk):
         self.option_workflow_outputs.selection_clear()
 
     def _open_workflow_dir_dialog(self):
+        if len(self.workflow_manager.threads) > 0:
+            messagebox.showerror("Workflow Selection Error", 'Cannot change workflows while threads are running')
+            return  # will leave the window open
         # refresh the list of workflows auto-found on the machine
         self.workflow_manager.auto_find_workflow_directories()
         # pass the newly found folders in, as well as the current active list of workflow directories
@@ -674,16 +701,22 @@ class EPLaunchWindow(Tk):
         if wf_dialog.exit_code == TkWorkflowsDialog.CLOSE_SIGNAL_CANCEL:
             return
         self.workflow_manager.workflow_directories = wf_dialog.list_of_directories
-        self.workflow_manager.instantiate_all_workflows()  # TODO: check self.manager_workflows.warnings
+        self.workflow_manager.instantiate_all_workflows()
+        if len(self.workflow_manager.warnings) > 0:
+            self.generic_dialogs.display(
+                self, 'Workflow Processing Errors', '\n'.join(self.workflow_manager.warnings)
+            )
         self.configuration.workflow_directories = self.workflow_manager.workflow_directories
         self._repopulate_workflow_context_menu()
         self._repopulate_workflow_instance_menu()
 
     def _run_workflow(self) -> None:
-        if self.selected_directory and self.current_file_selection and self.workflow_manager.current_workflow:
+        if self.configuration.cur_directory and self.current_file_selection and self.workflow_manager.current_workflow:
             pass
         else:
-            # self.show_error_message('ERROR: Make sure you select a workflow, directory and a file')
+            messagebox.showerror(
+                title='Selection Error', message='ERROR: Make sure you select a workflow, directory and a file'
+            )
             return
 
         files_in_current_workflow = self.current_cache.get_files_for_workflow(
@@ -709,8 +742,8 @@ class EPLaunchWindow(Tk):
                         weather_file_to_use = self.dd_only_string
                     else:
                         weather_file_to_use = str(w.selected_weather_file)
-                        if not any([str(p) == weather_file_to_use for p in self.configuration.weathers_recent]):
-                            self.configuration.weathers_recent.appendleft(Path(weather_file_to_use))
+                        if w.selected_weather_file not in self.configuration.weathers_recent:
+                            self.configuration.weathers_recent.appendleft(w.selected_weather_file)
             for selected_file_name in self.current_file_selection:
                 self.current_cache.add_config(
                     self.workflow_manager.current_workflow.name,
@@ -719,7 +752,7 @@ class EPLaunchWindow(Tk):
                 )
             self._update_file_list()
 
-        sel_dir = self.selected_directory
+        sel_dir = self.configuration.cur_directory
         cur_wf = self.workflow_manager.current_workflow.name
         for selected_file_name in self.current_file_selection:
             for thread_id, t in self.workflow_manager.threads.items():
@@ -738,7 +771,7 @@ class EPLaunchWindow(Tk):
             if weather_file_to_use != self.dd_only_string:
                 this_weather = weather_file_to_use
             self.workflow_manager.threads[new_uuid] = WorkflowThread(
-                new_uuid, new_instance, self.selected_directory, selected_file_name,
+                new_uuid, new_instance, self.configuration.cur_directory, selected_file_name,
                 {
                     'weather': this_weather,
                     'workflow location': self.workflow_manager.current_workflow.workflow_directory
@@ -788,20 +821,18 @@ class EPLaunchWindow(Tk):
 
     def _handler_workflow_done(self, workflow_response: EPLaunchWorkflowResponse1) -> None:
         try:
-            successful = workflow_response.success
-            if successful:
+            if workflow_response.success:
                 status_message = 'Successfully completed a workflow: ' + workflow_response.message
                 try:
                     data_from_workflow = workflow_response.column_data
                     workflow_working_directory = self.workflow_manager.threads[workflow_response.id].run_directory
                     workflow_directory_cache = CacheFile(workflow_working_directory)
-                    # TODO: What if workflows change while a workflow is running...we shouldn't allow that
                     workflow_directory_cache.add_result(
                         self.workflow_manager.threads[workflow_response.id].workflow_instance.name(),
                         self.workflow_manager.threads[workflow_response.id].file_name,
                         data_from_workflow
                     )
-                    if self.selected_directory == workflow_working_directory:
+                    if self.configuration.cur_directory == workflow_working_directory:
                         # only update file lists if we are still in that directory
                         self._update_file_list()
                 except EPLaunchFileException:
@@ -848,26 +879,16 @@ class EPLaunchWindow(Tk):
         }
 
     def _open_welcome(self):
-        welcome_already_shown = self.configuration.welcome_shown
-        show = False
-        if not welcome_already_shown:  # it's never been shown
-            show = True
-        elif VERSION != self.configuration.latest_welcome_shown:  # different (newer?) version
-            show = True
-        if not show:
+        if self.configuration.welcome_shown and VERSION == self.configuration.latest_welcome_shown:
             return
-        t = Toplevel(self)
-        t.title('Welcome to EP-Launch ' + VERSION)
-        Label(t, justify=LEFT, text="""
+        message = """
 EP-Launch has been around for many years as a part of the EnergyPlus distribution.
 Starting with the 3.0 release, it has changed drastically, completely redesigned and rewritten.
 For full documentation or a quick start guide, click the "Open Docs" button below.
-This dialog will only be shown once, but documentation is available in the Help menu.
-                """).pack(side=TOP, expand=True, fill=BOTH, **self.pad)
-        Button(t, text='Open Documentation', command=self._open_documentation).pack(side=TOP, **self.pad)
-        t.grab_set()
-        t.transient(self)
-        self.wait_window(t)
+This dialog will only be shown once, but documentation is available in the Help menu."""
+        self.generic_dialogs.display(
+            self, 'Welcome to EP-Launch ' + VERSION, message, 'Open Documentation', self._open_documentation
+        )
         self.configuration.welcome_shown = True
         self.configuration.latest_welcome_shown = VERSION
 
@@ -875,8 +896,14 @@ This dialog will only be shown once, but documentation is available in the Help 
         text = """
 EP-Launch
 
+EP-Launch is a graphical workflow manager for EnergyPlus.
+Originally written in VB6 and released with essentially every version of EnergyPlus,
+it is now a cross platform Python tool.
+Users are encouraged to leverage EP-Launch and write their own workflow scripts
+to enable new capabilities.
+
 Version %s
-Copyright (c) 2018, Alliance for Sustainable Energy, LLC  and GARD Analytics, Inc
+Copyright (c) 2023, Alliance for Sustainable Energy, LLC  and GARD Analytics, Inc
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -906,33 +933,34 @@ OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         """ % VERSION
-        t = Toplevel(self)
-        t.title("About EP-Launch")
-        Label(t, text=text, justify=LEFT).pack(side=TOP, fill=BOTH, expand=True, **self.pad)
-        t.grab_set()
-        t.transient(self)
-        self.wait_window(t)
+        self.generic_dialogs.display(self, "About EP-Launch", text)
 
     def _open_output_file(self):
         if len(self.current_file_selection) > 2:
-            pass  # TODO: Error?  yes/no?  That could be a lot of files
+            message = """More than 2 files were selected when choosing to open workflow outputs.
+This could generate many output windows and is usually not intentional.  Select up to 2 input files."""
+            messagebox.showerror("File Selection Issue", message)
+            return
         for f in self.current_file_selection:
-            original_path = Path(self.selected_directory) / f
+            original_path = self.configuration.cur_directory / f
             new_path_str = str(original_path.with_suffix('')) + self._tk_var_output_suffix.get()
             new_path = Path(new_path_str)
             if not new_path.exists():
-                pass  # TODO: Error? Let it go?
-            suffix_found = self._tk_var_output_suffix.get() in self.configuration.viewer_overrides
-            viewer = self.configuration.viewer_overrides[self._tk_var_output_suffix.get()] if suffix_found else None
-            suffix_not_none = viewer is not None
-            if suffix_found and suffix_not_none:
-                binary = str(viewer)
-                Popen([binary, new_path_str])
-            else:
-                self._open_file_or_dir_with_default(new_path_str)
+                message = """At least some of the output files were not found.
+Make sure that the workflow has run on the selected input file(s), and that the runs
+actually generated the requested outputs.  Any found output files are being opened now."""
+                messagebox.showwarning("Missing Output Files", message)
+            if self._tk_var_output_suffix.get() in self.configuration.viewer_overrides:
+                if self.configuration.viewer_overrides[self._tk_var_output_suffix.get()] is not None:
+                    # then the viewer override was found, and not None, so use it
+                    Popen([str(self.configuration.viewer_overrides[self._tk_var_output_suffix.get()]), new_path_str])
+                    return
+            # if we make it this far, we didn't open it with a custom viewer, try to use the default
+            self._open_file_or_dir_with_default(new_path)
 
     @staticmethod
-    def _open_file_or_dir_with_default(full_path: str) -> None:
+    def _open_file_or_dir_with_default(full_path_obj: Path) -> None:
+        full_path = str(full_path_obj)
         if system() == 'Windows':
             from os import startfile
             startfile(full_path)
@@ -943,7 +971,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
     def _open_text_editor(self) -> None:
         for file_name in self.current_file_selection:
-            full_path_str = str(self.selected_directory / file_name)
+            full_path_str = self.configuration.cur_directory / file_name
             if 'txt' in self.configuration.viewer_overrides:
                 text_editor_binary = str(self.configuration.viewer_overrides['txt'])
                 Popen([text_editor_binary, full_path_str])
@@ -951,7 +979,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                 self._open_file_or_dir_with_default(full_path_str)
 
     def _open_file_browser(self) -> None:
-        self._open_file_or_dir_with_default(str(self.selected_directory))
+        self._open_file_or_dir_with_default(self.configuration.cur_directory)
 
     @staticmethod
     def _open_documentation() -> None:
