@@ -38,7 +38,7 @@ class TkOutputDialog(Toplevel):
         self.after(20, self._size_window)
 
     def _size_window(self):
-        current_height = self.winfo_height()
+        current_height = max(self.winfo_height(), 400)
         self.geometry('%dx%d+%d+%d' % (500, current_height, self.x, self.y))
 
     def add_output(self, message: str):
