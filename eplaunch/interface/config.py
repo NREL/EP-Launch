@@ -13,8 +13,8 @@ class ConfigManager:
         self.keep_dialog_open: bool = True
         self.cur_workflow_name: str = ''
         self.cur_workflow_context: str = ''
-        self.cur_directory: Path = Path.home()  # default to the home directory
-        # self.cur_filename: str = ''
+        self.directory: Path = Path.home()  # default to the home directory
+        self.file_selection: List[Path] = []
         self.welcome_shown: bool = False
         self.latest_welcome_shown: str = ''
         self.height: int = -1
@@ -53,9 +53,9 @@ class ConfigManager:
                     self.keep_dialog_open = parse('ActiveWindow', 'KeepDialogOpen', self.keep_dialog_open)
                     self.cur_workflow_name = parse('ActiveWindow', 'SelectedWorkflow', self.cur_workflow_name)
                     self.cur_workflow_context = parse('ActiveWindow', 'CurrentContext', self.cur_workflow_context)
-                    self.cur_directory = parse('ActiveWindow', 'CurrentDirectory', self.cur_directory)
-                    if isinstance(self.cur_directory, str):
-                        self.cur_directory = Path(self.cur_directory)
+                    self.directory = parse('ActiveWindow', 'CurrentDirectory', self.directory)
+                    if isinstance(self.directory, str):
+                        self.directory = Path(self.directory)
                     self.welcome_shown = parse('ActiveWindow', 'WelcomeAlreadyShown', self.welcome_shown)
                     self.latest_welcome_shown = parse(
                         'ActiveWindow', 'LatestWelcomeVersionShown', self.latest_welcome_shown
@@ -81,10 +81,11 @@ class ConfigManager:
                     self.keep_dialog_open = config.get('KeepDialogOpen', self.keep_dialog_open)
                     self.cur_workflow_name = config.get('SelectedWorkflow', self.cur_workflow_name)
                     self.cur_workflow_context = config.get('CurrentContext', self.cur_workflow_context)
-                    self.cur_directory = config.get('CurrentDirectory', self.cur_directory)
-                    if isinstance(self.cur_directory, str):
-                        self.cur_directory = Path(self.cur_directory)
+                    self.directory = config.get('CurrentDirectory', self.directory)
+                    if isinstance(self.directory, str):
+                        self.directory = Path(self.directory)
                     # self.cur_filename = config.get('CurrentFileName', self.cur_filename)
+                    self.file_selection = config.get('CurrentFileSelection', self.file_selection)
                     self.welcome_shown = config.get('WelcomeAlreadyShown', self.welcome_shown)
                     self.latest_welcome_shown = config.get('LatestWelcomeVersionShown', self.latest_welcome_shown)
                     self.height = config.get('height', self.height)
@@ -115,10 +116,10 @@ class ConfigManager:
                 else:
                     pass  # Bad config saved file format?  Indicates a crash?
                 # fix up the current selected directory to initialize in case it doesn't exist (anymore)
-                if not self.cur_directory:
-                    self.cur_directory = Path.home()
-                elif not self.cur_directory.exists():
-                    self.cur_directory = Path.home()
+                if not self.directory:
+                    self.directory = Path.home()
+                elif not self.directory.exists():
+                    self.directory = Path.home()
 
     def save(self):
         # save the config file to disk
@@ -126,8 +127,8 @@ class ConfigManager:
             'KeepDialogOpen': self.keep_dialog_open,
             'SelectedWorkflow': self.cur_workflow_name,
             'CurrentContext': self.cur_workflow_context,
-            'CurrentDirectory': str(self.cur_directory),
-            # 'CurrentFileName': self.cur_filename,
+            'CurrentDirectory': str(self.directory),
+            'CurrentFileSelection': self.file_selection,
             'WelcomeAlreadyShown': self.welcome_shown,
             'LatestWelcomeVersionShown': self.latest_welcome_shown,
             'height': self.height,

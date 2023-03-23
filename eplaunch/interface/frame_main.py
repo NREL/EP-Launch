@@ -52,19 +52,18 @@ class EPLaunchWindow(Tk):
         self.output_dialogs: Dict[str, TkOutputDialog] = {}
 
         # create a config manager and load up the saved, or default, configuration
-        self.configuration = ConfigManager()
-        self.configuration.load()
+        self.conf = ConfigManager()
+        self.conf.load()
 
         # initialize some dir/file selection variables
         self.previous_selected_directory: Optional[Path] = None
-        self.current_file_selection: List[str] = []
         self.current_cache: Optional[CacheFile] = None
 
         # create a workflow manager, it will initialize (EnergyPlus) workflows in predetermined locations
         self.workflow_manager = WorkflowManager()
         # but now, if the saved configuration exists, use that as the list of directories to use moving forward
-        if self.configuration.workflow_directories:
-            self.workflow_manager.workflow_directories = self.configuration.workflow_directories
+        if self.conf.workflow_directories:
+            self.workflow_manager.workflow_directories = self.conf.workflow_directories
         # now that we have a list of workflows, instantiate any/all of them
         self.workflow_manager.instantiate_all_workflows()
         if len(self.workflow_manager.warnings) > 0:
@@ -92,7 +91,7 @@ class EPLaunchWindow(Tk):
         self._init = False
 
         # finally set the initial directory and update the file listing
-        self.dir_tree.dir_list.refresh_listing(self.configuration.cur_directory)
+        self.dir_tree.dir_list.refresh_listing(self.conf.directory)
         self._update_file_list()
 
         # set the minimum size and redraw the app
@@ -135,10 +134,10 @@ class EPLaunchWindow(Tk):
         self.grid_rowconfigure(1, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
-        height = max(self.configuration.height, 500)
-        width = max(self.configuration.width, 1000)
-        x = max(self.configuration.x, 128)
-        y = max(self.configuration.y, 128)
+        height = max(self.conf.height, 500)
+        width = max(self.conf.width, 1000)
+        x = max(self.conf.x, 128)
+        y = max(self.conf.y, 128)
         self.wm_geometry(f"{width}x{height}+{x}+{y}")
 
     def _build_top_menu(self):
@@ -186,7 +185,7 @@ class EPLaunchWindow(Tk):
 
         def _update_keep_dialog_open(*_):
             """Called whenever the checkbox is checked, updates configuration value"""
-            self.configuration.keep_dialog_open = self._tk_var_keep_dialogs_open.get()
+            self.conf.keep_dialog_open = self._tk_var_keep_dialogs_open.get()
 
         self._tk_var_keep_dialogs_open.trace('w', _update_keep_dialog_open)
         menu_settings.add_command(label="Viewers...", command=self._open_viewers_dialog)
@@ -300,17 +299,17 @@ class EPLaunchWindow(Tk):
         for dialog_id in keys:
             self.output_dialogs[dialog_id].close()
         # save the configuration and close
-        self.configuration.x = self.winfo_x()
-        self.configuration.y = self.winfo_y()
-        self.configuration.width = self.winfo_width()
-        self.configuration.height = self.winfo_height()
-        self.configuration.save()
+        self.conf.x = self.winfo_x()
+        self.conf.y = self.winfo_y()
+        self.conf.width = self.winfo_width()
+        self.conf.height = self.winfo_height()
+        self.conf.save()
         self.destroy()
 
     def _update_status_bar(self, message: str) -> None:
         """Updates all the status bar entries for current status and status by setting tk variables"""
-        if self.configuration.cur_directory:
-            self._tk_var_status_dir.set(str(self.configuration.cur_directory))
+        if self.conf.directory:
+            self._tk_var_status_dir.set(str(self.conf.directory))
         else:
             self._tk_var_status_dir.set('<No Directory>')
         if self.workflow_manager.current_workflow:
@@ -337,75 +336,75 @@ class EPLaunchWindow(Tk):
     # region group operations
 
     def _clear_group(self):
-        self.configuration.group_locations.clear()
+        self.conf.group_locations.clear()
         self._rebuild_group_menu()
 
     def _load_new_group_file(self):
         group_file_path = filedialog.askopenfilename(
             title="Load a new EPLaunch Group File",
-            initialdir=self.configuration.cur_directory,
+            initialdir=self.conf.directory,
             filetypes=(("EP-Launch Group Files", "*.epg"),)
         )
         if not group_file_path:
             return
         group_file_path_object = Path(group_file_path)
         entries = group_file_path_object.read_text().splitlines()
-        self.configuration.group_locations = []
+        self.conf.group_locations = []
         for e in sorted(entries):
             if e:
-                self.configuration.group_locations.append(Path(e))
+                self.conf.group_locations.append(Path(e))
         self._rebuild_group_menu()
 
     def _save_group_file(self):
         group_file_path = filedialog.asksaveasfilename(
             title="Save EPLaunch Group File",
-            initialdir=self.configuration.cur_directory,
+            initialdir=self.conf.directory,
             filetypes=(("EP-Launch Group Files", "*.epg"),)
         )
         if not group_file_path:
             return
         group_file_path_object = Path(group_file_path)
         try:
-            group_file_path_object.write_text('\n'.join([str(p) for p in self.configuration.group_locations]))
+            group_file_path_object.write_text('\n'.join([str(p) for p in self.conf.group_locations]))
         except Exception as e:  # could be permission or just about anything
             messagebox.showerror("Error", f"Could not save group file, error message:\n{str(e)}")
             return
 
     def _add_current_dir_to_group(self):
-        if self.configuration.cur_directory in self.configuration.group_locations:
+        if self.conf.directory in self.conf.group_locations:
             messagebox.showwarning("Warning", "This folder already exists in this group, skipping")
             return
-        self.configuration.group_locations.append(self.configuration.cur_directory)
+        self.conf.group_locations.append(self.conf.directory)
         self._rebuild_group_menu()
 
     def _add_current_files_to_group(self):
-        if len(self.current_file_selection) == 0:
+        if len(self.conf.file_selection) == 0:
             messagebox.showwarning("Warning", "No files selected, so none added to current group")
             return
         issue_warning = False
-        for f in self.current_file_selection:
-            potential_path = self.configuration.cur_directory / f
-            if potential_path in self.configuration.group_locations:
+        for f in self.conf.file_selection:
+            potential_path = self.conf.directory / f
+            if potential_path in self.conf.group_locations:
                 issue_warning = True
             else:
-                self.configuration.group_locations.append(potential_path)
+                self.conf.group_locations.append(potential_path)
         if issue_warning:
             messagebox.showwarning("Warning", "At least one file path was already in the group and skipped")
         self._rebuild_group_menu()
 
     def _remove_current_dir_from_group(self):
-        if self.configuration.cur_directory not in self.configuration.group_locations:
+        if self.conf.directory not in self.conf.group_locations:
             messagebox.showwarning("Warning", "This folder isn't in the current group, not doing anything")
             return
-        self.configuration.group_locations.remove(self.configuration.cur_directory)
+        self.conf.group_locations.remove(self.conf.directory)
         self._rebuild_group_menu()
 
     def _remove_current_files_from_group(self):
         issue_warning = False
-        for f in self.current_file_selection:
-            potential_path = self.configuration.cur_directory / f
-            if potential_path in self.configuration.group_locations:
-                self.configuration.group_locations.remove(potential_path)
+        for f in self.conf.file_selection:
+            potential_path = self.conf.directory / f
+            if potential_path in self.conf.group_locations:
+                self.conf.group_locations.remove(potential_path)
             else:
                 issue_warning = True
         if issue_warning:
@@ -414,18 +413,18 @@ class EPLaunchWindow(Tk):
 
     def _rebuild_group_menu(self):
         self.menu_nav_group.delete(0, END)
-        for index, entry in enumerate(self.configuration.group_locations):
+        for index, entry in enumerate(self.conf.group_locations):
             self.menu_nav_group.add_command(
                 label=str(entry), command=lambda i=index: self._handle_group_selection(i)
             )
 
     def _handle_group_selection(self, index: int):
-        entry = self.configuration.group_locations[index]
+        entry = self.conf.group_locations[index]
         if not entry.exists():
             messagebox.showerror("Error", f"Could not navigate to group entry, it doesn't exist: {entry}")
             return
-        self.configuration.cur_directory = entry if entry.is_dir() else entry.parent
-        self.dir_tree.dir_list.refresh_listing(self.configuration.cur_directory)
+        self.conf.directory = entry if entry.is_dir() else entry.parent
+        self.dir_tree.dir_list.refresh_listing(self.conf.directory)
         self._update_file_list()
         if entry.is_file():
             self.file_list.tree.try_to_reselect([entry.name])
@@ -449,41 +448,41 @@ class EPLaunchWindow(Tk):
         self.file_list.tree.set_new_columns(column_list)
 
     def add_folder_to_favorites(self):
-        if self.configuration.cur_directory in self.configuration.folders_favorite:
+        if self.conf.directory in self.conf.folders_favorite:
             messagebox.showwarning("Favorite Selection", "Folder already exists in favorites, skipping")
             return
-        self.configuration.folders_favorite.append(self.configuration.cur_directory)
+        self.conf.folders_favorite.append(self.conf.directory)
         self._rebuild_favorite_folder_menu()
 
     def remove_folder_from_favorites(self):
-        if self.configuration.cur_directory not in self.configuration.folders_favorite:
+        if self.conf.directory not in self.conf.folders_favorite:
             messagebox.showwarning("Favorite Selection", "Folder is not in favorites, skipping")
             return
-        self.configuration.folders_favorite.remove(self.configuration.cur_directory)
+        self.conf.folders_favorite.remove(self.conf.directory)
         self._rebuild_favorite_folder_menu()
 
     def _rebuild_favorite_folder_menu(self):
         self.menu_nav_favorites.delete(0, END)
-        for index, folder in enumerate(self.configuration.folders_favorite):
+        for index, folder in enumerate(self.conf.folders_favorite):
             self.menu_nav_favorites.add_command(
                 label=str(folder), command=lambda i=index: self._handle_favorite_folder_selection(i)
             )
 
     def _handle_favorite_folder_selection(self, folder_index: int):
-        self.configuration.cur_directory = self.configuration.folders_favorite[folder_index]
-        self.dir_tree.dir_list.refresh_listing(self.configuration.cur_directory)
+        self.conf.directory = self.conf.folders_favorite[folder_index]
+        self.dir_tree.dir_list.refresh_listing(self.conf.directory)
         self._update_file_list()
 
     def _rebuild_recent_folder_menu(self):
         self.menu_nav_recent.delete(0, END)
-        for index, folder in enumerate(self.configuration.folders_recent):
+        for index, folder in enumerate(self.conf.folders_recent):
             self.menu_nav_recent.add_command(
                 label=str(folder), command=lambda i=index: self._handle_recent_folder_selection(i)
             )
 
     def _handle_recent_folder_selection(self, folder_index: int):
-        self.configuration.cur_directory = self.configuration.folders_recent[folder_index]
-        self.dir_tree.dir_list.refresh_listing(self.configuration.cur_directory)
+        self.conf.directory = self.conf.folders_recent[folder_index]
+        self.dir_tree.dir_list.refresh_listing(self.conf.directory)
         self._update_file_list()
 
     def _get_files_in_current_directory(self, workflow_file_patterns: List[str]) -> List[Tuple[str, str, str, str]]:
@@ -494,7 +493,7 @@ class EPLaunchWindow(Tk):
         """
         file_list = []
         # loop over all non-hidden files to retrieve data for each
-        for iter_path in self.configuration.cur_directory.glob('*'):
+        for iter_path in self.conf.directory.glob('*'):
             if iter_path.is_file() and not iter_path.name.startswith('.'):
                 base_name = iter_path.name
                 # check to see if this file type matches any of the workflow patterns
@@ -515,14 +514,14 @@ class EPLaunchWindow(Tk):
         return file_list
 
     def _new_dir_selected(self, _: bool, selected_path: Path):
-        self.previous_selected_directory = self.configuration.cur_directory
-        self.configuration.cur_directory = selected_path
-        if selected_path not in self.configuration.folders_recent:
-            self.configuration.folders_recent.appendleft(selected_path)
+        self.previous_selected_directory = self.conf.directory
+        self.conf.directory = selected_path
+        if selected_path not in self.conf.folders_recent:
+            self.conf.folders_recent.appendleft(selected_path)
         self._rebuild_recent_folder_menu()
-        self.current_cache = CacheFile(self.configuration.cur_directory)
+        self.current_cache = CacheFile(self.conf.directory)
         try:
-            self._update_status_bar(f"Selected directory: {self.configuration.cur_directory}")
+            self._update_status_bar(f"Selected directory: {self.conf.directory}")
             self._update_file_list()
         except Exception as e:  # noqa -- status_bar and things may not exist during initialization, just ignore
             print(str(e))  # log it to the console for fun
@@ -533,17 +532,17 @@ class EPLaunchWindow(Tk):
     def _update_file_list(self):
         """Update the file listing widget by querying the directory and cache contents, try to reselect current files"""
         # If selected directory hasn't been set up yet then just carry on, this is only happening during app init
-        if self._init or not self.configuration.cur_directory:
+        if self._init or not self.conf.directory:
             return
 
         # If we aren't in a directory, just warn and abort, should not really be possible to get him after init
-        if not self.configuration.cur_directory.exists() or not self.configuration.cur_directory.is_dir():
-            self._update_status_bar(f"Bad directory selection: {self.configuration.cur_directory}")
+        if not self.conf.directory.exists() or not self.conf.directory.is_dir():
+            self._update_status_bar(f"Bad directory selection: {self.conf.directory}")
             return
 
         # If we are staying in the same directory, try to select the files that were previously selected
-        if self.previous_selected_directory == self.configuration.cur_directory:
-            previous_selected_files = self.current_file_selection
+        if self.previous_selected_directory == self.conf.directory:
+            previous_selected_files = self.conf.file_selection
         else:
             previous_selected_files = []
 
@@ -612,7 +611,7 @@ class EPLaunchWindow(Tk):
         """
         if len(self.workflow_manager.current_workflow.output_suffixes) == 0:
             return None  # can't support stale without output suffixes
-        full_file_path = self.configuration.cur_directory / input_file_name
+        full_file_path = self.conf.directory / input_file_name
         if full_file_path.exists():
             input_file_date = full_file_path.lstat().st_mtime
             suffixes = self.workflow_manager.current_workflow.output_suffixes
@@ -620,7 +619,7 @@ class EPLaunchWindow(Tk):
                 suffixes = ['.err']
             file_name_no_ext = full_file_path.with_suffix('').name
             for suffix in suffixes:
-                tentative_output_file_path = self.configuration.cur_directory / (file_name_no_ext + suffix)
+                tentative_output_file_path = self.conf.directory / (file_name_no_ext + suffix)
                 if tentative_output_file_path.exists():
                     output_file_date = tentative_output_file_path.lstat().st_mtime
                     if output_file_date < input_file_date:
@@ -629,8 +628,8 @@ class EPLaunchWindow(Tk):
 
     def _callback_file_selection_changed(self, selected_file_names: List[str]) -> None:
         """This gets called back by the file listing widget when a selection changes"""
-        self.current_file_selection = selected_file_names
-        status = ACTIVE if len(self.current_file_selection) > 0 else DISABLED
+        self.conf.file_selection = selected_file_names
+        status = ACTIVE if len(self.conf.file_selection) > 0 else DISABLED
         self.button_open_in_text['state'] = status
 
     # endregion
@@ -643,7 +642,7 @@ class EPLaunchWindow(Tk):
         self.button_weather_set.configure(state=weather_enabled)
 
     def _repopulate_recent_weather_list(self, try_to_select: Optional[Path] = None):
-        recent_weather = self.configuration.weathers_recent
+        recent_weather = self.conf.weathers_recent
         combobox_weather_enabled = 'readonly' if len(recent_weather) > 0 else 'disabled'
         button_weather_enabled = ACTIVE if len(recent_weather) > 0 else DISABLED
         self.option_weather_recent.configure(state=combobox_weather_enabled)
@@ -653,7 +652,7 @@ class EPLaunchWindow(Tk):
             if try_to_select:
                 desired_weather_path = str(try_to_select)
             else:
-                desired_weather_path = str(self.configuration.weathers_recent[self.option_weather_recent.current()])
+                desired_weather_path = str(self.conf.weathers_recent[self.option_weather_recent.current()])
             self.option_weather_recent['values'] = [x.name for x in recent_weather]
             self.option_weather_recent.current(0)
             for i, r in enumerate(recent_weather):
@@ -665,8 +664,8 @@ class EPLaunchWindow(Tk):
 
     def _set_weather_from_recent(self) -> None:
         current_index = self.option_weather_recent.current()
-        selected_recent_weather_string = str(self.configuration.weathers_recent[current_index])
-        for selected_file_name in self.current_file_selection:
+        selected_recent_weather_string = str(self.conf.weathers_recent[current_index])
+        for selected_file_name in self.conf.file_selection:
             self.current_cache.add_config(
                 self.workflow_manager.current_workflow.name,
                 selected_file_name,
@@ -676,7 +675,7 @@ class EPLaunchWindow(Tk):
 
     def _open_weather_dialog(self) -> None:
         dialog_weather = TkWeatherDialog(
-            self, list(self.configuration.weathers_recent), self.configuration.weathers_favorite
+            self, list(self.conf.weathers_recent), self.conf.weathers_favorite
         )
         self.wait_window(dialog_weather)
         if dialog_weather.exit_code == TkWeatherDialog.CLOSE_SIGNAL_CANCEL:
@@ -685,10 +684,10 @@ class EPLaunchWindow(Tk):
             weather_file_to_use = self.dd_only_string
         else:
             weather_file_to_use = dialog_weather.selected_weather_file
-            if weather_file_to_use not in self.configuration.weathers_recent:
-                self.configuration.weathers_recent.appendleft(weather_file_to_use)
+            if weather_file_to_use not in self.conf.weathers_recent:
+                self.conf.weathers_recent.appendleft(weather_file_to_use)
                 self._repopulate_recent_weather_list(weather_file_to_use)
-        for selected_file_name in self.current_file_selection:
+        for selected_file_name in self.conf.file_selection:
             self.current_cache.add_config(
                 self.workflow_manager.current_workflow.name,
                 selected_file_name,
@@ -703,7 +702,7 @@ class EPLaunchWindow(Tk):
     def _repopulate_workflow_context_menu(self):
         """Clears and repopulates the workflow context menu; tries to reselect the last context saved in config"""
         # save the currently selected workflow context for later
-        desired_selected_workflow_context = self.configuration.cur_workflow_context
+        desired_selected_workflow_context = self.conf.cur_workflow_context
         # get all known contexts from the workflow manager
         all_available_contexts = sorted(list(self.workflow_manager.workflow_contexts))
         # clear the context menu entirely
@@ -723,16 +722,16 @@ class EPLaunchWindow(Tk):
         """This is called when the workflow context option menu changes value"""
         # set the tk var and the config var to the new value
         self._tk_var_workflow_context.set(new_value)
-        self.configuration.cur_workflow_context = self._tk_var_workflow_context.get()
+        self.conf.cur_workflow_context = self._tk_var_workflow_context.get()
         # then refresh the workflow list with the new context
         self._repopulate_workflow_instance_menu()
 
     def _repopulate_workflow_instance_menu(self):
         """Clears and repopulates the workflow instance menu; tries to reselect the last instance saved in config"""
         # save the currently selected workflow instance for later
-        desired_selected_workflow_name = self.configuration.cur_workflow_name
+        desired_selected_workflow_name = self.conf.cur_workflow_name
         # get all known workflows for the current context
-        self.available_workflows = self.workflow_manager.workflow_instances(self.configuration.cur_workflow_context)
+        self.available_workflows = self.workflow_manager.workflow_instances(self.conf.cur_workflow_context)
         # clear the option menu entirely
         self.option_workflow_instance['menu'].delete(0, END)
         # add in all the instances, registering a lambda that will set the tk var and refresh the file list as needed
@@ -754,7 +753,7 @@ class EPLaunchWindow(Tk):
         """This is called when the workflow instance option menu changes value"""
         # store the new instance name in the tk var and in the config
         self._tk_var_workflow_instance.set(new_value)
-        self.configuration.cur_workflow_name = new_value
+        self.conf.cur_workflow_name = new_value
         # find the new workflow in the list of currently available workflows
         new_workflow = None
         for w in self.available_workflows:
@@ -810,12 +809,12 @@ class EPLaunchWindow(Tk):
             self.generic_dialogs.display(
                 self, 'Workflow Processing Errors', '\n'.join(self.workflow_manager.warnings)
             )
-        self.configuration.workflow_directories = self.workflow_manager.workflow_directories
+        self.conf.workflow_directories = self.workflow_manager.workflow_directories
         self._repopulate_workflow_context_menu()
         self._repopulate_workflow_instance_menu()
 
     def _run_workflow(self) -> None:
-        if self.configuration.cur_directory and self.current_file_selection and self.workflow_manager.current_workflow:
+        if self.conf.directory and self.conf.file_selection and self.workflow_manager.current_workflow:
             pass
         else:
             messagebox.showerror(
@@ -828,15 +827,15 @@ class EPLaunchWindow(Tk):
         )
         weather_file_to_use: Optional[str] = None
         if self.workflow_manager.current_workflow.uses_weather:
-            for selected_file_name in self.current_file_selection:
+            for selected_file_name in self.conf.file_selection:
                 if selected_file_name in files_in_current_workflow:
                     cached_file_info = files_in_current_workflow[selected_file_name]
                     if CacheFile.ParametersKey in cached_file_info:
                         if CacheFile.WeatherFileKey in cached_file_info[CacheFile.ParametersKey]:
                             weather_file_to_use = cached_file_info[CacheFile.ParametersKey][CacheFile.WeatherFileKey]
             if not weather_file_to_use:
-                recent_files = list(self.configuration.weathers_recent)
-                favorite_files = self.configuration.weathers_favorite
+                recent_files = list(self.conf.weathers_recent)
+                favorite_files = self.conf.weathers_favorite
                 w = TkWeatherDialog(self, recent_files, favorite_files)
                 self.wait_window(w)
                 if w.exit_code == TkWeatherDialog.CLOSE_SIGNAL_CANCEL:
@@ -846,9 +845,9 @@ class EPLaunchWindow(Tk):
                         weather_file_to_use = self.dd_only_string
                     else:
                         weather_file_to_use = str(w.selected_weather_file)
-                        if w.selected_weather_file not in self.configuration.weathers_recent:
-                            self.configuration.weathers_recent.appendleft(w.selected_weather_file)
-            for selected_file_name in self.current_file_selection:
+                        if w.selected_weather_file not in self.conf.weathers_recent:
+                            self.conf.weathers_recent.appendleft(w.selected_weather_file)
+            for selected_file_name in self.conf.file_selection:
                 self.current_cache.add_config(
                     self.workflow_manager.current_workflow.name,
                     selected_file_name,
@@ -856,9 +855,9 @@ class EPLaunchWindow(Tk):
                 )
             self._update_file_list()
 
-        sel_dir = self.configuration.cur_directory
+        sel_dir = self.conf.directory
         cur_wf = self.workflow_manager.current_workflow.name
-        for selected_file_name in self.current_file_selection:
+        for selected_file_name in self.conf.file_selection:
             for thread_id, t in self.workflow_manager.threads.items():
                 if t.file_name == selected_file_name and t.run_directory == sel_dir and \
                         t.workflow_instance.name() == cur_wf:
@@ -875,7 +874,7 @@ class EPLaunchWindow(Tk):
             if weather_file_to_use != self.dd_only_string:
                 this_weather = weather_file_to_use
             self.workflow_manager.threads[new_uuid] = WorkflowThread(
-                new_uuid, new_instance, self.configuration.cur_directory, selected_file_name,
+                new_uuid, new_instance, self.conf.directory, selected_file_name,
                 {
                     'weather': this_weather,
                     'workflow location': self.workflow_manager.current_workflow.workflow_directory
@@ -936,12 +935,12 @@ class EPLaunchWindow(Tk):
                         self.workflow_manager.threads[workflow_response.id].file_name,
                         data_from_workflow
                     )
-                    if self.configuration.cur_directory == workflow_working_directory:
+                    if self.conf.directory == workflow_working_directory:
                         # only update file lists if we are still in that directory
                         self._update_file_list()
                 except EPLaunchFileException:
                     pass
-                if not self.configuration.keep_dialog_open:
+                if not self.conf.keep_dialog_open:
                     self.output_dialogs[workflow_response.id].close()
             else:
                 status_message = 'Workflow failed: ' + workflow_response.message
@@ -974,16 +973,16 @@ class EPLaunchWindow(Tk):
             output_suffixes = self.workflow_manager.current_workflow.output_suffixes
         else:
             output_suffixes = []
-        viewer_dialog = TkViewerDialog(self, output_suffixes, self.configuration.viewer_overrides)
+        viewer_dialog = TkViewerDialog(self, output_suffixes, self.conf.viewer_overrides)
         self.wait_window(viewer_dialog)
         if viewer_dialog.exit_code == TkViewerDialog.CLOSE_SIGNAL_CANCEL:
             return
-        self.configuration.viewer_overrides = {
-            **viewer_dialog.extension_to_viewer, **self.configuration.viewer_overrides
+        self.conf.viewer_overrides = {
+            **viewer_dialog.extension_to_viewer, **self.conf.viewer_overrides
         }
 
     def _open_welcome(self):
-        if self.configuration.welcome_shown and VERSION == self.configuration.latest_welcome_shown:
+        if self.conf.welcome_shown and VERSION == self.conf.latest_welcome_shown:
             return
         message = """
 EP-Launch has been around for many years as a part of the EnergyPlus distribution.
@@ -993,8 +992,8 @@ This dialog will only be shown once, but documentation is available in the Help 
         self.generic_dialogs.display(
             self, 'Welcome to EP-Launch ' + VERSION, message, 'Open Documentation', self._open_documentation
         )
-        self.configuration.welcome_shown = True
-        self.configuration.latest_welcome_shown = VERSION
+        self.conf.welcome_shown = True
+        self.conf.latest_welcome_shown = VERSION
 
     def _open_about(self) -> None:
         text = """
@@ -1040,13 +1039,13 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         self.generic_dialogs.display(self, "About EP-Launch", text)
 
     def _open_output_file(self):
-        if len(self.current_file_selection) > 2:
+        if len(self.conf.file_selection) > 2:
             message = """More than 2 files were selected when choosing to open workflow outputs.
 This could generate many output windows and is usually not intentional.  Select up to 2 input files."""
             messagebox.showerror("File Selection Issue", message)
             return
-        for f in self.current_file_selection:
-            original_path = self.configuration.cur_directory / f
+        for f in self.conf.file_selection:
+            original_path = self.conf.directory / f
             new_path_str = str(original_path.with_suffix('')) + self._tk_var_output_suffix.get()
             new_path = Path(new_path_str)
             if not new_path.exists():
@@ -1054,10 +1053,10 @@ This could generate many output windows and is usually not intentional.  Select 
 Make sure that the workflow has run on the selected input file(s), and that the runs
 actually generated the requested outputs.  Any found output files are being opened now."""
                 messagebox.showwarning("Missing Output Files", message)
-            if self._tk_var_output_suffix.get() in self.configuration.viewer_overrides:
-                if self.configuration.viewer_overrides[self._tk_var_output_suffix.get()] is not None:
+            if self._tk_var_output_suffix.get() in self.conf.viewer_overrides:
+                if self.conf.viewer_overrides[self._tk_var_output_suffix.get()] is not None:
                     # then the viewer override was found, and not None, so use it
-                    Popen([str(self.configuration.viewer_overrides[self._tk_var_output_suffix.get()]), new_path_str])
+                    Popen([str(self.conf.viewer_overrides[self._tk_var_output_suffix.get()]), new_path_str])
                     return
             # if we make it this far, we didn't open it with a custom viewer, try to use the default
             self._open_file_or_dir_with_default(new_path)
@@ -1074,16 +1073,16 @@ actually generated the requested outputs.  Any found output files are being open
             Popen(['open', full_path])
 
     def _open_text_editor(self) -> None:
-        for file_name in self.current_file_selection:
-            full_path_str = self.configuration.cur_directory / file_name
-            if 'txt' in self.configuration.viewer_overrides:
-                text_editor_binary = str(self.configuration.viewer_overrides['txt'])
+        for file_name in self.conf.file_selection:
+            full_path_str = self.conf.directory / file_name
+            if 'txt' in self.conf.viewer_overrides:
+                text_editor_binary = str(self.conf.viewer_overrides['txt'])
                 Popen([text_editor_binary, full_path_str])
             else:
                 self._open_file_or_dir_with_default(full_path_str)
 
     def _open_file_browser(self) -> None:
-        self._open_file_or_dir_with_default(self.configuration.cur_directory)
+        self._open_file_or_dir_with_default(self.conf.directory)
 
     @staticmethod
     def _open_documentation() -> None:
