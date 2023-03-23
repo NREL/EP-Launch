@@ -320,6 +320,7 @@ class EPLaunchWindow(Tk):
         self._tk_var_status_message.set(message)
 
     def _handle_keyboard_press(self, event) -> None:
+        # Update docs/navigation.rst whenever this set of keybindings changes
         # relevant_modifiers
         # mod_shift = 0x1
         mod_control = 0x4
