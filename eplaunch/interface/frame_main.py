@@ -9,7 +9,7 @@ from queue import Queue
 
 from subprocess import Popen
 from tkinter import Tk, PhotoImage, StringVar, Menu, DISABLED, OptionMenu, Frame, Label, Button, NSEW, \
-    SUNKEN, S, LEFT, BOTH, messagebox, END, BooleanVar, ACTIVE, LabelFrame, RIGHT, EW, PanedWindow, NS
+    SUNKEN, S, LEFT, BOTH, messagebox, END, BooleanVar, ACTIVE, LabelFrame, RIGHT, EW, PanedWindow, NS, filedialog
 from tkinter.ttk import Combobox
 from typing import Dict, List, Optional, Tuple
 from uuid import uuid4
@@ -88,6 +88,7 @@ class EPLaunchWindow(Tk):
         self._repopulate_recent_weather_list()
         self._rebuild_recent_folder_menu()
         self._rebuild_favorite_folder_menu()
+        self._rebuild_group_menu()
         self._init = False
 
         # finally set the initial directory and update the file listing
@@ -144,41 +145,37 @@ class EPLaunchWindow(Tk):
         menubar = Menu(self)
 
         menu_file = Menu(menubar, tearoff=False)
-        menu_file.add_command(label="Run File", command=self._run_workflow)
+        menu_file.add_command(label="Run Current Workflow on Selection", command=self._run_workflow)
         menu_file.add_command(label="Quit", command=self.window_close)
         menubar.add_cascade(label="File", menu=menu_file)
 
-        menu_folder = Menu(menubar, tearoff=False)
-        self.menu_folder_recent = Menu(menu_folder, tearoff=False)
-        menu_folder.add_cascade(label="Recent", menu=self.menu_folder_recent)
-        menu_folder.add_separator()
-        self.menu_folder_favorites = Menu(menu_folder, tearoff=False)
-        menu_folder.add_cascade(label="Favorites", menu=self.menu_folder_favorites)
-        menu_folder.add_command(
-            label="Add Current Folder to Favorites", command=self.add_folder_to_favorites
+        menu_nav = Menu(menubar, tearoff=False)
+        self.menu_nav_recent = Menu(menu_nav, tearoff=False)
+        menu_nav.add_cascade(label="Recent", menu=self.menu_nav_recent)
+        menu_nav.add_separator()
+        self.menu_nav_favorites = Menu(menu_nav, tearoff=False)
+        menu_nav.add_cascade(label="Favorites", menu=self.menu_nav_favorites)
+        menu_nav.add_command(label="Add Current Folder to Favorites", command=self.add_folder_to_favorites)
+        menu_nav.add_command(label="Remove Current Folder from Favorites", command=self.remove_folder_from_favorites)
+        menu_nav.add_separator()
+        self.menu_nav_group = Menu(menu_nav, tearoff=False)
+        menu_nav.add_cascade(label="Current Group", menu=self.menu_nav_group)
+        menu_nav.add_command(label="Clear Current Group", command=self._clear_group)
+        menu_nav.add_command(label="Load new Group file...", command=self._load_new_group_file)
+        menu_nav.add_command(label="Save Current Group to file...", command=self._save_group_file)
+        menu_nav.add_command(
+            label="Add current folder to current group", command=self._add_current_dir_to_group
         )
-        menu_folder.add_command(
-            label="Remove Current Folder from Favorites", command=self.remove_folder_from_favorites
+        menu_nav.add_command(
+            label="Add current file selection to current group", command=self._add_current_files_to_group
         )
-        menubar.add_cascade(label="Folder", menu=menu_folder)
-
-        menu_group = Menu(menubar, tearoff=False)
-        menu_group.add_command(label="Show Saved Group")
-        menu_group.add_command(label="Show Next Folder in Saved Group")
-        menu_group.add_command(label="Open Saved Group File")
-        menu_group.add_command(label="Save Selected Files as Group File")
-        menu_group.add_command(label="Add to Saved Group")
-        menu_group.add_command(label="Remove from Saved Group")
-        menu_group.add_command(label="Recent Saved Groups", state=DISABLED)
-        menu_group.add_separator()
-        menu_group.add_command(label="Favorite Saved Groups", state=DISABLED)
-        menu_group.add_command(
-            label="Add Saved Group to Favorites", command=self.add_group_to_favorites
+        menu_nav.add_command(
+            label="Remove current folder from current group", command=self._remove_current_dir_from_group
         )
-        menu_group.add_command(
-            label="Remove Saved Group from Favorites", command=self.remove_group_from_favorites
+        menu_nav.add_command(
+            label="Remove current file selection from current group", command=self._remove_current_files_from_group
         )
-        menubar.add_cascade(label="Group", menu=menu_group)
+        menubar.add_cascade(label="Navigation", menu=menu_nav)
 
         menu_settings = Menu(menubar, tearoff=False)
         menu_settings.add_command(label="Workflow Directories", command=self._open_workflow_dir_dialog)
@@ -338,11 +335,99 @@ class EPLaunchWindow(Tk):
 
     # region group operations
 
-    def add_group_to_favorites(self):
-        pass
+    def _clear_group(self):
+        self.configuration.group_locations.clear()
+        self._rebuild_group_menu()
 
-    def remove_group_from_favorites(self):
-        pass
+    def _load_new_group_file(self):
+        group_file_path = filedialog.askopenfilename(
+            title="Load a new EPLaunch Group File",
+            initialdir=self.configuration.cur_directory,
+            filetypes=(("EP-Launch Group Files", "*.epg"),)
+        )
+        if not group_file_path:
+            return
+        group_file_path_object = Path(group_file_path)
+        entries = group_file_path_object.read_text().splitlines()
+        self.configuration.group_locations = []
+        for e in sorted(entries):
+            if e:
+                self.configuration.group_locations.append(Path(e))
+        self._rebuild_group_menu()
+
+    def _save_group_file(self):
+        group_file_path = filedialog.asksaveasfilename(
+            title="Save EPLaunch Group File",
+            initialdir=self.configuration.cur_directory,
+            filetypes=(("EP-Launch Group Files", "*.epg"),)
+        )
+        if not group_file_path:
+            return
+        group_file_path_object = Path(group_file_path)
+        try:
+            group_file_path_object.write_text('\n'.join([str(p) for p in self.configuration.group_locations]))
+        except Exception as e:  # could be permission or just about anything
+            messagebox.showerror("Error", f"Could not save group file, error message:\n{str(e)}")
+            return
+
+    def _add_current_dir_to_group(self):
+        if self.configuration.cur_directory in self.configuration.group_locations:
+            messagebox.showwarning("Warning", "This folder already exists in this group, skipping")
+            return
+        self.configuration.group_locations.append(self.configuration.cur_directory)
+        self._rebuild_group_menu()
+
+    def _add_current_files_to_group(self):
+        if len(self.current_file_selection) == 0:
+            messagebox.showwarning("Warning", "No files selected, so none added to current group")
+            return
+        issue_warning = False
+        for f in self.current_file_selection:
+            potential_path = self.configuration.cur_directory / f
+            if potential_path in self.configuration.group_locations:
+                issue_warning = True
+            else:
+                self.configuration.group_locations.append(potential_path)
+        if issue_warning:
+            messagebox.showwarning("Warning", "At least one file path was already in the group and skipped")
+        self._rebuild_group_menu()
+
+    def _remove_current_dir_from_group(self):
+        if self.configuration.cur_directory not in self.configuration.group_locations:
+            messagebox.showwarning("Warning", "This folder isn't in the current group, not doing anything")
+            return
+        self.configuration.group_locations.remove(self.configuration.cur_directory)
+        self._rebuild_group_menu()
+
+    def _remove_current_files_from_group(self):
+        issue_warning = False
+        for f in self.current_file_selection:
+            potential_path = self.configuration.cur_directory / f
+            if potential_path in self.configuration.group_locations:
+                self.configuration.group_locations.remove(potential_path)
+            else:
+                issue_warning = True
+        if issue_warning:
+            messagebox.showwarning("Warning", "At least one file path was not in the current group and was skipped")
+        self._rebuild_group_menu()
+
+    def _rebuild_group_menu(self):
+        self.menu_nav_group.delete(0, END)
+        for index, entry in enumerate(self.configuration.group_locations):
+            self.menu_nav_group.add_command(
+                label=str(entry), command=lambda i=index: self._handle_group_selection(i)
+            )
+
+    def _handle_group_selection(self, index: int):
+        entry = self.configuration.group_locations[index]
+        if not entry.exists():
+            messagebox.showerror("Error", f"Could not navigate to group entry, it doesn't exist: {entry}")
+            return
+        self.configuration.cur_directory = entry if entry.is_dir() else entry.parent
+        self.dir_tree.dir_list.refresh_listing(self.configuration.cur_directory)
+        self._update_file_list()
+        if entry.is_file():
+            self.file_list.tree.try_to_reselect([entry.name])
 
     # endregion
 
@@ -377,9 +462,9 @@ class EPLaunchWindow(Tk):
         self._rebuild_favorite_folder_menu()
 
     def _rebuild_favorite_folder_menu(self):
-        self.menu_folder_favorites.delete(0, END)
+        self.menu_nav_favorites.delete(0, END)
         for index, folder in enumerate(self.configuration.folders_favorite):
-            self.menu_folder_favorites.add_command(
+            self.menu_nav_favorites.add_command(
                 label=str(folder), command=lambda i=index: self._handle_favorite_folder_selection(i)
             )
 
@@ -389,9 +474,9 @@ class EPLaunchWindow(Tk):
         self._update_file_list()
 
     def _rebuild_recent_folder_menu(self):
-        self.menu_folder_recent.delete(0, END)
+        self.menu_nav_recent.delete(0, END)
         for index, folder in enumerate(self.configuration.folders_recent):
-            self.menu_folder_recent.add_command(
+            self.menu_nav_recent.add_command(
                 label=str(folder), command=lambda i=index: self._handle_recent_folder_selection(i)
             )
 
@@ -512,7 +597,8 @@ class EPLaunchWindow(Tk):
 
         # clear all items from the listview and then add them back in
         self.file_list.tree.set_files(control_list_rows)
-        self.file_list.tree.try_to_reselect(previous_selected_files)
+        if previous_selected_files:
+            self.file_list.tree.try_to_reselect(previous_selected_files)
 
     def _is_file_stale(self, input_file_name: str) -> Optional[bool]:
         """

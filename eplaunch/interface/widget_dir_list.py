@@ -69,7 +69,7 @@ class DirListWidget(Treeview):
 
     def select_new_root(self):
         response = filedialog.askdirectory()
-        if response is None:
+        if not response:
             return
         p = Path(response)
         if p.exists():
@@ -79,7 +79,7 @@ class DirListWidget(Treeview):
         self.reset_tree()
         if new_path is not None:
             string_root = str(new_path)
-            self.heading('#0', text="Click here to select new root directory")
+            self.heading('#0', text="Click here to select root...")
             self.root_path = new_path
             self.item(self.root_node, text=string_root, image=self.root_folder_image)
         new_id = self.insert(

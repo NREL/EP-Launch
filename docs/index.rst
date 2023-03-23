@@ -8,8 +8,9 @@ Welcome to EP-Launch's documentation!
    intro
    cache
    workflows
-   mechanics
    eplus_versions
+   navigation
+   developers
 
 
 Indices and tables

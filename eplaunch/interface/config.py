@@ -26,8 +26,9 @@ class ConfigManager:
         self.folders_favorite: List[Path] = []
         self.weathers_recent: deque[Optional[Path]] = deque(maxlen=5)
         self.weathers_favorite: List[Path] = []
-        self.groups_recent: List[str] = []
-        self.groups_favorite: List[str] = []
+        self.group_locations: List[Path] = []
+        # self.groups_recent: List[str] = []
+        # self.groups_favorite: List[str] = []
         self.viewer_overrides: Dict[str, Path] = {}
 
     def load(self):
@@ -55,7 +56,6 @@ class ConfigManager:
                     self.cur_directory = parse('ActiveWindow', 'CurrentDirectory', self.cur_directory)
                     if isinstance(self.cur_directory, str):
                         self.cur_directory = Path(self.cur_directory)
-                    # self.cur_filename = parse('ActiveWindow', 'CurrentFileName', self.cur_filename)
                     self.welcome_shown = parse('ActiveWindow', 'WelcomeAlreadyShown', self.welcome_shown)
                     self.latest_welcome_shown = parse(
                         'ActiveWindow', 'LatestWelcomeVersionShown', self.latest_welcome_shown
@@ -64,7 +64,7 @@ class ConfigManager:
                     self.width = parse('ActiveWindow', 'width', self.width)
                     self.x = parse('ActiveWindow', 'x', self.x)
                     self.y = parse('ActiveWindow', 'y', self.y)
-                    # TODO: Attempt to read in these:
+                    # These are more complex, I don't intend on reading these in
                     # self.workflow_directories: List[str] = []  /WorkflowDirectories/Path-##=/foo/bar
                     # self.folders_recent: List[str] = []  /FolderMenu/Recent/Path-##=/foo/bar
                     # self.folders_favorite: List[str] = []  /FolderMenu/Favorite/Path-##=/foo/bar
@@ -104,8 +104,11 @@ class ConfigManager:
                         for string_path in recent_weather:
                             self.weathers_recent.appendleft(Path(string_path))
                     self.weathers_favorite = [Path(p) for p in config.get('FavoriteWeather', self.weathers_favorite)]
-                    self.groups_recent = config.get('RecentGroup', self.groups_recent)
-                    self.groups_favorite = config.get('FavoriteGroup', self.groups_favorite)
+                    # self.groups_recent = config.get('RecentGroup', self.groups_recent)
+                    # self.groups_favorite = config.get('FavoriteGroup', self.groups_favorite)
+                    temp_group_locations = config.get('GroupLocations', self.group_locations)
+                    for t in temp_group_locations:
+                        self.group_locations.append(Path(t))
                     for k, v in config.get('ViewerOverrides', self.viewer_overrides).items():
                         self.viewer_overrides[k] = Path(v) if v else None
 
@@ -136,8 +139,9 @@ class ConfigManager:
             'FavoriteFolders': [str(p) for p in self.folders_favorite],
             'RecentWeather': [str(p) for p in self.weathers_recent if p is not None],
             'FavoriteWeather': [str(p) for p in self.weathers_favorite],
-            'RecentGroup': self.groups_recent,
-            'FavoriteGroup': self.groups_favorite,
+            # 'RecentGroup': self.groups_recent,
+            # 'FavoriteGroup': self.groups_favorite,
+            'GroupLocations': [str(t) for t in self.group_locations],
             'ViewerOverrides': {k: None if v is None else str(v) for k, v in self.viewer_overrides.items()},
         }
         config_file_path = Path.home() / ConfigManager.config_file_name

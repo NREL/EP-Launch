@@ -47,11 +47,18 @@ class FileListWidget(Treeview):
         # don't call back during programmatic selection
         hold_callback = self.callback_on_selection_changed
         self.callback_on_selection_changed = None
+        for item in self.selection():
+            self.selection_remove(item)
+        items_to_select = []
         for f in self.file_ids:
             item = self.item(f)
             if item['values'][0] in files_to_reselect:
-                self.selection_add(f)
+                items_to_select.append(f)
+        if len(items_to_select) > 0:
+            self.focus(items_to_select[0])
+            self.selection_set(items_to_select)
         self.callback_on_selection_changed = hold_callback
+        self._selection_changed()
 
     def set_new_columns(self, extended_column_names=None) -> None:
         # we always leave Filename, the list should include Stale, Weather, etc.
@@ -116,6 +123,6 @@ if __name__ == "__main__":
         ))
     file_listing.tree.set_files(files)
     file_listing.pack(side=TOP, expand=True, fill=BOTH)
-    file_listing.tree.try_to_reselect(['FileName1.png'])
+    file_listing.tree.try_to_reselect(['FileName1.png', 'FileName3.png'])
     Button(text="add columns", command=set_columns).pack(side=TOP, fill='x')
     root.mainloop()
