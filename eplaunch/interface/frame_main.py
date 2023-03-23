@@ -151,6 +151,7 @@ class EPLaunchWindow(Tk):
         menu_nav = Menu(menubar, tearoff=False)
         self.menu_nav_recent = Menu(menu_nav, tearoff=False)
         menu_nav.add_cascade(label="Recent", menu=self.menu_nav_recent)
+        menu_nav.add_command(label="Navigate to previous folder", command=self._navigate_to_previous_folder)
         menu_nav.add_separator()
         self.menu_nav_favorites = Menu(menu_nav, tearoff=False)
         menu_nav.add_cascade(label="Favorites", menu=self.menu_nav_favorites)
@@ -173,6 +174,9 @@ class EPLaunchWindow(Tk):
         )
         menu_nav.add_command(
             label="Remove current file selection from current group", command=self._remove_current_files_from_group
+        )
+        menu_nav.add_command(
+            label="Cycle through current group entries", command=self._cycle_through_group
         )
         menubar.add_cascade(label="Navigation", menu=menu_nav)
 
@@ -330,6 +334,10 @@ class EPLaunchWindow(Tk):
             self._open_weather_dialog()
         elif event.keysym == 'r' and mod_control & event.state:
             self._run_workflow()
+        elif event.keysym == 'm' and mod_control & event.state:
+            self._cycle_through_group()
+        elif event.keysym == 'z' and mod_control & event.state:
+            self._navigate_to_previous_folder()
 
     # endregion
 
@@ -411,7 +419,17 @@ class EPLaunchWindow(Tk):
             messagebox.showwarning("Warning", "At least one file path was not in the current group and was skipped")
         self._rebuild_group_menu()
 
+    def _cycle_through_group(self):
+        if len(self.conf.group_locations) == 0:
+            messagebox.showwarning("Invalid Group Cycle", "Could not cycle through empty group list")
+            return
+        self._handle_group_selection(self.group_cycle_next_index)
+        self.group_cycle_next_index += 1
+        if self.group_cycle_next_index + 1 > len(self.conf.group_locations):
+            self.group_cycle_next_index = 0
+
     def _rebuild_group_menu(self):
+        self.group_cycle_next_index = 0
         self.menu_nav_group.delete(0, END)
         for index, entry in enumerate(self.conf.group_locations):
             self.menu_nav_group.add_command(
@@ -480,6 +498,10 @@ class EPLaunchWindow(Tk):
                 label=str(folder), command=lambda i=index: self._handle_recent_folder_selection(i)
             )
 
+    def _navigate_to_previous_folder(self):
+        if len(self.conf.folders_recent) > 1:
+            self._handle_recent_folder_selection(1)
+
     def _handle_recent_folder_selection(self, folder_index: int):
         self.conf.directory = self.conf.folders_recent[folder_index]
         self.dir_tree.dir_list.refresh_listing(self.conf.directory)
@@ -516,7 +538,7 @@ class EPLaunchWindow(Tk):
     def _new_dir_selected(self, _: bool, selected_path: Path):
         self.previous_selected_directory = self.conf.directory
         self.conf.directory = selected_path
-        if selected_path not in self.conf.folders_recent:
+        if len(self.conf.folders_recent) > 0 and self.conf.folders_recent[0] != selected_path:
             self.conf.folders_recent.appendleft(selected_path)
         self._rebuild_recent_folder_menu()
         self.current_cache = CacheFile(self.conf.directory)

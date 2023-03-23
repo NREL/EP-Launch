@@ -32,6 +32,8 @@ If the user selects a folder and quickly wants to get back to the last folder, i
    :scale: 100 %
    :alt: image 1
 
+There is also a shortcut to go back to the previously selected folder, which uses the shortcut Ctrl-z.
+
 Favorite Folders
 ----------------
 
@@ -64,14 +66,22 @@ Management of the group happens through the menu options shown, and are generall
 Groups are saved as epg files, which are simply a list of file/dir locations in a plain text file.
 These could be created automatically and just loaded into EP-Launch.
 Note that EP-Launch does not do any background checks on whether the entries of a group currently exist, but will warn if you try to select an invalid entry.
+A keyboard shortcut is available which allows the user to cycle through all entries of a group, using Ctrl-m.
 
 Keyboard Navigation
 -------------------
 
-Keyboard navigation is going to be enhanced soon to allow power users to navigate more heavily from the keyboard.
+Keyboard navigation will be enhanced as needed allow power users to navigate more heavily from the keyboard.
 This will include cycling through group and favorite locations.
 For now, the following keybindings are supported on the interface:
 
-- F5 : refresh the file listing
-- shift-w: load the weather selection dialog for the current file selection
-- shift-r: run the currently selected workflow for the current file selection
+F5
+    Refresh the file listing
+Ctrl-w
+    Load the weather selection dialog for the current file selection
+Ctrl-r
+    Run the currently selected workflow for the current file selection
+Ctrl-m
+    Cycle through navigation entries in the current group
+Ctrl-z
+    Go back to the previously selected folder
