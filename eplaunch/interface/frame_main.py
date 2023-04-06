@@ -14,8 +14,9 @@ from tkinter.ttk import Combobox
 from typing import Dict, List, Optional, Tuple
 from uuid import uuid4
 from webbrowser import open as open_web
+from plan_tools.runtime import fixup_taskbar_icon_on_windows
 
-from eplaunch import VERSION, DOCS_URL
+from eplaunch import VERSION, DOCS_URL, NAME
 from eplaunch.interface.dialog_generic import TkGenericDialog
 from eplaunch.utilities.exceptions import EPLaunchFileException
 from eplaunch.interface.config import ConfigManager
@@ -37,12 +38,30 @@ class EPLaunchWindow(Tk):
     # region Construction and GUI building functions
 
     def __init__(self):
-        super().__init__()
+        super().__init__(className=NAME)
         # set the form title and icon, basic stuff
         self.title("EnergyPlus Launch")
-        icon_path = Path(__file__).parent / 'resources' / 'main_icon.png'
-        image = PhotoImage(file=str(icon_path))
-        self.iconphoto(True, image)
+        if system() == 'Darwin':
+            self.icon_path = Path(__file__).resolve().parent.parent / 'icons' / 'icon.icns'
+            if self.icon_path.exists():
+                self.iconbitmap(str(self.icon_path))
+            else:
+                print(f"Could not set icon for Mac, expecting to find it at {self.icon_path}")
+        elif system() == 'Windows':
+            self.icon_path = Path(__file__).resolve().parent.parent / 'icons' / 'icon.png'
+            img = PhotoImage(file=str(self.icon_path))
+            if self.icon_path.exists():
+                self.iconphoto(False, img)
+            else:
+                print(f"Could not set icon for Windows, expecting to find it at {self.icon_path}")
+        else:  # Linux
+            self.icon_path = Path(__file__).resolve().parent.parent / 'icons' / 'icon.png'
+            img = PhotoImage(file=str(self.icon_path))
+            if self.icon_path.exists():
+                self.iconphoto(False, img)
+            else:
+                print(f"Could not set icon for Windows, expecting to find it at {self.icon_path}")
+        fixup_taskbar_icon_on_windows(NAME)
         self.pad = {'padx': 3, 'pady': 3}
         self.dd_only_string = '<No_Weather_File>'  # Can we change to just using blank?  It's fine for now.
         self.generic_dialogs = TkGenericDialog(self.pad)
