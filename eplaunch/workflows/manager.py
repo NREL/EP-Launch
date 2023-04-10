@@ -1,10 +1,11 @@
 from pathlib import Path
 from string import ascii_uppercase
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional, Set, Tuple, Type
 from importlib import util as import_util
 from inspect import getmembers, isclass
 
 from eplaunch.utilities.crossplatform import Platform
+from eplaunch.workflows.base import BaseEPLaunchWorkflow1
 from eplaunch.workflows.workflow import Workflow
 from eplaunch.workflows.workflow_thread import WorkflowThread
 
@@ -102,7 +103,7 @@ class WorkflowManager:
                     continue
 
             for module_file_path, this_module in modules:
-                class_members = getmembers(this_module, isclass)
+                class_members: List[Tuple[str, Type[BaseEPLaunchWorkflow1]]] = getmembers(this_module, isclass)
                 for this_class in class_members:
                     this_class_name, this_class_type = this_class
                     # so right here, we could check issubclass, but this also matches the BaseEPLaunchWorkflow1, which
@@ -115,8 +116,8 @@ class WorkflowManager:
                     if num_inheritance == 1 and workflow_base_class_name in base_class_name:
                         try:
                             # we've got a good match, grab more data and get ready to load this into the Detail class
-                            workflow_instance = this_class_type()
-                            workflow_name = workflow_instance.name()
+                            workflow_instance: BaseEPLaunchWorkflow1 = this_class_type()
+                            workflow_name: str = workflow_instance.name()
                             workflow_file_types = workflow_instance.get_file_types()
                             workflow_output_suffixes = workflow_instance.get_output_suffixes()
                             workflow_columns = workflow_instance.get_interface_columns()

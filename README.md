@@ -26,6 +26,7 @@ The code coverage across platforms is collected on Coveralls.
 
 When a tag is created in the GitHub Repo, Github Actions builds a Python wheel and uploads it to PyPi: https://pypi.org/project/ep-launch/.
 The packages can be downloaded using standard `pip install energyplus-launch` commands.
+Once Pip installed, desktop shortcuts and launchers can be configured using the `energyplus-launch-configure` command from the same Python environment.
 
 ## Development
 

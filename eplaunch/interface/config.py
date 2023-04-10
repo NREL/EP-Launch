@@ -14,7 +14,7 @@ class ConfigManager:
         self.cur_workflow_name: str = ''
         self.cur_workflow_context: str = ''
         self.directory: Path = Path.home()  # default to the home directory
-        self.file_selection: List[Path] = []
+        self.file_selection: List[str] = []
         self.welcome_shown: bool = False
         self.latest_welcome_shown: str = ''
         self.height: int = -1

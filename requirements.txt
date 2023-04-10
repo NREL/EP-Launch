@@ -1,5 +1,5 @@
 # for running tests, you'll need the nose and coverage packages
-coverage==6.5.0
+coverage
 coveralls  # really just for github, but it's fine
 nose
 

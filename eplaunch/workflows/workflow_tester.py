@@ -5,13 +5,13 @@ This file is a standalone EP-Launch workflow tester.
 It is called using a single argument, the path to a workflow file
 """
 
-import inspect
-import os
-import sys
+from inspect import isclass, getmembers
+from pathlib import Path
+from sys import argv, exit
 from importlib import util as import_util
 
 
-class WorkflowTesting(object):
+class WorkflowTesting:
 
     def __init__(self, verbose: bool):
         self.verbose = verbose
@@ -20,13 +20,15 @@ class WorkflowTesting(object):
         if self.verbose:  # pragma: no cover
             print(message)
 
-    def workflow_file_tester(self, file_path):
+    def workflow_file_tester(self, file_path: str):
         modules = []
 
-        if os.path.exists(file_path):
-            self.printer("   OK: File path exists at: " + file_path)
+        path = Path(file_path)
+
+        if path.exists():
+            self.printer(f"   OK: File path exists at: {path}")
         else:  # pragma: no cover
-            print("ERROR: File path does not exist!  Path: " + file_path)
+            print(f"ERROR: File path does not exist!  Path: {path}")
             return 1
 
         if file_path.endswith('.py'):
@@ -43,23 +45,23 @@ class WorkflowTesting(object):
             self.printer("   OK: Python import process completed successfully!")
         except ImportError as ie:  # pragma: no cover
             # this error generally means they have a bad workflow class or something
-            print("ERROR: Import error occurred on workflow file %s: %s" % (file_path, ie.msg))
+            print(f"ERROR: Import error occurred on workflow file {path}: {ie.msg}")
             return 1
         except SyntaxError as se:  # pragma: no cover
             # syntax errors are, well, syntax errors in the Python code itself
-            print("ERROR: Syntax error occurred on workflow file %s, line %s: %s" % (file_path, se.lineno, se.msg))
+            print(f"ERROR: Syntax error occurred on workflow file {path}, line {se.lineno}: {se.msg}")
             return 1
         except Exception as e:  # pragma: no cover
             # there's always the potential of some other unforeseen thing going on when a workflow is executed
-            print("ERROR: Unexpected error occurred trying to import workflow: %s: %a" % file_path, str(e))
+            print(f"ERROR: Unexpected error occurred trying to import workflow: {path}: {e}")
             return 1
 
         successful_classes = []
         for this_module in modules:
-            class_members = inspect.getmembers(this_module, inspect.isclass)
+            class_members = getmembers(this_module, isclass)
             for this_class in class_members:
                 this_class_name, this_class_type = this_class
-                self.printer(" INFO: Encountered class: \"" + this_class_name + "\", testing now...")
+                self.printer(f" INFO: Encountered class: \"{this_class_name}\", testing now...")
                 # so right here, we could check issubclass, but this would also match the BaseEPLaunchWorkflow1, which
                 # is imported in each workflow class.  No need to do that.  For now, I'm going to check the direct
                 # parent class of this class to verify we only get direct descendants.  We can evaluate this later.
@@ -68,57 +70,29 @@ class WorkflowTesting(object):
                 base_class_name = this_class_type.__bases__[0].__name__
                 workflow_base_class_name = 'BaseEPLaunchWorkflow1'
                 if num_inheritance == 1 and workflow_base_class_name in base_class_name:
-                    self.printer("   OK: Basic inheritance checks out OK for class: " + this_class_name)
+                    self.printer(f"   OK: Basic inheritance checks out OK for class: {this_class_name}")
                     successful_classes.append(this_class_name)
 
                     try:
                         workflow_instance = this_class_type()
                         self.printer("   OK: Instantiation of derived class works")
                     except Exception as e:  # pragma: no cover
-                        print("ERROR: Instantiation of derived class malfunctioning; reason: " + str(e))
+                        print(f"ERROR: Instantiation of derived class malfunctioning; reason: {e}")
                         return 1
 
-                    try:
-                        workflow_instance.name()
-                        self.printer("   OK: Overridden name() function execution works")
-                    except Exception as e:  # pragma: no cover
-                        print("ERROR: name() function not overridden, or malfunctioning; reason: " + str(e))
-                        return 1
+                    required_method_names = [
+                        "name", "description", "get_file_types",
+                        "get_output_suffixes", "get_interface_columns", "context"
+                    ]
 
-                    try:
-                        workflow_instance.description()
-                        self.printer("   OK: Overridden description() function execution works")
-                    except Exception as e:  # pragma: no cover
-                        print("ERROR: description() function not overridden, or malfunctioning; reason: " + str(e))
-                        return 1
-
-                    try:
-                        workflow_instance.get_file_types()
-                        self.printer("   OK: Overridden get_file_types() function execution works")
-                    except Exception as e:  # pragma: no cover
-                        print("ERROR: get_file_types() function not overridden, or malfunctioning; reason: " + str(e))
-                        return 1
-
-                    try:
-                        workflow_instance.get_output_suffixes()
-                        self.printer("   OK: Overridden get_output_suffixes() function execution works")
-                    except Exception as e:  # pragma: no cover
-                        print(f"ERROR: get_output_suffixes() function not overridden, or malfunctioning; reason: {e}")
-                        return 1
-
-                    try:
-                        workflow_instance.get_interface_columns()
-                        self.printer("   OK: Overridden get_interface_columns() function execution works")
-                    except Exception as e:  # pragma: no cover
-                        print(f"ERROR: get_interface_columns() function not overridden, or malfunctioning; reason: {e}")
-                        return 1
-
-                    try:
-                        workflow_instance.context()
-                        self.printer("   OK: Overridden context() function execution works")
-                    except Exception as e:  # pragma: no cover
-                        print("ERROR: context() function not overridden, or malfunctioning; reason: " + str(e))
-                        return 1
+                    for method in required_method_names:
+                        try:
+                            func = getattr(workflow_instance, method)
+                            func()
+                            self.printer(f"   OK: Overridden {method}() function execution works")
+                        except Exception as e:  # pragma: no cover
+                            print(f"ERROR: {method}() function not overridden, or malfunctioning; reason: {e}")
+                            return 1
 
                 else:
                     self.printer(" INFO: Inheritance does not check out, will continue with other classes in this file")
@@ -134,13 +108,13 @@ class WorkflowTesting(object):
             return 1
 
 
-def cli():  # pragma: no cover
-    if len(sys.argv) != 2:
+def cli() -> int:  # pragma: no cover
+    if len(argv) != 2:
         print("Bad call to workflow_tester.cli, give one command line argument, the full path to a workflow file")
         return 2
     else:
-        return WorkflowTesting(verbose=True).workflow_file_tester(sys.argv[1])
+        return WorkflowTesting(verbose=True).workflow_file_tester(argv[1])
 
 
 if __name__ == "__main__":  # pragma: no cover
-    sys.exit(cli())
+    exit(cli())

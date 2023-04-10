@@ -1,14 +1,15 @@
 from pathlib import Path
-import threading
+from threading import Thread
+from typing import Dict, Callable
 
 from eplaunch.workflows.base import EPLaunchWorkflowResponse1
 
 
-class WorkflowThread(threading.Thread):
+class WorkflowThread(Thread):
     """Worker Thread Class."""
 
     def __init__(self, identifier: str, workflow_instance,
-                 run_directory: Path, file_name, main_args, done_callback):
+                 run_directory: Path, file_name: str, main_args: Dict, done_callback: Callable):
         super().__init__()
         self._want_abort = 0
         self.id = identifier

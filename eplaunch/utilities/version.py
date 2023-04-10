@@ -2,7 +2,7 @@ import json
 import os
 from typing import Tuple
 
-# TODO: this built in eplaunch/utilities/version module should be removed, workflows should manage this themselves
+# TODO: this built-in eplaunch/utilities/version module should be removed, workflows should manage this themselves
 
 
 class Version:
