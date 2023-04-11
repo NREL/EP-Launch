@@ -9,7 +9,7 @@ from queue import Queue
 
 from subprocess import Popen
 from tkinter import Tk, PhotoImage, StringVar, Menu, DISABLED, OptionMenu, Frame, Label, Button, NSEW, \
-    SUNKEN, S, LEFT, BOTH, messagebox, END, BooleanVar, ACTIVE, LabelFrame, RIGHT, EW, PanedWindow, NS, filedialog
+    SUNKEN, S, LEFT, BOTH, messagebox, END, BooleanVar, ACTIVE, LabelFrame, RIGHT, EW, PanedWindow, NS, filedialog, ALL
 from tkinter.ttk import Combobox
 from typing import Dict, List, Optional, Tuple
 from uuid import uuid4
@@ -28,7 +28,7 @@ from eplaunch.interface.dialog_workflow_dirs import TkWorkflowsDialog
 from eplaunch.interface.dialog_output import TkOutputDialog
 from eplaunch.workflows.workflow_thread import WorkflowThread
 from eplaunch.utilities.cache import CacheFile
-from eplaunch.workflows.base import EPLaunchWorkflowResponse1
+from eplaunch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1
 from eplaunch.workflows.manager import WorkflowManager
 from eplaunch.workflows.workflow import Workflow
 
@@ -41,6 +41,7 @@ class EPLaunchWindow(Tk):
         super().__init__(className=NAME)
         # set the form title and icon, basic stuff
         self.title("EnergyPlus Launch")
+        self.option_add('*Dialog.msg.font', 'Helvetica 12')
         if system() == 'Darwin':
             self.icon_path = Path(__file__).resolve().parent.parent / 'icons' / 'icon.icns'
             if self.icon_path.exists():
@@ -76,7 +77,6 @@ class EPLaunchWindow(Tk):
 
         # initialize some dir/file selection variables
         self.previous_selected_directory: Optional[Path] = None
-        self.current_cache: Optional[CacheFile] = None
 
         # create a workflow manager, it will initialize (EnergyPlus) workflows in predetermined locations
         self.workflow_manager = WorkflowManager()
@@ -130,6 +130,11 @@ class EPLaunchWindow(Tk):
         self._tk_var_workflow_context = StringVar(value='<context>')
         self._tk_var_workflow_instance = StringVar(value='<instance>')
         self._tk_var_output_suffix = StringVar(value='<output')
+        self._tk_var_output_1 = StringVar(value='--')
+        self._tk_var_output_2 = StringVar(value='--')
+        self._tk_var_output_3 = StringVar(value='--')
+        self._tk_var_output_4 = StringVar(value='--')
+        self._tk_var_output_5 = StringVar(value='--')
         self._tk_var_status_dir = StringVar(value="Selected dir")
         self._tk_var_status_workflow = StringVar(value="Selected workflow")
         self._tk_var_status_message = StringVar(value="Status Message")
@@ -163,7 +168,8 @@ class EPLaunchWindow(Tk):
         menubar = Menu(self)
 
         menu_file = Menu(menubar, tearoff=False)
-        menu_file.add_command(label="Run Current Workflow on Selection", command=self._run_workflow)
+        menu_file.add_command(label="Run Current Workflow on Selection", command=self._run_workflow_on_selection)
+        menu_file.add_command(label="Run Current Workflow on Current Group", command=self._run_workflow_on_group)
         menu_file.add_command(label="Quit", command=self.window_close)
         menubar.add_cascade(label="File", menu=menu_file)
 
@@ -176,28 +182,24 @@ class EPLaunchWindow(Tk):
         menu_nav.add_cascade(label="Favorites", menu=self.menu_nav_favorites)
         menu_nav.add_command(label="Add Current Folder to Favorites", command=self.add_folder_to_favorites)
         menu_nav.add_command(label="Remove Current Folder from Favorites", command=self.remove_folder_from_favorites)
-        menu_nav.add_separator()
-        self.menu_nav_group = Menu(menu_nav, tearoff=False)
-        menu_nav.add_cascade(label="Current Group", menu=self.menu_nav_group)
-        menu_nav.add_command(label="Clear Current Group", command=self._clear_group)
-        menu_nav.add_command(label="Load new Group file...", command=self._load_new_group_file)
-        menu_nav.add_command(label="Save Current Group to file...", command=self._save_group_file)
-        menu_nav.add_command(
-            label="Add current folder to current group", command=self._add_current_dir_to_group
+        menubar.add_cascade(label="Navigation", menu=menu_nav)
+
+        menu_group = Menu(menubar, tearoff=False)
+        self.menu_group_current = Menu(menu_group, tearoff=False)
+        menu_group.add_cascade(label="Current Group", menu=self.menu_group_current)
+        menu_group.add_command(label="Clear Current Group", command=self._clear_group)
+        menu_group.add_command(label="Load new Group file...", command=self._load_new_group_file)
+        menu_group.add_command(label="Save Current Group to file...", command=self._save_group_file)
+        menu_group.add_command(
+            label="Add selected files to current group", command=self._add_current_files_to_group
         )
-        menu_nav.add_command(
-            label="Add current file selection to current group", command=self._add_current_files_to_group
+        menu_group.add_command(
+            label="Remove selected files from current group", command=self._remove_current_files_from_group
         )
-        menu_nav.add_command(
-            label="Remove current folder from current group", command=self._remove_current_dir_from_group
-        )
-        menu_nav.add_command(
-            label="Remove current file selection from current group", command=self._remove_current_files_from_group
-        )
-        menu_nav.add_command(
+        menu_group.add_command(
             label="Cycle through current group entries", command=self._cycle_through_group
         )
-        menubar.add_cascade(label="Navigation", menu=menu_nav)
+        menubar.add_cascade(label="Group", menu=menu_group)
 
         menu_settings = Menu(menubar, tearoff=False)
         menu_settings.add_command(label="Workflow Directories", command=self._open_workflow_dir_dialog)
@@ -223,47 +225,81 @@ class EPLaunchWindow(Tk):
 
     # noinspection SqlNoDataSourceInspection
     def _build_top_icon_bar(self, container: Frame):
-        lf = LabelFrame(container, text="Workflow Operations")
+        lf = LabelFrame(container, text="Workflow Selection")
         Label(lf, text="Context:", justify=RIGHT).grid(row=0, column=0, **self.pad)
         self.option_workflow_context = OptionMenu(lf, self._tk_var_workflow_context, '<context>')
         self.option_workflow_context.grid(row=0, column=1, sticky=EW, **self.pad)
         Label(lf, text="Workflow: ", justify=RIGHT).grid(row=1, column=0, **self.pad)
         self.option_workflow_instance = OptionMenu(lf, self._tk_var_workflow_instance, '<instance>')
         self.option_workflow_instance.grid(row=1, column=1, sticky=EW, **self.pad)
-        Button(
-            lf, text=u"\U000025B6 Run Workflow on Current File(s)", command=self._run_workflow
-        ).grid(row=2, column=0, columnspan=2, sticky=EW, **self.pad)
-        lf.grid(row=0, column=0, **self.pad)
+        lf.grid(row=0, column=0, sticky=NS, **self.pad)
 
-        lf = LabelFrame(container, text="Weather")
-        Label(lf, text="Set Weather from Recent or from File").grid(row=0, column=0, columnspan=3, **self.pad)
-        Label(lf, text="Recent: ", justify=RIGHT).grid(row=1, column=0, **self.pad)
+        lf = LabelFrame(container, text="Workflow Execution")
+        Button(
+            lf, text=u"\U000025B6 Run Workflow on Current File(s)", command=self._run_workflow_on_selection
+        ).grid(row=0, column=0, sticky=EW, **self.pad)
+        Button(
+            lf, text=u"\U000025B6 Run Workflow on Current Group", command=self._run_workflow_on_group
+        ).grid(row=1, column=0, sticky=EW, **self.pad)
+        lf.grid(row=0, column=1, sticky=NS, **self.pad)
+
+        lf = LabelFrame(container, text="Weather Selection")
+        Label(lf, text="Recent: ", justify=RIGHT).grid(row=0, column=0, **self.pad)
         self.option_weather_recent = Combobox(lf, textvariable=self._tk_var_weather_recent)
-        self.option_weather_recent.grid(row=1, column=1, **self.pad)
+        self.option_weather_recent.grid(row=0, column=1, **self.pad)
         self.option_weather_recent['state'] = 'readonly'
         self.button_weather_set = Button(lf, text=u"\U00002713 Set", command=self._set_weather_from_recent)
-        self.button_weather_set.grid(row=1, column=2, **self.pad)
+        self.button_weather_set.grid(row=0, column=2, **self.pad)
         self.button_weather_select = Button(
             lf, text=u"\U0001f325 Select Weather From Disk...", command=self._open_weather_dialog
         )
-        self.button_weather_select.grid(row=2, column=0, columnspan=3, sticky=EW, **self.pad)
-        lf.grid(row=0, column=1, sticky=NS, **self.pad)
+        self.button_weather_select.grid(row=1, column=0, columnspan=3, sticky=EW, **self.pad)
+        lf.grid(row=0, column=2, sticky=NS, **self.pad)
 
-        lf = LabelFrame(container, text="File/Folder Actions")
-        Label(lf, text="Open Output: ", justify=RIGHT).grid(row=0, column=0, **self.pad)
-        self.option_workflow_outputs = Combobox(lf, textvariable=self._tk_var_output_suffix)
-        self.option_workflow_outputs.grid(row=0, column=1, **self.pad)
-        self.option_workflow_outputs['state'] = 'readonly'
-        self.button_open_output_file = Button(lf, text=u"\U0001f325 Open", command=self._open_output_file)
-        self.button_open_output_file.grid(row=0, column=2, **self.pad)
+        lf = LabelFrame(container, text="Quicklinks")
         self.button_open_in_text = Button(
             lf, text=u"\U0001F5B9 Open Selected File in Text Editor", command=self._open_text_editor, state=DISABLED
         )
-        self.button_open_in_text.grid(row=1, column=0, columnspan=3, sticky=EW, **self.pad)
+        self.button_open_in_text.grid(row=0, column=0, columnspan=3, sticky=EW, **self.pad)
         Button(
             lf, text=u"\U0001F5C0 Open Dir in File Browser", command=self._open_file_browser
-        ).grid(row=2, column=0, columnspan=3, sticky=EW, **self.pad)
-        lf.grid(row=0, column=2, **self.pad)
+        ).grid(row=1, column=0, columnspan=3, sticky=EW, **self.pad)
+        lf.grid(row=0, column=3, sticky=NS, **self.pad)
+
+        lf = LabelFrame(container, text="Open Outputs")
+        sub_frame = Frame(lf)
+        self.button_open_output_1 = Button(
+            sub_frame, textvariable=self._tk_var_output_1, command=self._open_output_1, state=DISABLED
+        )
+        self.button_open_output_1.grid(row=0, column=0, sticky=EW, **self.pad)
+        self.button_open_output_2 = Button(
+            sub_frame, textvariable=self._tk_var_output_2, command=self._open_output_2, state=DISABLED
+        )
+        self.button_open_output_2.grid(row=0, column=1, sticky=EW, **self.pad)
+        self.button_open_output_3 = Button(
+            sub_frame, textvariable=self._tk_var_output_3, command=self._open_output_3, state=DISABLED
+        )
+        self.button_open_output_3.grid(row=0, column=2, sticky=EW, **self.pad)
+        self.button_open_output_4 = Button(
+            sub_frame, textvariable=self._tk_var_output_4, command=self._open_output_4, state=DISABLED
+        )
+        self.button_open_output_4.grid(row=0, column=3, sticky=EW, **self.pad)
+        self.button_open_output_5 = Button(
+            sub_frame, textvariable=self._tk_var_output_5, command=self._open_output_5, state=DISABLED
+        )
+        self.button_open_output_5.grid(row=0, column=4, sticky=EW, **self.pad)
+        sub_frame.grid_columnconfigure(ALL, weight=1)
+        sub_frame.grid_rowconfigure(ALL, weight=1)
+        sub_frame.grid(row=0, column=0, columnspan=3, sticky=EW, **self.pad)
+        Label(lf, text="Full List: ", justify=RIGHT).grid(row=1, column=0, **self.pad)
+        self.option_workflow_outputs = Combobox(lf, textvariable=self._tk_var_output_suffix)
+        self.option_workflow_outputs.grid(row=1, column=1, **self.pad)
+        self.option_workflow_outputs['state'] = 'readonly'
+        self.button_open_output_file = Button(lf, text=u"\U0001f325 Open", command=self._open_output_file)
+        self.button_open_output_file.grid(row=1, column=2, **self.pad)
+        lf.grid_columnconfigure(ALL, weight=1)
+        lf.grid_rowconfigure(ALL, weight=1)
+        lf.grid(row=0, column=4, sticky=NS, **self.pad)
 
     def _build_listings(self, container: Frame):
         pw = PanedWindow(container)  # default horizontal
@@ -352,7 +388,7 @@ class EPLaunchWindow(Tk):
         elif event.keysym == 'w' and mod_control & event.state:
             self._open_weather_dialog()
         elif event.keysym == 'r' and mod_control & event.state:
-            self._run_workflow()
+            self._run_workflow_on_selection()
         elif event.keysym == 'm' and mod_control & event.state:
             self._cycle_through_group()
         elif event.keysym == 'z' and mod_control & event.state:
@@ -370,7 +406,7 @@ class EPLaunchWindow(Tk):
         group_file_path = filedialog.askopenfilename(
             title="Load a new EPLaunch Group File",
             initialdir=self.conf.directory,
-            filetypes=(("EP-Launch Group Files", "*.epg"),)
+            filetypes=(("EP-Launch Group Files", "*.epg3"),)
         )
         if not group_file_path:
             return
@@ -386,7 +422,7 @@ class EPLaunchWindow(Tk):
         group_file_path = filedialog.asksaveasfilename(
             title="Save EPLaunch Group File",
             initialdir=self.conf.directory,
-            filetypes=(("EP-Launch Group Files", "*.epg"),)
+            filetypes=(("EP-Launch Group Files", "*.epg3"),)
         )
         if not group_file_path:
             return
@@ -396,13 +432,6 @@ class EPLaunchWindow(Tk):
         except Exception as e:  # could be permission or just about anything
             messagebox.showerror("Error", f"Could not save group file, error message:\n{str(e)}")
             return
-
-    def _add_current_dir_to_group(self):
-        if self.conf.directory in self.conf.group_locations:
-            messagebox.showwarning("Warning", "This folder already exists in this group, skipping")
-            return
-        self.conf.group_locations.append(self.conf.directory)
-        self._rebuild_group_menu()
 
     def _add_current_files_to_group(self):
         if len(self.conf.file_selection) == 0:
@@ -417,13 +446,6 @@ class EPLaunchWindow(Tk):
                 self.conf.group_locations.append(potential_path)
         if issue_warning:
             messagebox.showwarning("Warning", "At least one file path was already in the group and skipped")
-        self._rebuild_group_menu()
-
-    def _remove_current_dir_from_group(self):
-        if self.conf.directory not in self.conf.group_locations:
-            messagebox.showwarning("Warning", "This folder isn't in the current group, not doing anything")
-            return
-        self.conf.group_locations.remove(self.conf.directory)
         self._rebuild_group_menu()
 
     def _remove_current_files_from_group(self):
@@ -449,9 +471,9 @@ class EPLaunchWindow(Tk):
 
     def _rebuild_group_menu(self):
         self.group_cycle_next_index = 0
-        self.menu_nav_group.delete(0, END)
+        self.menu_group_current.delete(0, END)
         for index, entry in enumerate(self.conf.group_locations):
-            self.menu_nav_group.add_command(
+            self.menu_group_current.add_command(
                 label=str(entry), command=lambda i=index: self._handle_group_selection(i)
             )
 
@@ -460,11 +482,10 @@ class EPLaunchWindow(Tk):
         if not entry.exists():
             messagebox.showerror("Error", f"Could not navigate to group entry, it doesn't exist: {entry}")
             return
-        self.conf.directory = entry if entry.is_dir() else entry.parent
+        self.conf.directory = entry.parent
         self.dir_tree.dir_list.refresh_listing(self.conf.directory)
         self._update_file_list()
-        if entry.is_file():
-            self.file_list.tree.try_to_reselect([entry.name])
+        self.file_list.tree.try_to_reselect([entry.name])
 
     # endregion
 
@@ -560,7 +581,6 @@ class EPLaunchWindow(Tk):
         if len(self.conf.folders_recent) > 0 and self.conf.folders_recent[0] != selected_path:
             self.conf.folders_recent.appendleft(selected_path)
         self._rebuild_recent_folder_menu()
-        self.current_cache = CacheFile(self.conf.directory)
         try:
             self._update_status_bar(f"Selected directory: {self.conf.directory}")
             self._update_file_list()
@@ -592,7 +612,8 @@ class EPLaunchWindow(Tk):
         workflow_file_patterns = []
         workflow_columns = []
         if self.workflow_manager.current_workflow:
-            files_in_current_workflow = self.current_cache.get_files_for_workflow(
+            cache = CacheFile(self.conf.directory)
+            files_in_current_workflow = cache.get_files_for_workflow(
                 self.workflow_manager.current_workflow.name
             )
             workflow_file_patterns = self.workflow_manager.current_workflow.file_types
@@ -707,7 +728,8 @@ class EPLaunchWindow(Tk):
         current_index = self.option_weather_recent.current()
         selected_recent_weather_string = str(self.conf.weathers_recent[current_index])
         for selected_file_name in self.conf.file_selection:
-            self.current_cache.add_config(
+            cache = CacheFile(self.conf.directory)
+            cache.add_config(
                 self.workflow_manager.current_workflow.name,
                 selected_file_name,
                 {'weather': selected_recent_weather_string}
@@ -729,7 +751,8 @@ class EPLaunchWindow(Tk):
                 self.conf.weathers_recent.appendleft(weather_file_to_use)
                 self._repopulate_recent_weather_list(weather_file_to_use)
         for selected_file_name in self.conf.file_selection:
-            self.current_cache.add_config(
+            workflow_directory_cache = CacheFile(self.conf.directory)
+            workflow_directory_cache.add_config(
                 self.workflow_manager.current_workflow.name,
                 selected_file_name,
                 {'weather': str(weather_file_to_use)}
@@ -814,22 +837,35 @@ class EPLaunchWindow(Tk):
         self._update_file_list()
 
     def _repopulate_output_suffix_options(self):
-        suffixes = sorted(self.workflow_manager.current_workflow.output_suffixes)
-        combobox_output_enabled = 'readonly' if len(suffixes) > 0 else 'disabled'
-        output_enabled = ACTIVE if len(suffixes) > 0 else DISABLED
+        suffixes = self.workflow_manager.current_workflow.output_suffixes
+        sorted_suffixes = sorted(suffixes)
+        combobox_output_enabled = 'readonly' if len(sorted_suffixes) > 0 else 'disabled'
+        output_enabled = ACTIVE if len(sorted_suffixes) > 0 else DISABLED
         self.option_workflow_outputs.configure(state=combobox_output_enabled)
         self.button_open_output_file.configure(state=output_enabled)
 
         # rebuild the option menu if applicable
         current_selection = self._tk_var_output_suffix.get()
         if output_enabled == ACTIVE:
-            self.option_workflow_outputs['values'] = suffixes
-            if current_selection not in suffixes:
-                self._tk_var_output_suffix.set(suffixes[0])
+            self.option_workflow_outputs['values'] = sorted_suffixes
+            if current_selection not in sorted_suffixes:
+                self._tk_var_output_suffix.set(sorted_suffixes[0])
         else:
             self.option_workflow_outputs['values'] = []
             self._tk_var_output_suffix.set('')
         self.option_workflow_outputs.selection_clear()
+
+        # update the output file buttons too
+        self.button_open_output_1.configure(state=ACTIVE if len(suffixes) > 0 else DISABLED)
+        self._tk_var_output_1.set(suffixes[0] if len(suffixes) > 0 else '--')
+        self.button_open_output_2.configure(state=ACTIVE if len(suffixes) > 1 else DISABLED)
+        self._tk_var_output_2.set(suffixes[1] if len(suffixes) > 1 else '--')
+        self.button_open_output_3.configure(state=ACTIVE if len(suffixes) > 2 else DISABLED)
+        self._tk_var_output_3.set(suffixes[2] if len(suffixes) > 2 else '--')
+        self.button_open_output_4.configure(state=ACTIVE if len(suffixes) > 3 else DISABLED)
+        self._tk_var_output_4.set(suffixes[3] if len(suffixes) > 3 else '--')
+        self.button_open_output_5.configure(state=ACTIVE if len(suffixes) > 4 else DISABLED)
+        self._tk_var_output_5.set(suffixes[4] if len(suffixes) > 4 else '--')
 
     def _open_workflow_dir_dialog(self):
         if len(self.workflow_manager.threads) > 0:
@@ -854,33 +890,41 @@ class EPLaunchWindow(Tk):
         self._repopulate_workflow_context_menu()
         self._repopulate_workflow_instance_menu()
 
-    def _run_workflow(self) -> None:
-        if self.conf.directory and self.conf.file_selection and self.workflow_manager.current_workflow:
-            pass
-        else:
-            messagebox.showerror(
-                title='Selection Error', message='ERROR: Make sure you select a workflow, directory and a file'
-            )
-            return
-
-        files_in_current_workflow = self.current_cache.get_files_for_workflow(
-            self.workflow_manager.current_workflow.name
-        )
+    def get_or_set_weather_for_file(self,
+                                    cur_workflow: Optional[BaseEPLaunchWorkflow1],
+                                    directory: Path,
+                                    selected_file: str,
+                                    backup_weather_file_to_use: str,
+                                    ) -> Tuple[bool, str, str]:
+        """
+        cur_workflow is "None" at init time, so it is marked technically optional
+        """
         weather_file_to_use: Optional[str] = None
-        if self.workflow_manager.current_workflow.uses_weather:
-            for selected_file_name in self.conf.file_selection:
-                if selected_file_name in files_in_current_workflow:
-                    cached_file_info = files_in_current_workflow[selected_file_name]
-                    if CacheFile.ParametersKey in cached_file_info:
-                        if CacheFile.WeatherFileKey in cached_file_info[CacheFile.ParametersKey]:
-                            weather_file_to_use = cached_file_info[CacheFile.ParametersKey][CacheFile.WeatherFileKey]
-            if not weather_file_to_use:
+        # if we find this file in the current folder cache
+        cache = CacheFile(directory)
+        files_in_current_workflow = cache.get_files_for_workflow(cur_workflow.name)
+        if selected_file in files_in_current_workflow:
+            # and if we find a weather file key for that file, for that workflow, just use the weather file
+            cached_file_info = files_in_current_workflow[selected_file]
+            if CacheFile.ParametersKey in cached_file_info:
+                if CacheFile.WeatherFileKey in cached_file_info[CacheFile.ParametersKey]:
+                    weather_file_to_use = cached_file_info[CacheFile.ParametersKey][CacheFile.WeatherFileKey]
+        # if we didn't find a weather file anywhere, we need to ask
+        if not weather_file_to_use:
+            # since we could be asking for many files, we don't want to ask for each
+            # get a backup file to use only once, and apply that to any missing ones as needed
+            if backup_weather_file_to_use:
+                weather_file_to_use = backup_weather_file_to_use
+            else:
+                # if we need weather, didn't find one in the cache, and didn't have a backup, ask for one now
                 recent_files = list(self.conf.weathers_recent)
                 favorite_files = self.conf.weathers_favorite
-                w = TkWeatherDialog(self, recent_files, favorite_files)
+                w = TkWeatherDialog(
+                    self, recent_files, favorite_files, "*At least one file is missing a weather configuration*"
+                )
                 self.wait_window(w)
                 if w.exit_code == TkWeatherDialog.CLOSE_SIGNAL_CANCEL:
-                    return  # might need to do some other clean up
+                    return False, '', ''
                 else:  # a valid response was encountered
                     if not w.selected_weather_file:
                         weather_file_to_use = self.dd_only_string
@@ -888,43 +932,78 @@ class EPLaunchWindow(Tk):
                         weather_file_to_use = str(w.selected_weather_file)
                         if w.selected_weather_file not in self.conf.weathers_recent:
                             self.conf.weathers_recent.appendleft(w.selected_weather_file)
-            for selected_file_name in self.conf.file_selection:
-                self.current_cache.add_config(
-                    self.workflow_manager.current_workflow.name,
-                    selected_file_name,
-                    {'weather': weather_file_to_use}
-                )
-            self._update_file_list()
+            # save the current selected one as the new backup for subsequent files
+            backup_weather_file_to_use = weather_file_to_use
+        # add the weather configuration to the cache regardless of how it was retrieved, and update file listing
+        cache.add_config(cur_workflow.name, selected_file, {'weather': weather_file_to_use})
+        return True, weather_file_to_use, backup_weather_file_to_use
 
-        sel_dir = self.conf.directory
-        cur_wf = self.workflow_manager.current_workflow.name
-        for selected_file_name in self.conf.file_selection:
+    def _run_workflow_on_selection(self) -> None:
+        cur_files = self.conf.file_selection
+        file_paths = [self.conf.directory / f for f in cur_files]
+        self._run_workflow_on_list_of_file_paths(file_paths)
+
+    def _run_workflow_on_group(self) -> None:
+        file_paths = self.conf.group_locations
+        self._run_workflow_on_list_of_file_paths(file_paths)
+
+    def _run_workflow_on_list_of_file_paths(self, file_paths: List[Path]):
+
+        # error out early
+        if self.conf.directory and self.conf.file_selection and self.workflow_manager.current_workflow:
+            pass
+        else:
+            messagebox.showerror(title='Selection', message='ERROR: Select a workflow, directory and a file')
+            return
+
+        already_running_instances = []
+        cur_workflow = self.workflow_manager.current_workflow
+        w_name = cur_workflow.name
+        backup_weather_file_to_use: Optional[str] = None
+
+        # loop over all the selected files and try to run the current workflow on each of them
+        for path in file_paths:
+            # if the current workflow uses weather, we need to determine what to pass into it
+            weather_file_to_use: Optional[str] = None
+            if cur_workflow.uses_weather:
+                success, weather_file_to_use, backup_weather_file_to_use = self.get_or_set_weather_for_file(
+                    cur_workflow, path.parent, path.name, backup_weather_file_to_use
+                )
+                if not success:
+                    return  # TODO: probably shouldn't just return blindly here
+            this_wea = '' if weather_file_to_use == self.dd_only_string else weather_file_to_use
+
+            # now we actually need to run this current file
+            this_file_good_to_go = True
+            # first check to see if the current file/dir/workflow combination is already running
             for thread_id, t in self.workflow_manager.threads.items():
-                if t.file_name == selected_file_name and t.run_directory == sel_dir and \
-                        t.workflow_instance.name() == cur_wf:
-                    # self.show_error_message('ERROR: This workflow/dir/file combination is already running')
-                    return
+                t_path = Path(t.run_directory) / t.file_name
+                if t_path == path and t.workflow_instance.name() == w_name:
+                    # save it in a list and wait to issue error message until the end
+                    already_running_instances.append(f"{w_name}: {path}")
+                    this_file_good_to_go = False
+                    break
+            # if this file isn't good, just continue the file loop
+            if not this_file_good_to_go:
+                continue
+            # otherwise, continue to instantiate a workflow thread instance to let it run
             new_uuid = str(uuid4())
-            self._update_status_bar('Starting workflow')
-            new_instance = self.workflow_manager.current_workflow.workflow_class()
-            new_instance.register_standard_output_callback(
-                new_uuid,
-                self._callback_workflow_stdout
-            )
-            this_weather = ''
-            if weather_file_to_use != self.dd_only_string:
-                this_weather = weather_file_to_use
+            new_instance = cur_workflow.workflow_class()
+            new_instance.register_standard_output_callback(new_uuid, self._callback_workflow_stdout)
             self.workflow_manager.threads[new_uuid] = WorkflowThread(
-                new_uuid, new_instance, self.conf.directory, selected_file_name,
-                {
-                    'weather': this_weather,
-                    'workflow location': self.workflow_manager.current_workflow.workflow_directory
-                },
+                new_uuid, new_instance, path.parent, path.name,
+                {'weather': this_wea, 'workflow location': cur_workflow.workflow_directory},
                 self._callback_workflow_done
             )
             self.output_dialogs[new_uuid] = self._create_output_dialog(new_uuid)
             self.output_dialogs[new_uuid].add_output("*** STARTING WORKFLOW ***")
 
+        # emit an error dialog if needed
+        if len(already_running_instances) > 0:
+            out = '\n'.join(already_running_instances)
+            messagebox.showerror("Run Error", f"Some configurations were already running, and were skipped: {out}")
+
+        self._update_file_list()  # do one update once all threads are spawned to update for weather selection, etc.
         self._update_status_bar("Currently %s processes running" % len(self.workflow_manager.threads))
 
     def _create_output_dialog(self, workflow_id: str) -> TkOutputDialog:
@@ -1079,28 +1158,57 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         """ % VERSION
         self.generic_dialogs.display(self, "About EP-Launch", text)
 
-    def _open_output_file(self):
+    def _open_output_file_generic(self, suffix_to_open: str):
         if len(self.conf.file_selection) > 2:
             message = """More than 2 files were selected when choosing to open workflow outputs.
-This could generate many output windows and is usually not intentional.  Select up to 2 input files."""
+        This could generate many output windows and is usually not intentional.  Select up to 2 input files."""
             messagebox.showerror("File Selection Issue", message)
             return
         for f in self.conf.file_selection:
             original_path = self.conf.directory / f
-            new_path_str = str(original_path.with_suffix('')) + self._tk_var_output_suffix.get()
-            new_path = Path(new_path_str)
-            if not new_path.exists():
+            filename_no_ext = original_path.with_suffix('').name
+            new_path = original_path.with_suffix(suffix_to_open)
+            new_path_str = str(new_path)
+            eplus_sub_dir = f"EPLaunchRun_{filename_no_ext}"
+            eplus_specific_output_path = self.conf.directory / eplus_sub_dir / f"{filename_no_ext}{suffix_to_open}"
+            eplus_specific_output_file = str(eplus_specific_output_path)
+            if new_path.exists():
+                if suffix_to_open in self.conf.viewer_overrides:
+                    if self.conf.viewer_overrides[suffix_to_open] is not None:
+                        # then the viewer override was found, and not None, so use it
+                        Popen([str(self.conf.viewer_overrides[suffix_to_open]), new_path_str])
+                # if we make it this far, we didn't open it with a custom viewer, try to use the default
+                self._open_file_or_dir_with_default(new_path)
+            elif eplus_specific_output_path.exists():
+                if suffix_to_open in self.conf.viewer_overrides:
+                    if self.conf.viewer_overrides[suffix_to_open] is not None:
+                        # then the viewer override was found, and not None, so use it
+                        Popen([str(self.conf.viewer_overrides[suffix_to_open]), eplus_specific_output_file])
+                # if we make it this far, we didn't open it with a custom viewer, try to use the default
+                self._open_file_or_dir_with_default(eplus_specific_output_path)
+            else:
                 message = """At least some of the output files were not found.
 Make sure that the workflow has run on the selected input file(s), and that the runs
 actually generated the requested outputs.  Any found output files are being opened now."""
                 messagebox.showwarning("Missing Output Files", message)
-            if self._tk_var_output_suffix.get() in self.conf.viewer_overrides:
-                if self.conf.viewer_overrides[self._tk_var_output_suffix.get()] is not None:
-                    # then the viewer override was found, and not None, so use it
-                    Popen([str(self.conf.viewer_overrides[self._tk_var_output_suffix.get()]), new_path_str])
-                    return
-            # if we make it this far, we didn't open it with a custom viewer, try to use the default
-            self._open_file_or_dir_with_default(new_path)
+
+    def _open_output_file(self):
+        self._open_output_file_generic(self._tk_var_output_suffix.get())
+
+    def _open_output_1(self):
+        self._open_output_file_generic(self._tk_var_output_1.get())
+
+    def _open_output_2(self):
+        self._open_output_file_generic(self._tk_var_output_2.get())
+
+    def _open_output_3(self):
+        self._open_output_file_generic(self._tk_var_output_3.get())
+
+    def _open_output_4(self):
+        self._open_output_file_generic(self._tk_var_output_4.get())
+
+    def _open_output_5(self):
+        self._open_output_file_generic(self._tk_var_output_5.get())
 
     @staticmethod
     def _open_file_or_dir_with_default(full_path_obj: Path) -> None:

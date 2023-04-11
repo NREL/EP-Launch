@@ -1,5 +1,5 @@
 from pathlib import Path
-from subprocess import Popen, PIPE, CalledProcessError
+from subprocess import Popen, PIPE, STDOUT, CalledProcessError
 from typing import Callable, Dict, List, Optional
 
 
@@ -98,7 +98,9 @@ class BaseEPLaunchWorkflow1:
         # with Popen(["ifconfig"], stdout=PIPE) as proc:
         #     log.write(proc.stdout.read())
         # could be a useful change later
-        self._process = Popen(command_line_tokens, cwd=working_directory, stdout=PIPE, universal_newlines=True)
+        self._process = Popen(
+            command_line_tokens, cwd=working_directory, stdout=PIPE, stderr=STDOUT, universal_newlines=True
+        )
         for stdout_line in iter(self._process.stdout.readline, ""):
             yield stdout_line.strip()
         self._process.stdout.close()

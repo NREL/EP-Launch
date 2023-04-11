@@ -1,6 +1,6 @@
 from pathlib import Path
 from tkinter import Tk, Toplevel, Frame, LabelFrame, StringVar, Radiobutton, TOP, W, Button, EW, NSEW, Entry, \
-    ALL, ACTIVE, DISABLED, filedialog, Label, OptionMenu, E, messagebox
+    ALL, ACTIVE, DISABLED, filedialog, Label, OptionMenu, E, messagebox, CENTER
 from typing import List, Optional
 
 
@@ -10,8 +10,9 @@ class TkWeatherDialog(Toplevel):
     WEATHER_TYPE_DD = "DD"
     WEATHER_TYPE_EPW = "EPW"
 
-    def __init__(self, parent_window, recent_files: List[Path], favorite_files: List[Path]):
+    def __init__(self, parent_window, recent_files: List[Path], favorite_files: List[Path], text: Optional[str] = None):
         super().__init__()
+        self.alt_text = text
         self.title("Choose Weather Configuration")
         # assume cancel to allow for closing the dialog with the X
         self.exit_code = self.CLOSE_SIGNAL_CANCEL
@@ -32,6 +33,8 @@ class TkWeatherDialog(Toplevel):
 
     def _build_gui(self, recent_files: List[Path], favorite_files: List[Path]):
         lf = LabelFrame(self, text="Choose a Weather File Configuration Option")
+        if self.alt_text:
+            Label(lf, text=self.alt_text).pack(side=TOP, anchor=CENTER, padx=3, pady=3)
         Radiobutton(
             lf, text="Design Days (Use Design Days Only; No Weather File)",
             value=self.WEATHER_TYPE_DD, variable=self._tk_var_weather_type
