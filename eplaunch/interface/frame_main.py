@@ -172,7 +172,7 @@ class EPLaunchWindow(Tk):
         menu_file = Menu(menubar, tearoff=False)
         menu_file.add_command(label="Run Current Workflow on Selection", command=self._run_workflow_on_selection)
         menu_file.add_command(label="Run Current Workflow on Current Group", command=self._run_workflow_on_group)
-        menu_file.add_command(label="Quit", command=self.window_close)
+        menu_file.add_command(label="Quit", command=self._window_close)
         menubar.add_cascade(label="File", menu=menu_file)
 
         menu_nav = Menu(menubar, tearoff=False)
@@ -182,8 +182,8 @@ class EPLaunchWindow(Tk):
         menu_nav.add_separator()
         self.menu_nav_favorites = Menu(menu_nav, tearoff=False)
         menu_nav.add_cascade(label="Favorites", menu=self.menu_nav_favorites)
-        menu_nav.add_command(label="Add Current Folder to Favorites", command=self.add_folder_to_favorites)
-        menu_nav.add_command(label="Remove Current Folder from Favorites", command=self.remove_folder_from_favorites)
+        menu_nav.add_command(label="Add Current Folder to Favorites", command=self._add_folder_to_favorites)
+        menu_nav.add_command(label="Remove Current Folder from Favorites", command=self._remove_folder_from_favorites)
         menubar.add_cascade(label="Navigation", menu=menu_nav)
 
         menu_group = Menu(menubar, tearoff=False)
@@ -339,10 +339,10 @@ class EPLaunchWindow(Tk):
 
     def run(self):
         """Main entry point to register a close handler and execute the app main loop"""
-        self.protocol('WM_DELETE_WINDOW', self.window_close)
+        self.protocol('WM_DELETE_WINDOW', self._window_close)
         self.mainloop()
 
-    def window_close(self, *_):
+    def _window_close(self, *_):
         # block for running threads
         if len(self.workflow_manager.threads) > 0:
             msg = 'Program closing, but there are threads running; would you like to kill the threads and close?'
@@ -509,14 +509,14 @@ class EPLaunchWindow(Tk):
         # ask the file listing widget to update columns
         self.file_list.tree.set_new_columns(column_list)
 
-    def add_folder_to_favorites(self):
+    def _add_folder_to_favorites(self):
         if self.conf.directory in self.conf.folders_favorite:
             messagebox.showwarning("Favorite Selection", "Folder already exists in favorites, skipping")
             return
         self.conf.folders_favorite.append(self.conf.directory)
         self._rebuild_favorite_folder_menu()
 
-    def remove_folder_from_favorites(self):
+    def _remove_folder_from_favorites(self):
         if self.conf.directory not in self.conf.folders_favorite:
             messagebox.showwarning("Favorite Selection", "Folder is not in favorites, skipping")
             return
@@ -702,7 +702,7 @@ class EPLaunchWindow(Tk):
 
     # region weather operations
 
-    def set_weather_widget_state(self, weather_enabled) -> None:
+    def _set_weather_widget_state(self, weather_enabled) -> None:
         self.option_weather_recent.configure(state=weather_enabled)
         self.button_weather_select.configure(state=weather_enabled)
         self.button_weather_set.configure(state=weather_enabled)
@@ -804,16 +804,22 @@ class EPLaunchWindow(Tk):
         self.option_workflow_instance['menu'].delete(0, END)
         # add in all the instances, registering a lambda that will set the tk var and refresh the file list as needed
         just_names = []
+        energyplus_ip_workflow_name = None
         for w in self.available_workflows:
             workflow_name = w.name
+            workflow_name_upper = workflow_name.upper()
+            if 'ENERGYPLUS' in workflow_name_upper and 'IP' in workflow_name_upper:
+                energyplus_ip_workflow_name = workflow_name
             just_names.append(workflow_name)
             self.option_workflow_instance['menu'].add_command(
                 label=workflow_name,
                 command=lambda n=workflow_name: self._handler_workflow_instance_option_changed(n)
             )
-        # call the handler method with either the saved instance name, or the top one in the list
+        # call the handler method with either the saved instance name, or an E+ one, or the top one in the list
         if desired_selected_workflow_name in just_names:
             self._handler_workflow_instance_option_changed(desired_selected_workflow_name)
+        elif energyplus_ip_workflow_name:
+            self._handler_workflow_instance_option_changed(energyplus_ip_workflow_name)
         else:
             self._handler_workflow_instance_option_changed(just_names[0])
 
@@ -833,7 +839,7 @@ class EPLaunchWindow(Tk):
         # assign the current workflow instance in the workflow manager
         self.workflow_manager.current_workflow = new_workflow
         # update the weather buttons accordingly depending on if the workflow uses weather inputs
-        self.set_weather_widget_state(ACTIVE if new_workflow.uses_weather else DISABLED)
+        self._set_weather_widget_state(ACTIVE if new_workflow.uses_weather else DISABLED)
         # clear the output menu entirely, and set status conditionally
         self._repopulate_output_suffix_options()
         # now that the workflow has been set, repopulate the file list columns and the file list itself
@@ -894,12 +900,12 @@ class EPLaunchWindow(Tk):
         self._repopulate_workflow_context_menu()
         self._repopulate_workflow_instance_menu()
 
-    def get_or_set_weather_for_file(self,
-                                    cur_workflow: Optional[BaseEPLaunchWorkflow1],
-                                    directory: Path,
-                                    selected_file: str,
-                                    backup_weather_file_to_use: str,
-                                    ) -> Tuple[bool, str, str]:
+    def _get_or_set_weather_for_file(self,
+                                     cur_workflow: Optional[BaseEPLaunchWorkflow1],
+                                     directory: Path,
+                                     selected_file: str,
+                                     backup_weather_file_to_use: str,
+                                     ) -> Tuple[bool, str, str]:
         """
         cur_workflow is "None" at init time, so it is marked technically optional
         """
@@ -970,7 +976,7 @@ class EPLaunchWindow(Tk):
             # if the current workflow uses weather, we need to determine what to pass into it
             weather_file_to_use: Optional[str] = None
             if cur_workflow.uses_weather:
-                success, weather_file_to_use, backup_weather_file_to_use = self.get_or_set_weather_for_file(
+                success, weather_file_to_use, backup_weather_file_to_use = self._get_or_set_weather_for_file(
                     cur_workflow, path.parent, path.name, backup_weather_file_to_use
                 )
                 if not success:
@@ -1228,7 +1234,7 @@ actually generated the requested outputs.  Any found output files are being open
     def _open_text_editor(self) -> None:
         for file_name in self.conf.file_selection:
             full_path_str = self.conf.directory / file_name
-            if 'txt' in self.conf.viewer_overrides:
+            if 'txt' in self.conf.viewer_overrides and self.conf.viewer_overrides['txt']:
                 text_editor_binary = str(self.conf.viewer_overrides['txt'])
                 Popen([text_editor_binary, full_path_str])
             else:
