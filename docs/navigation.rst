@@ -50,11 +50,9 @@ The user can add and remove the current root folder from the list by using the m
 EP-Launch Groups
 ----------------
 
-In addition to a single persistent favorites list, EP-Launch also supports the ability to save customized lists.
-Groups work like favorites in that they provide a quick list of locations that the user can easily select from the menu.
-However, groups can hold not only folders, but also files.
-Also, groups can be saved and opened so that power users who may want a more "session-based" environment can easily manage different group files for different projects.
-When a user selects a directory location from the groups entry, it will simply navigate to that as the new root directory.
+In addition to a single persistent favorites list, EP-Launch also supports the ability to save customized groups of files.
+Groups provide a quick list of files to run, and can be manipulated inside the application, or generated from outside.
+Groups can be saved and opened so that power users who may want a more "session-based" environment can easily manage different group files for different projects.
 When a user selects a file location from the groups entry, it will navigate to that folder and attempt to select that file as well.
 The groups menu is shown here:
 
@@ -62,11 +60,16 @@ The groups menu is shown here:
    :scale: 100 %
    :alt: image 1
 
-Management of the group happens through the menu options shown, and are generally straight-forward.
-Groups are saved as epg files, which are simply a list of file/dir locations in a plain text file.
-These could be created automatically and just loaded into EP-Launch.
-Note that EP-Launch does not do any background checks on whether the entries of a group currently exist, but will warn if you try to select an invalid entry.
+Management of the group happens through the Group options shown, and are generally straight-forward.
+Groups are saved as epg3 files, which are simply a list of file locations in a plain text file.
+These could be created externally and just loaded into EP-Launch for a given session.
+Note that EP-Launch does not do any background checks on whether the entries of a group currently exist, but will warn if you try to run an invalid entry.
 A keyboard shortcut is available which allows the user to cycle through all entries of a group, using Ctrl-m.
+
+Once a group is in place, running the entire group of files with the currently selected workflow can be executed from the correct button on the top bar.
+A keyboard shortcut is also available to run the current group of files with the currently selected workflow, using Ctrl-g.
+Note that EP-Launch is just going to try to execute them directly, with minimal validation.
+If you change workflows, the current group of files may no longer be valid.
 
 Keyboard Navigation
 -------------------
@@ -81,6 +84,8 @@ Ctrl-w
     Load the weather selection dialog for the current file selection
 Ctrl-r
     Run the currently selected workflow for the current file selection
+Ctrl-g
+    Run the currently selected workflow for the current file group
 Ctrl-m
     Cycle through navigation entries in the current group
 Ctrl-z

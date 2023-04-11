@@ -78,11 +78,13 @@ class EPLaunchWindow(Tk):
         # initialize some dir/file selection variables
         self.previous_selected_directory: Optional[Path] = None
 
-        # create a workflow manager, it will initialize (EnergyPlus) workflows in predetermined locations
+        # create a workflow manager, it will initialize workflows in predetermined locations
         self.workflow_manager = WorkflowManager()
+
         # but now, if the saved configuration exists, use that as the list of directories to use moving forward
         if self.conf.workflow_directories:
             self.workflow_manager.workflow_directories = self.conf.workflow_directories
+
         # now that we have a list of workflows, instantiate any/all of them
         self.workflow_manager.instantiate_all_workflows()
         if len(self.workflow_manager.warnings) > 0:
@@ -389,6 +391,8 @@ class EPLaunchWindow(Tk):
             self._open_weather_dialog()
         elif event.keysym == 'r' and mod_control & event.state:
             self._run_workflow_on_selection()
+        elif event.keysym == 'g' and mod_control & event.state:
+            self._run_workflow_on_group()
         elif event.keysym == 'm' and mod_control & event.state:
             self._cycle_through_group()
         elif event.keysym == 'z' and mod_control & event.state:
@@ -1167,7 +1171,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         for f in self.conf.file_selection:
             original_path = self.conf.directory / f
             filename_no_ext = original_path.with_suffix('').name
-            new_path = original_path.with_suffix(suffix_to_open)
+            new_path = self.conf.directory / (filename_no_ext + suffix_to_open)
             new_path_str = str(new_path)
             eplus_sub_dir = f"EPLaunchRun_{filename_no_ext}"
             eplus_specific_output_path = self.conf.directory / eplus_sub_dir / f"{filename_no_ext}{suffix_to_open}"
