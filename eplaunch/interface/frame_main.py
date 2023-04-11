@@ -247,15 +247,14 @@ class EPLaunchWindow(Tk):
 
         lf = LabelFrame(container, text="Weather Selection")
         Label(lf, text="Recent: ", justify=RIGHT).grid(row=0, column=0, **self.pad)
-        self.option_weather_recent = Combobox(lf, textvariable=self._tk_var_weather_recent)
-        self.option_weather_recent.grid(row=0, column=1, **self.pad)
-        self.option_weather_recent['state'] = 'readonly'
-        self.button_weather_set = Button(lf, text=u"\U00002713 Set", command=self._set_weather_from_recent)
-        self.button_weather_set.grid(row=0, column=2, **self.pad)
+        self.option_weather_recent = OptionMenu(lf, self._tk_var_weather_recent, '<weather>')
+        self.option_weather_recent.grid(row=0, column=1, sticky=EW, **self.pad)
+        # self.button_weather_set = Button(lf, text=u"\U00002713 Set", command=self._set_weather_from_recent)
+        # self.button_weather_set.grid(row=0, column=2, **self.pad)
         self.button_weather_select = Button(
             lf, text=u"\U0001f325 Select Weather From Disk...", command=self._open_weather_dialog
         )
-        self.button_weather_select.grid(row=1, column=0, columnspan=3, sticky=EW, **self.pad)
+        self.button_weather_select.grid(row=1, column=0, columnspan=2, sticky=EW, **self.pad)
         lf.grid(row=0, column=2, sticky=NS, **self.pad)
 
         lf = LabelFrame(container, text="Quicklinks")
@@ -705,32 +704,24 @@ class EPLaunchWindow(Tk):
     def _set_weather_widget_state(self, weather_enabled) -> None:
         self.option_weather_recent.configure(state=weather_enabled)
         self.button_weather_select.configure(state=weather_enabled)
-        self.button_weather_set.configure(state=weather_enabled)
 
     def _repopulate_recent_weather_list(self, try_to_select: Optional[Path] = None):
-        recent_weather = self.conf.weathers_recent
-        combobox_weather_enabled = 'readonly' if len(recent_weather) > 0 else 'disabled'
-        button_weather_enabled = ACTIVE if len(recent_weather) > 0 else DISABLED
-        self.option_weather_recent.configure(state=combobox_weather_enabled)
-        self.button_weather_set.configure(state=button_weather_enabled)
-
-        if button_weather_enabled == ACTIVE:
-            if try_to_select:
-                desired_weather_path = str(try_to_select)
-            else:
-                desired_weather_path = str(self.conf.weathers_recent[self.option_weather_recent.current()])
-            self.option_weather_recent['values'] = [x.name for x in recent_weather]
-            self.option_weather_recent.current(0)
-            for i, r in enumerate(recent_weather):
-                if str(r) == desired_weather_path:
-                    self.option_weather_recent.current(i)
-                    break
+        self.option_weather_recent['menu'].delete(0, END)
+        for x in self.conf.weathers_recent:
+            weather_path = x
+            self.option_weather_recent['menu'].add_command(
+                label=weather_path.name,
+                command=lambda w=weather_path: self._handler_weather_recent_option_changed(w)
+            )
+        if try_to_select in self.conf.weathers_recent:
+            self._handler_weather_recent_option_changed(try_to_select)
         else:
-            self.option_weather_recent['values'] = []
+            self._handler_weather_recent_option_changed(self.conf.weathers_recent[0])  # could persist in self.conf
 
-    def _set_weather_from_recent(self) -> None:
-        current_index = self.option_weather_recent.current()
-        selected_recent_weather_string = str(self.conf.weathers_recent[current_index])
+    def _handler_weather_recent_option_changed(self, new_weather_path: Path):
+        """This is called when the recent weather option menu changes value"""
+        self._tk_var_weather_recent.set(str(new_weather_path.name))
+        selected_recent_weather_string = self._tk_var_weather_recent.get()
         for selected_file_name in self.conf.file_selection:
             cache = CacheFile(self.conf.directory)
             cache.add_config(
@@ -1169,9 +1160,9 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         self.generic_dialogs.display(self, "About EP-Launch", text)
 
     def _open_output_file_generic(self, suffix_to_open: str):
-        if len(self.conf.file_selection) > 2:
-            message = """More than 2 files were selected when choosing to open workflow outputs.
-        This could generate many output windows and is usually not intentional.  Select up to 2 input files."""
+        if len(self.conf.file_selection) > 5:
+            message = """More than 5 files were selected when choosing to open workflow outputs.
+        This could generate many output windows and is usually not intentional.  Select up to 5 input files."""
             messagebox.showerror("File Selection Issue", message)
             return
         for f in self.conf.file_selection:
