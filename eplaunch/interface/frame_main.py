@@ -10,7 +10,7 @@ from queue import Queue
 from subprocess import Popen
 from tkinter import Tk, PhotoImage, StringVar, Menu, DISABLED, OptionMenu, Frame, Label, Button, NSEW, E, VERTICAL, \
     SUNKEN, S, LEFT, BOTH, messagebox, END, BooleanVar, ACTIVE, LabelFrame, RIGHT, EW, PanedWindow, NS, filedialog, \
-    ALL, Listbox, Scrollbar, SINGLE
+    ALL, Listbox, Scrollbar, SINGLE, Variable
 from tkinter.ttk import Combobox, PanedWindow as ttkPanedWindow
 from typing import Dict, List, Optional, Tuple
 from uuid import uuid4
@@ -312,7 +312,7 @@ class EPLaunchWindow(Tk):
         # the bottom part of the left pane will be a label frame containing a group listbox, add it with a lower weight
         group_label_frame = LabelFrame(sub_pw, text="Current Group")
         self.group_list_box = Listbox(group_label_frame, height=5, selectmode=SINGLE)
-        self.group_list_box.bind('<Double-1>', self._handle_group_selection)
+        self.group_list_box.bind('<Double-1>', self._handle_group_selection_from_widget)
         from string import ascii_uppercase
         for i, e in enumerate(ascii_uppercase):
             self.group_list_box.insert(i + 1, e)
@@ -498,7 +498,10 @@ class EPLaunchWindow(Tk):
         for index, entry in enumerate(self.conf.group_locations):
             self.group_list_box.insert(index, str(entry))
 
-    def _handle_group_selection(self, specific_index: int = None):
+    def _handle_group_selection_from_widget(self, *_):
+        self._handle_group_selection()
+
+    def _handle_group_selection(self, specific_index: Optional[int] = None):
         if isinstance(specific_index, int):
             idx = specific_index
         else:
@@ -722,6 +725,7 @@ class EPLaunchWindow(Tk):
         self.conf.file_selection = selected_file_names
         status = ACTIVE if len(self.conf.file_selection) > 0 else DISABLED
         self.button_open_in_text['state'] = status
+        self._refresh_output_suffix_buttons_based_on_selection()
 
     # endregion
 
@@ -862,8 +866,7 @@ class EPLaunchWindow(Tk):
         self._update_file_list()
 
     def _repopulate_output_suffix_options(self):
-        suffixes = self.workflow_manager.current_workflow.output_suffixes
-        sorted_suffixes = sorted(suffixes)
+        sorted_suffixes = sorted(self.workflow_manager.current_workflow.output_suffixes)
         combobox_output_enabled = 'readonly' if len(sorted_suffixes) > 0 else 'disabled'
         output_enabled = ACTIVE if len(sorted_suffixes) > 0 else DISABLED
         self.option_workflow_outputs.configure(state=combobox_output_enabled)
@@ -879,8 +882,7 @@ class EPLaunchWindow(Tk):
             self.option_workflow_outputs['values'] = []
             self._tk_var_output_suffix.set('')
         self.option_workflow_outputs.selection_clear()
-
-        # update the output file buttons too
+        suffixes = self.workflow_manager.current_workflow.output_suffixes
         self.button_open_output_1.configure(state=ACTIVE if len(suffixes) > 0 else DISABLED)
         self._tk_var_output_1.set(suffixes[0] if len(suffixes) > 0 else '--')
         self.button_open_output_2.configure(state=ACTIVE if len(suffixes) > 1 else DISABLED)
@@ -891,6 +893,38 @@ class EPLaunchWindow(Tk):
         self._tk_var_output_4.set(suffixes[3] if len(suffixes) > 3 else '--')
         self.button_open_output_5.configure(state=ACTIVE if len(suffixes) > 4 else DISABLED)
         self._tk_var_output_5.set(suffixes[4] if len(suffixes) > 4 else '--')
+        self._refresh_output_suffix_buttons_based_on_selection()
+
+    def suffixed_paths_exist(self, original_path: Path, new_suffix: str) -> Tuple[Optional[Path], Optional[Path]]:
+        filename_no_ext = original_path.with_suffix('').name
+        new_path = self.conf.directory / (filename_no_ext + new_suffix)
+        eplus_sub_dir = f"EPLaunchRun_{filename_no_ext}"
+        eplus_specific_output_path = self.conf.directory / eplus_sub_dir / f"{filename_no_ext}{new_suffix}"
+        primary_path_to_return = new_path if new_path.exists() else None
+        eplus_path_to_return = eplus_specific_output_path if eplus_specific_output_path.exists() else None
+        return primary_path_to_return, eplus_path_to_return
+
+    def _refresh_single_output_suffix_button(self, tk_var: Variable, button: Button):
+        if tk_var.get() == '--':
+            return
+        else:
+            suffix_to_open = tk_var.get()
+            all_files_have_this_suffix = True
+            for f in self.conf.file_selection:
+                original_path = self.conf.directory / f
+                new_path, eplus_path = self.suffixed_paths_exist(original_path, suffix_to_open)
+                if (new_path and new_path.exists()) or (eplus_path and eplus_path.exists()):
+                    pass  # good
+                else:
+                    all_files_have_this_suffix = False
+                    break
+            button.configure(state=ACTIVE if all_files_have_this_suffix else DISABLED)
+    def _refresh_output_suffix_buttons_based_on_selection(self):
+        self._refresh_single_output_suffix_button(self._tk_var_output_1, self.button_open_output_1)
+        self._refresh_single_output_suffix_button(self._tk_var_output_2, self.button_open_output_2)
+        self._refresh_single_output_suffix_button(self._tk_var_output_3, self.button_open_output_3)
+        self._refresh_single_output_suffix_button(self._tk_var_output_4, self.button_open_output_4)
+        self._refresh_single_output_suffix_button(self._tk_var_output_5, self.button_open_output_5)
 
     def _open_workflow_dir_dialog(self):
         if len(self.workflow_manager.threads) > 0:
