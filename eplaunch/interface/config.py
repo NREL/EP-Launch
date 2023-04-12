@@ -30,6 +30,8 @@ class ConfigManager:
         # self.groups_recent: List[str] = []
         # self.groups_favorite: List[str] = []
         self.viewer_overrides: Dict[str, Path] = {}
+        self.dir_file_paned_window_sash_position: int = 400
+        self.list_group_paned_window_sash_position: int = 500
 
     def load(self):
         # load the config from the file on disk
@@ -112,7 +114,12 @@ class ConfigManager:
                         self.group_locations.append(Path(t))
                     for k, v in config.get('ViewerOverrides', self.viewer_overrides).items():
                         self.viewer_overrides[k] = Path(v) if v else None
-
+                    self.dir_file_paned_window_sash_position = config.get(
+                        'DirFilePanedWindowSash', self.dir_file_paned_window_sash_position
+                    )
+                    self.list_group_paned_window_sash_position = config.get(
+                        'ListGroupPanedWindowSash', self.list_group_paned_window_sash_position
+                    )
                 else:
                     pass  # Bad config saved file format?  Indicates a crash?
                 # fix up the current selected directory to initialize in case it doesn't exist (anymore)
@@ -144,6 +151,8 @@ class ConfigManager:
             # 'FavoriteGroup': self.groups_favorite,
             'GroupLocations': [str(t) for t in self.group_locations],
             'ViewerOverrides': {k: None if v is None else str(v) for k, v in self.viewer_overrides.items()},
+            'DirFilePanedWindowSash': self.dir_file_paned_window_sash_position,
+            'ListGroupPanedWindowSash': self.list_group_paned_window_sash_position,
         }
         config_file_path = Path.home() / ConfigManager.config_file_name
         config_file_path.write_text(dumps(output_dict, indent=2))

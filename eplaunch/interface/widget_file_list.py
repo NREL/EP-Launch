@@ -1,5 +1,5 @@
 from random import randint
-from tkinter import NSEW, VERTICAL, Frame, END, NS, TOP, BOTH, EXTENDED
+from tkinter import NSEW, VERTICAL, Frame, END, NS, TOP, BOTH, EXTENDED, YES
 from tkinter.ttk import Treeview, Scrollbar
 from tkinter.messagebox import showinfo
 from typing import Tuple, Optional, Callable, List
@@ -7,10 +7,12 @@ from typing import Tuple, Optional, Callable, List
 
 class FileListWidget(Treeview):
 
-    def __init__(self, parent_frame: Frame, on_selection_changed: Optional[Callable[[List[str]], None]] = None):
+    def __init__(self, parent_frame: Frame, on_selection_changed: Optional[Callable[[List[str]], None]] = None,
+                 on_double_click: Optional[Callable[[str], None]] = None):
         super().__init__(parent_frame, columns=['File Name'], show='headings', selectmode=EXTENDED)
         # disable callbacks while widget is initializing
         self.callback_on_selection_changed = None
+        self.callback_on_double_click = None
         self.columns = ['File Name']
         # define headings
         for c in self.columns:
@@ -19,6 +21,7 @@ class FileListWidget(Treeview):
         self.bind('<<TreeviewSelect>>', self._selection_changed)
         self.bind('<Double-1>', self._item_double_clicked)
         self.callback_on_selection_changed = on_selection_changed
+        self.callback_on_double_click = on_double_click
 
     def set_files(self, file_list: List[Tuple]):
         for file_id in self.file_ids:
@@ -38,10 +41,12 @@ class FileListWidget(Treeview):
         self.callback_on_selection_changed(response)
 
     def _item_double_clicked(self, _):
-        for selected_item in self.selection():
-            item = self.item(selected_item)
-            record = [str(x) for x in item['values']]
-            showinfo(title='Information', message=','.join(record))
+        if not self.callback_on_selection_changed:
+            return
+        selected_item = self.selection()[0]
+        item = self.item(selected_item)
+        record = [str(x) for x in item['values']]
+        showinfo(title='Information', message=','.join(record))
 
     def try_to_reselect(self, files_to_reselect: List[str]):
         # don't call back during programmatic selection
@@ -67,9 +72,15 @@ class FileListWidget(Treeview):
         column_list = ['File Name']
         column_list.extend(extended_column_names)
         self["columns"] = column_list
+        num_cols = len(column_list)
+        widget_width = max(self.winfo_width(), 400)
+        desired_first_column_portion = 1.093 - 0.195 * num_cols + 0.0116667 * num_cols * num_cols
+        first_column_width = int(desired_first_column_portion * widget_width)
+        remaining_width = widget_width - first_column_width
+        remaining_column_widths = remaining_width // (len(column_list) - 1)
         for i, c in enumerate(column_list):
-            # self.column(i, anchor='c')
             self.heading(i, text=c)
+            self.column(i, width=first_column_width if i == 0 else remaining_column_widths)
 
 
 class FileListScrollableFrame(Frame):
@@ -108,6 +119,7 @@ def set_columns():
 
 if __name__ == "__main__":
     from tkinter import Button, Tk
+
     root = Tk()
     root.title('File Listing Widget Demo')
 

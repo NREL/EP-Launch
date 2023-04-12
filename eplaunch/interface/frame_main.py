@@ -9,8 +9,8 @@ from queue import Queue
 
 from subprocess import Popen
 from tkinter import Tk, PhotoImage, StringVar, Menu, DISABLED, OptionMenu, Frame, Label, Button, NSEW, E, VERTICAL, \
-    SUNKEN, S, LEFT, BOTH, messagebox, END, BooleanVar, ACTIVE, LabelFrame, RIGHT, EW, PanedWindow, NS, filedialog, \
-    ALL, Listbox, Scrollbar, SINGLE, Variable
+    SUNKEN, S, LEFT, BOTH, messagebox, END, BooleanVar, ACTIVE, LabelFrame, RIGHT, EW, NS, filedialog, \
+    ALL, Listbox, Scrollbar, SINGLE, Variable, HORIZONTAL
 from tkinter.ttk import Combobox, PanedWindow as ttkPanedWindow
 from typing import Dict, List, Optional, Tuple
 from uuid import uuid4
@@ -118,6 +118,8 @@ class EPLaunchWindow(Tk):
 
         # set the minimum size and redraw the app
         self.minsize(1050, 400)
+        self.dir_files_pw.sashpos(0, self.conf.dir_file_paned_window_sash_position)
+        self.list_group_pw.sashpos(0, self.conf.list_group_paned_window_sash_position)
         self.update()
 
         # one time update of the status bar
@@ -300,17 +302,22 @@ class EPLaunchWindow(Tk):
         lf.grid(row=0, column=4, sticky=NS, **self.pad)
 
     def _build_listings(self, container: Frame):
-        # default horizontal for the primary left/right paned window
-        pw = PanedWindow(container)
+        # use vertical for the primary paned window
+        self.list_group_pw = ttkPanedWindow(container, orient=VERTICAL)
         # create a sub paned window that is vertical to split the directory from the group box
-        sub_pw = ttkPanedWindow(container, orient=VERTICAL)
+        self.dir_files_pw = ttkPanedWindow(container, orient=HORIZONTAL)
         # the top part of this pane is simply the directory tree, add it with a heavier weight
         self.dir_tree = DirListScrollableFrame(
-            sub_pw, on_select=self._new_dir_selected, on_root_changed=self._new_root_dir
+            self.dir_files_pw, on_select=self._new_dir_selected, on_root_changed=self._new_root_dir
         )
-        sub_pw.add(self.dir_tree, weight=10)
-        # the bottom part of the left pane will be a label frame containing a group listbox, add it with a lower weight
-        group_label_frame = LabelFrame(sub_pw, text="Current Group")
+        self.dir_files_pw.add(self.dir_tree, weight=1)
+        self.file_list = FileListScrollableFrame(
+            self.dir_files_pw, on_selection_changed=self._callback_file_selection_changed
+        )
+        self.dir_files_pw.add(self.file_list, weight=1)
+        self.list_group_pw.add(self.dir_files_pw, weight=10)
+        # the bottom part of the primary pane will be a label frame containing a group listbox, add it with a lower weight
+        group_label_frame = LabelFrame(self.list_group_pw, text="Current Group")
         self.group_list_box = Listbox(group_label_frame, height=5, selectmode=SINGLE)
         self.group_list_box.bind('<Double-1>', self._handle_group_selection_from_widget)
         from string import ascii_uppercase
@@ -321,12 +328,9 @@ class EPLaunchWindow(Tk):
         scroll.pack(side=RIGHT, fill=BOTH)
         self.group_list_box.config(yscrollcommand=scroll.set)
         scroll.config(command=self.group_list_box.yview)
-        sub_pw.add(group_label_frame, weight=0)
+        self.list_group_pw.add(group_label_frame, weight=1)
         # add the left paned window to the primary panes
-        pw.add(sub_pw)
-        self.file_list = FileListScrollableFrame(container, on_selection_changed=self._callback_file_selection_changed)
-        pw.add(self.file_list)
-        pw.pack(fill=BOTH, expand=True, **self.pad)
+        self.list_group_pw.pack(fill=BOTH, expand=True, **self.pad)
 
     def _build_status_bar(self, container: Frame):
         Label(container, relief=SUNKEN, anchor=S, textvariable=self._tk_var_status_dir).pack(
@@ -381,6 +385,8 @@ class EPLaunchWindow(Tk):
         self.conf.y = self.winfo_y()
         self.conf.width = self.winfo_width()
         self.conf.height = self.winfo_height()
+        self.conf.dir_file_paned_window_sash_position = self.dir_files_pw.sashpos(0)
+        self.conf.list_group_paned_window_sash_position = self.list_group_pw.sashpos(0)
         self.conf.save()
         self.destroy()
 
