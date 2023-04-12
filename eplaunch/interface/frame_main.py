@@ -7,7 +7,7 @@ from pathlib import Path
 from platform import system
 from queue import Queue
 
-from subprocess import Popen
+from subprocess import Popen, check_output
 from tkinter import Tk, PhotoImage, StringVar, Menu, DISABLED, OptionMenu, Frame, Label, Button, NSEW, E, \
     SUNKEN, S, LEFT, BOTH, messagebox, END, BooleanVar, ACTIVE, LabelFrame, RIGHT, EW, PanedWindow, NS, filedialog, ALL
 from tkinter.ttk import Combobox
@@ -1206,15 +1206,27 @@ actually generated the requested outputs.  Any found output files are being open
         self._open_output_file_generic(self._tk_var_output_5.get())
 
     @staticmethod
-    def _open_file_or_dir_with_default(full_path_obj: Path) -> None:
+    def _open_file_or_dir_with_default(full_path_obj: Path, text_file_override: bool = False) -> None:
         full_path = str(full_path_obj)
         if system() == 'Windows':
             from os import startfile
             startfile(full_path)
         elif system() == 'Linux':
             Popen(['xdg-open', full_path])
+            # could try to find the default text/plain editor and open using gtk-launch
+            # if text_file_override:
+            #     desktop_file = check_output(['xdg-mime', 'query', 'default', 'text/plain'], shell=False)
+            #     if '.desktop' in desktop_file.decode('utf-8'):
+            #         Popen(['gtk-launch', desktop_file, full_path])
+            #     else:  # try falling back to the default application
+            #         Popen(['xdg-open', full_path])
+            # else:
+            #     Popen(['xdg-open', full_path])
         else:  # assuming Mac
-            Popen(['open', full_path])
+            if text_file_override:  # will open in the default text editor specifically
+                Popen(['open', '-t', full_path])
+            else:
+                Popen(['open', full_path])
 
     def _open_text_editor(self) -> None:
         for file_name in self.conf.file_selection:
