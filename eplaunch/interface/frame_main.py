@@ -118,9 +118,12 @@ class EPLaunchWindow(Tk):
 
         # set the minimum size and redraw the app
         self.minsize(1050, 400)
-        self.dir_files_pw.sashpos(0, self.conf.dir_file_paned_window_sash_position)
-        self.list_group_pw.sashpos(0, self.conf.list_group_paned_window_sash_position)
         self.update()
+        self.dir_files_pw.sashpos(0, self.conf.dir_file_paned_window_sash_position)
+        self.conf.list_group_paned_window_sash_position = min(
+            self.conf.list_group_paned_window_sash_position, self.winfo_height() - 250
+        )
+        self.list_group_pw.sashpos(0, self.conf.list_group_paned_window_sash_position)
 
         # one time update of the status bar
         self._update_status_bar("Program Initialized")

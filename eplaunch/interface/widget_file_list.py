@@ -1,5 +1,5 @@
 from random import randint
-from tkinter import NSEW, VERTICAL, Frame, END, NS, TOP, BOTH, EXTENDED
+from tkinter import NSEW, VERTICAL, Frame, END, NS, TOP, BOTH, EXTENDED, W, CENTER
 from tkinter.ttk import Treeview, Scrollbar
 from tkinter.messagebox import showinfo
 from typing import Tuple, Optional, Callable, List
@@ -80,7 +80,11 @@ class FileListWidget(Treeview):
         remaining_column_widths = remaining_width // (len(column_list) - 1)
         for i, c in enumerate(column_list):
             self.heading(i, text=c)
-            self.column(i, width=first_column_width if i == 0 else remaining_column_widths)
+            self.column(
+                i,
+                width=first_column_width if i == 0 else remaining_column_widths,
+                anchor=W if i == 0 else CENTER
+            )
 
 
 class FileListScrollableFrame(Frame):
