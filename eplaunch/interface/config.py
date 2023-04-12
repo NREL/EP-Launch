@@ -25,7 +25,7 @@ class ConfigManager:
         self.folders_recent: deque[Optional[Path]] = deque(maxlen=5)
         self.folders_favorite: List[Path] = []
         self.weathers_recent: deque[Optional[Path]] = deque(maxlen=5)
-        self.weathers_favorite: List[Path] = []
+        # self.weathers_favorite: List[Path] = []
         self.group_locations: List[Path] = []
         # self.groups_recent: List[str] = []
         # self.groups_favorite: List[str] = []
@@ -104,7 +104,7 @@ class ConfigManager:
                     if recent_weather is not None:
                         for string_path in recent_weather:
                             self.weathers_recent.appendleft(Path(string_path))
-                    self.weathers_favorite = [Path(p) for p in config.get('FavoriteWeather', self.weathers_favorite)]
+                    # self.weathers_favorite = [Path(p) for p in config.get('FavoriteWeather', self.weathers_favorite)]
                     # self.groups_recent = config.get('RecentGroup', self.groups_recent)
                     # self.groups_favorite = config.get('FavoriteGroup', self.groups_favorite)
                     temp_group_locations = config.get('GroupLocations', self.group_locations)
@@ -139,7 +139,7 @@ class ConfigManager:
             'RecentFolders': [str(p) for p in self.folders_recent if p is not None],
             'FavoriteFolders': [str(p) for p in self.folders_favorite],
             'RecentWeather': [str(p) for p in self.weathers_recent if p is not None],
-            'FavoriteWeather': [str(p) for p in self.weathers_favorite],
+            # 'FavoriteWeather': [str(p) for p in self.weathers_favorite],
             # 'RecentGroup': self.groups_recent,
             # 'FavoriteGroup': self.groups_favorite,
             'GroupLocations': [str(t) for t in self.group_locations],

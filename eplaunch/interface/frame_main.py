@@ -732,9 +732,7 @@ class EPLaunchWindow(Tk):
         self._update_file_list()
 
     def _open_weather_dialog(self) -> None:
-        dialog_weather = TkWeatherDialog(
-            self, list(self.conf.weathers_recent), self.conf.weathers_favorite
-        )
+        dialog_weather = TkWeatherDialog(self, list(self.conf.weathers_recent))
         self.wait_window(dialog_weather)
         if dialog_weather.exit_code == TkWeatherDialog.CLOSE_SIGNAL_CANCEL:
             return
@@ -919,10 +917,8 @@ class EPLaunchWindow(Tk):
             else:
                 # if we need weather, didn't find one in the cache, and didn't have a backup, ask for one now
                 recent_files = list(self.conf.weathers_recent)
-                favorite_files = self.conf.weathers_favorite
-                w = TkWeatherDialog(
-                    self, recent_files, favorite_files, "*At least one file is missing a weather configuration*"
-                )
+                # favorite_files = self.conf.weathers_favorite
+                w = TkWeatherDialog(self, recent_files, "*At least one file is missing a weather configuration*")
                 self.wait_window(w)
                 if w.exit_code == TkWeatherDialog.CLOSE_SIGNAL_CANCEL:
                     return False, '', ''
