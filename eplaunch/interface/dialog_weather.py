@@ -1,6 +1,6 @@
 from pathlib import Path
 from tkinter import Tk, Toplevel, StringVar, Button, EW, Entry, ALL, DISABLED, filedialog, Label, OptionMenu, E, \
-    messagebox, HORIZONTAL
+    HORIZONTAL
 from tkinter.ttk import Separator
 from typing import List, Optional
 

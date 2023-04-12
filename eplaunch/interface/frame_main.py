@@ -316,7 +316,7 @@ class EPLaunchWindow(Tk):
         )
         self.dir_files_pw.add(self.file_list, weight=1)
         self.list_group_pw.add(self.dir_files_pw, weight=10)
-        # the bottom part of the primary pane will be a label frame containing a group listbox, add it with a lower weight
+        # the bottom part of the primary pane will be a label frame containing a group listbox, add it with lower weight
         group_label_frame = LabelFrame(self.list_group_pw, text="Current Group")
         self.group_list_box = Listbox(group_label_frame, height=5, selectmode=SINGLE)
         self.group_list_box.bind('<Double-1>', self._handle_group_selection_from_widget)
@@ -925,6 +925,7 @@ class EPLaunchWindow(Tk):
                     all_files_have_this_suffix = False
                     break
             button.configure(state=ACTIVE if all_files_have_this_suffix else DISABLED)
+
     def _refresh_output_suffix_buttons_based_on_selection(self):
         self._refresh_single_output_suffix_button(self._tk_var_output_1, self.button_open_output_1)
         self._refresh_single_output_suffix_button(self._tk_var_output_2, self.button_open_output_2)

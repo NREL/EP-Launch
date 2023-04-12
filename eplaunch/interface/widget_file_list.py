@@ -1,5 +1,5 @@
 from random import randint
-from tkinter import NSEW, VERTICAL, Frame, END, NS, TOP, BOTH, EXTENDED, YES
+from tkinter import NSEW, VERTICAL, Frame, END, NS, TOP, BOTH, EXTENDED
 from tkinter.ttk import Treeview, Scrollbar
 from tkinter.messagebox import showinfo
 from typing import Tuple, Optional, Callable, List
