@@ -751,7 +751,7 @@ class EPLaunchWindow(Tk):
             )
         if try_to_select in self.conf.weathers_recent:
             self._handler_weather_recent_option_changed(try_to_select)
-        else:
+        elif len(self.conf.weathers_recent) > 0:
             self._handler_weather_recent_option_changed(self.conf.weathers_recent[0])  # could persist in self.conf
 
     def _handler_weather_recent_option_changed(self, new_weather_path: Path):
@@ -808,7 +808,7 @@ class EPLaunchWindow(Tk):
         # call the handler method with either the saved context name, or the top one in the list
         if desired_selected_workflow_context in all_available_contexts:
             self._handler_workflow_context_option_changed(desired_selected_workflow_context)
-        else:
+        elif len(all_available_contexts) > 0:
             self._handler_workflow_context_option_changed(all_available_contexts[0])
 
     def _handler_workflow_context_option_changed(self, new_value: str):
