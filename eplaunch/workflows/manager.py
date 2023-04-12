@@ -29,14 +29,16 @@ class WorkflowManager:
         """Locate the (EnergyPlus) workflow directories that are in predestined locations"""
         self.auto_found_workflow_dirs = []
         # then search for e+ workflows
-        search_roots: Dict[str, List[Path]] = {
+        search_roots: Dict[int, List[Path]] = {
             Platform.WINDOWS: [Path(f"{c}:\\") for c in ascii_uppercase],
             Platform.LINUX: [Path('/usr/local/bin/'), Path('/tmp/')],
             Platform.MAC: [Path('/Applications/'), Path('/tmp/')],
             Platform.UNKNOWN: [],
         }
         current_search_roots = search_roots[Platform.get_current_platform()]
-        search_names = ["EnergyPlus*", "energyplus*", "EP*", "ep*", "E+*", "e+*"]
+        search_names = ["EnergyPlus*", "EP*", "ep*", "E+*", "e+*"]
+        if Platform.get_current_platform() == Platform.LINUX:
+            search_names.append("energyplus*")  # add lower case check on case-sensitive file systems (typically Linux)
         for search_root in current_search_roots:
             for search_name in search_names:
                 eplus_folder_matches = search_root.glob(search_name)

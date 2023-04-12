@@ -315,7 +315,7 @@ class EPLaunchWindow(Tk):
             self.dir_files_pw, on_selection_changed=self._callback_file_selection_changed
         )
         self.dir_files_pw.add(self.file_list, weight=1)
-        self.list_group_pw.add(self.dir_files_pw, weight=10)
+        self.list_group_pw.add(self.dir_files_pw, weight=5)
         # the bottom part of the primary pane will be a label frame containing a group listbox, add it with lower weight
         group_label_frame = LabelFrame(self.list_group_pw, text="Current Group")
         self.group_list_box = Listbox(group_label_frame, height=5, selectmode=SINGLE)
