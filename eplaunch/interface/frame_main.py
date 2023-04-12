@@ -8,7 +8,7 @@ from platform import system
 from queue import Queue
 
 from subprocess import Popen
-from tkinter import Tk, PhotoImage, StringVar, Menu, DISABLED, OptionMenu, Frame, Label, Button, NSEW, \
+from tkinter import Tk, PhotoImage, StringVar, Menu, DISABLED, OptionMenu, Frame, Label, Button, NSEW, E, \
     SUNKEN, S, LEFT, BOTH, messagebox, END, BooleanVar, ACTIVE, LabelFrame, RIGHT, EW, PanedWindow, NS, filedialog, ALL
 from tkinter.ttk import Combobox
 from typing import Dict, List, Optional, Tuple
@@ -228,20 +228,20 @@ class EPLaunchWindow(Tk):
     # noinspection SqlNoDataSourceInspection
     def _build_top_icon_bar(self, container: Frame):
         lf = LabelFrame(container, text="Workflow Selection")
-        Label(lf, text="Context:", justify=RIGHT).grid(row=0, column=0, **self.pad)
+        Label(lf, text="Context:", justify=RIGHT).grid(row=0, column=0, sticky=E, **self.pad)
         self.option_workflow_context = OptionMenu(lf, self._tk_var_workflow_context, '<context>')
         self.option_workflow_context.grid(row=0, column=1, sticky=EW, **self.pad)
-        Label(lf, text="Workflow: ", justify=RIGHT).grid(row=1, column=0, **self.pad)
+        Label(lf, text="Workflow:", justify=RIGHT).grid(row=1, column=0, sticky=E, **self.pad)
         self.option_workflow_instance = OptionMenu(lf, self._tk_var_workflow_instance, '<instance>')
         self.option_workflow_instance.grid(row=1, column=1, sticky=EW, **self.pad)
         lf.grid(row=0, column=0, sticky=NS, **self.pad)
 
-        lf = LabelFrame(container, text="Workflow Execution")
+        lf = LabelFrame(container, text="Run Workflow on...")
         Button(
-            lf, text=u"\U000025B6 Run Workflow on Current File(s)", command=self._run_workflow_on_selection
+            lf, text=u"\U000025B6 Selected File(s)", command=self._run_workflow_on_selection
         ).grid(row=0, column=0, sticky=EW, **self.pad)
         Button(
-            lf, text=u"\U000025B6 Run Workflow on Current Group", command=self._run_workflow_on_group
+            lf, text=u"\U000025B6 Current Group", command=self._run_workflow_on_group
         ).grid(row=1, column=0, sticky=EW, **self.pad)
         lf.grid(row=0, column=1, sticky=NS, **self.pad)
 
@@ -249,17 +249,15 @@ class EPLaunchWindow(Tk):
         Label(lf, text="Recent: ", justify=RIGHT).grid(row=0, column=0, **self.pad)
         self.option_weather_recent = OptionMenu(lf, self._tk_var_weather_recent, '<weather>')
         self.option_weather_recent.grid(row=0, column=1, sticky=EW, **self.pad)
-        # self.button_weather_set = Button(lf, text=u"\U00002713 Set", command=self._set_weather_from_recent)
-        # self.button_weather_set.grid(row=0, column=2, **self.pad)
         self.button_weather_select = Button(
-            lf, text=u"\U0001f325 Select Weather From Disk...", command=self._open_weather_dialog
+            lf, text=u"\U0001f325 Select Weather File...", command=self._open_weather_dialog
         )
         self.button_weather_select.grid(row=1, column=0, columnspan=2, sticky=EW, **self.pad)
         lf.grid(row=0, column=2, sticky=NS, **self.pad)
 
         lf = LabelFrame(container, text="Quicklinks")
         self.button_open_in_text = Button(
-            lf, text=u"\U0001F5B9 Open Selected File in Text Editor", command=self._open_text_editor, state=DISABLED
+            lf, text=u"\U0001F5B9 Open File in Text Editor", command=self._open_text_editor, state=DISABLED
         )
         self.button_open_in_text.grid(row=0, column=0, columnspan=3, sticky=EW, **self.pad)
         Button(
