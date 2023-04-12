@@ -7,10 +7,11 @@ from pathlib import Path
 from platform import system
 from queue import Queue
 
-from subprocess import Popen, check_output
-from tkinter import Tk, PhotoImage, StringVar, Menu, DISABLED, OptionMenu, Frame, Label, Button, NSEW, E, \
-    SUNKEN, S, LEFT, BOTH, messagebox, END, BooleanVar, ACTIVE, LabelFrame, RIGHT, EW, PanedWindow, NS, filedialog, ALL
-from tkinter.ttk import Combobox
+from subprocess import Popen
+from tkinter import Tk, PhotoImage, StringVar, Menu, DISABLED, OptionMenu, Frame, Label, Button, NSEW, E, VERTICAL, \
+    SUNKEN, S, LEFT, BOTH, messagebox, END, BooleanVar, ACTIVE, LabelFrame, RIGHT, EW, PanedWindow, NS, filedialog, \
+    ALL, Listbox, Scrollbar, SINGLE
+from tkinter.ttk import Combobox, PanedWindow as ttkPanedWindow
 from typing import Dict, List, Optional, Tuple
 from uuid import uuid4
 from webbrowser import open as open_web
@@ -187,8 +188,6 @@ class EPLaunchWindow(Tk):
         menubar.add_cascade(label="Navigation", menu=menu_nav)
 
         menu_group = Menu(menubar, tearoff=False)
-        self.menu_group_current = Menu(menu_group, tearoff=False)
-        menu_group.add_cascade(label="Current Group", menu=self.menu_group_current)
         menu_group.add_command(label="Clear Current Group", command=self._clear_group)
         menu_group.add_command(label="Load new Group file...", command=self._load_new_group_file)
         menu_group.add_command(label="Save Current Group to file...", command=self._save_group_file)
@@ -301,9 +300,30 @@ class EPLaunchWindow(Tk):
         lf.grid(row=0, column=4, sticky=NS, **self.pad)
 
     def _build_listings(self, container: Frame):
-        pw = PanedWindow(container)  # default horizontal
-        self.dir_tree = DirListScrollableFrame(pw, on_select=self._new_dir_selected, on_root_changed=self._new_root_dir)
-        pw.add(self.dir_tree)
+        # default horizontal for the primary left/right paned window
+        pw = PanedWindow(container)
+        # create a sub paned window that is vertical to split the directory from the group box
+        sub_pw = ttkPanedWindow(container, orient=VERTICAL)
+        # the top part of this pane is simply the directory tree, add it with a heavier weight
+        self.dir_tree = DirListScrollableFrame(
+            sub_pw, on_select=self._new_dir_selected, on_root_changed=self._new_root_dir
+        )
+        sub_pw.add(self.dir_tree, weight=10)
+        # the bottom part of the left pane will be a label frame containing a group listbox, add it with a lower weight
+        group_label_frame = LabelFrame(sub_pw, text="Current Group")
+        self.group_list_box = Listbox(group_label_frame, height=5, selectmode=SINGLE)
+        self.group_list_box.bind('<Double-1>', self._handle_group_selection)
+        from string import ascii_uppercase
+        for i, e in enumerate(ascii_uppercase):
+            self.group_list_box.insert(i + 1, e)
+        self.group_list_box.pack(side=LEFT, fill=BOTH, expand=True)
+        scroll = Scrollbar(group_label_frame)
+        scroll.pack(side=RIGHT, fill=BOTH)
+        self.group_list_box.config(yscrollcommand=scroll.set)
+        scroll.config(command=self.group_list_box.yview)
+        sub_pw.add(group_label_frame, weight=0)
+        # add the left paned window to the primary panes
+        pw.add(sub_pw)
         self.file_list = FileListScrollableFrame(container, on_selection_changed=self._callback_file_selection_changed)
         pw.add(self.file_list)
         pw.pack(fill=BOTH, expand=True, **self.pad)
@@ -465,6 +485,8 @@ class EPLaunchWindow(Tk):
         if len(self.conf.group_locations) == 0:
             messagebox.showwarning("Invalid Group Cycle", "Could not cycle through empty group list")
             return
+        self.group_list_box.selection_clear(0, END)
+        self.group_list_box.selection_set(self.group_cycle_next_index)
         self._handle_group_selection(self.group_cycle_next_index)
         self.group_cycle_next_index += 1
         if self.group_cycle_next_index + 1 > len(self.conf.group_locations):
@@ -472,14 +494,20 @@ class EPLaunchWindow(Tk):
 
     def _rebuild_group_menu(self):
         self.group_cycle_next_index = 0
-        self.menu_group_current.delete(0, END)
+        self.group_list_box.delete(0, END)
         for index, entry in enumerate(self.conf.group_locations):
-            self.menu_group_current.add_command(
-                label=str(entry), command=lambda i=index: self._handle_group_selection(i)
-            )
+            self.group_list_box.insert(index, str(entry))
 
-    def _handle_group_selection(self, index: int):
-        entry = self.conf.group_locations[index]
+    def _handle_group_selection(self, specific_index: int = None):
+        if isinstance(specific_index, int):
+            idx = specific_index
+        else:
+            idx = self.group_list_box.curselection()[0]
+        try:
+            entry = self.conf.group_locations[idx]
+        except IndexError:
+            messagebox.showerror("Error", f"Could not navigate to group entry at index {idx}")
+            return
         if not entry.exists():
             messagebox.showerror("Error", f"Could not navigate to group entry, it doesn't exist: {entry}")
             return
