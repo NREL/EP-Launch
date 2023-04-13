@@ -53,14 +53,14 @@ EP-Launch Groups
 In addition to a single persistent favorites list, EP-Launch also supports the ability to save customized groups of files.
 Groups provide a quick list of files to run, and can be manipulated inside the application, or generated from outside.
 Groups can be saved and opened so that power users who may want a more "session-based" environment can easily manage different group files for different projects.
-When a user selects a file location from the groups entry, it will navigate to that folder and attempt to select that file as well.
-The groups menu is shown here:
+When a user double clicks a file location from the groups entry, it will navigate to that folder and attempt to select that file as well.
+The groups list is on the bottom of the window, as shown here:
 
 .. figure:: navigation4.png
    :scale: 100 %
    :alt: image 1
 
-Management of the group happens through the Group options shown, and are generally straight-forward.
+Management of the group happens through the Group options shown, and is generally straight-forward.
 Groups are saved as epg3 files, which are simply a list of file locations in a plain text file.
 These could be created externally and just loaded into EP-Launch for a given session.
 Note that EP-Launch does not do any background checks on whether the entries of a group currently exist, but will warn if you try to run an invalid entry.

@@ -15,7 +15,7 @@ A workflow can be defined as:
 
 Some additional interesting features:
 
-- A workflow has a context function that allows the EPLaunch interface to do grouping of related workflows.
+- A workflow has a context function that allows the EPLaunch interface to group related workflows.
 
   - If multiple workflow files are packaged up with one tool, like they are with EnergyPlus, all those workflows should have the same context.
   - If the workflow is tied to a specific version of a piece of software, and you might have more than one version on your computer, the context should have the version number in it.

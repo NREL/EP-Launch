@@ -42,12 +42,9 @@ class TkOutputDialog(Toplevel):
         self.geometry('%dx%d+%d+%d' % (500, current_height, self.x, self.y))
 
     def add_output(self, message: str):
-        fully_scrolled_down = self.text_output.yview()[1] == 1.0
         self.text_output.insert(END, message)
         self.text_output.insert(END, '\n')
-        if fully_scrolled_down:
-            self.text_output.see(END)
-        self.update()
+        self.text_output.see(END)
 
     def close(self):
         self.destroy()

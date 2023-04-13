@@ -59,13 +59,11 @@ class DirListWidget(Treeview):
         clicked_node_path = item_contents['values'][0]
         self.refresh_listing(Path(clicked_node_path))
 
-    def reset_tree(self, redraw: bool = False):
+    def reset_tree(self):
         self.heading('#0', text="(Dir Path)", anchor='w', command=self.select_new_root)
         for item in self.directory_node_ids:
             self.delete(item)
         self.directory_node_ids.clear()
-        if redraw:
-            self.update()
 
     def select_new_root(self):
         response = filedialog.askdirectory()
@@ -96,7 +94,7 @@ class DirListWidget(Treeview):
                 self.directory_node_ids.append(new_id)
             # elif p.is_file() and not p.name.startswith('.') and not p.name.startswith('__'):
             #     print(f"Filename \"{p.name}\"; File path \"{str(p)}\"")
-        self.update()
+        # self.update()
         if new_path and self.callback_on_root_changed:
             self.callback_on_root_changed(new_path)
         self.selection_set(self.root_node)

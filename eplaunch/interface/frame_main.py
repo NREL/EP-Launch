@@ -118,7 +118,7 @@ class EPLaunchWindow(Tk):
 
         # set the minimum size and redraw the app
         self.minsize(1050, 400)
-        self.update()
+        self.update()  # one quick redraw should be fine here to get updated geometry
         self.dir_files_pw.sashpos(0, self.conf.dir_file_paned_window_sash_position)
         self.conf.list_group_paned_window_sash_position = min(
             self.conf.list_group_paned_window_sash_position, self.winfo_height() - 250
@@ -238,6 +238,8 @@ class EPLaunchWindow(Tk):
         Label(lf, text="Workflow:", justify=RIGHT).grid(row=1, column=0, sticky=E, **self.pad)
         self.option_workflow_instance = OptionMenu(lf, self._tk_var_workflow_instance, '<instance>')
         self.option_workflow_instance.grid(row=1, column=1, sticky=EW, **self.pad)
+        lf.grid_rowconfigure(ALL, weight=1)
+        lf.grid_columnconfigure(ALL, weight=1)
         lf.grid(row=0, column=0, sticky=NS, **self.pad)
 
         lf = LabelFrame(container, text="Run Workflow on...")
@@ -247,6 +249,8 @@ class EPLaunchWindow(Tk):
         Button(
             lf, text=u"\U000025B6 Current Group", command=self._run_workflow_on_group
         ).grid(row=1, column=0, sticky=EW, **self.pad)
+        lf.grid_rowconfigure(ALL, weight=1)
+        lf.grid_columnconfigure(ALL, weight=1)
         lf.grid(row=0, column=1, sticky=NS, **self.pad)
 
         lf = LabelFrame(container, text="Weather Selection")
@@ -257,6 +261,8 @@ class EPLaunchWindow(Tk):
             lf, text=u"\U0001f325 Select Weather File...", command=self._open_weather_dialog
         )
         self.button_weather_select.grid(row=1, column=0, columnspan=2, sticky=EW, **self.pad)
+        lf.grid_rowconfigure(ALL, weight=1)
+        lf.grid_columnconfigure(ALL, weight=1)
         lf.grid(row=0, column=2, sticky=NS, **self.pad)
 
         lf = LabelFrame(container, text="Quicklinks")
@@ -267,6 +273,8 @@ class EPLaunchWindow(Tk):
         Button(
             lf, text=u"\U0001F5C0 Open Dir in File Browser", command=self._open_file_browser
         ).grid(row=1, column=0, columnspan=3, sticky=EW, **self.pad)
+        lf.grid_rowconfigure(ALL, weight=1)
+        lf.grid_columnconfigure(ALL, weight=1)
         lf.grid(row=0, column=3, sticky=NS, **self.pad)
 
         lf = LabelFrame(container, text="Open Outputs")
