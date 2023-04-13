@@ -8,10 +8,14 @@ from platform import system
 from queue import Queue
 
 from subprocess import Popen
-from tkinter import Tk, PhotoImage, StringVar, Menu, DISABLED, OptionMenu, Frame, Label, Button, NSEW, E, VERTICAL, \
-    SUNKEN, S, LEFT, BOTH, messagebox, END, BooleanVar, ACTIVE, LabelFrame, RIGHT, EW, NS, filedialog, \
+from tkinter import Tk, PhotoImage, StringVar, Menu, DISABLED, Frame, Label, NSEW, E, VERTICAL, \
+    SUNKEN, S, LEFT, BOTH, messagebox, END, BooleanVar, NORMAL, RIGHT, EW, NS, filedialog, \
     ALL, Listbox, Scrollbar, SINGLE, Variable, HORIZONTAL
-from tkinter.ttk import Combobox, PanedWindow as ttkPanedWindow
+from tkinter.ttk import Combobox, PanedWindow as ttkPanedWindow, OptionMenu, LabelFrame
+if system() == 'Darwin':
+    from tkmacosx import Button
+else:
+    from tkinter.ttk import Button
 from typing import Dict, List, Optional, Tuple
 from uuid import uuid4
 from webbrowser import open as open_web
@@ -243,12 +247,10 @@ class EPLaunchWindow(Tk):
         lf.grid(row=0, column=0, sticky=NS, **self.pad)
 
         lf = LabelFrame(container, text="Run Workflow on...")
-        Button(
-            lf, text=u"\U000025B6 Selected File(s)", command=self._run_workflow_on_selection
-        ).grid(row=0, column=0, sticky=EW, **self.pad)
-        Button(
-            lf, text=u"\U000025B6 Current Group", command=self._run_workflow_on_group
-        ).grid(row=1, column=0, sticky=EW, **self.pad)
+        b = Button(lf, text=u"\U000025B6 Selected File(s)", command=self._run_workflow_on_selection, state=NORMAL)
+        b.grid(row=0, column=0, sticky=EW, **self.pad)
+        b = Button(lf, text=u"\U000025B6 Current Group", command=self._run_workflow_on_group, state=NORMAL)
+        b.grid(row=1, column=0, sticky=EW, **self.pad)
         lf.grid_rowconfigure(ALL, weight=1)
         lf.grid_columnconfigure(ALL, weight=1)
         lf.grid(row=0, column=1, sticky=NS, **self.pad)
@@ -271,7 +273,7 @@ class EPLaunchWindow(Tk):
         )
         self.button_open_in_text.grid(row=0, column=0, columnspan=3, sticky=EW, **self.pad)
         Button(
-            lf, text=u"\U0001F5C0 Open Dir in File Browser", command=self._open_file_browser
+            lf, text=u"\U0001F5C0 Open Dir in File Browser", command=self._open_file_browser, state=NORMAL
         ).grid(row=1, column=0, columnspan=3, sticky=EW, **self.pad)
         lf.grid_rowconfigure(ALL, weight=1)
         lf.grid_columnconfigure(ALL, weight=1)
@@ -740,7 +742,7 @@ class EPLaunchWindow(Tk):
     def _callback_file_selection_changed(self, selected_file_names: List[str]) -> None:
         """This gets called back by the file listing widget when a selection changes"""
         self.conf.file_selection = selected_file_names
-        status = ACTIVE if len(self.conf.file_selection) > 0 else DISABLED
+        status = NORMAL if len(self.conf.file_selection) > 0 else DISABLED
         self.button_open_in_text['state'] = status
         self._refresh_output_suffix_buttons_based_on_selection()
 
@@ -774,7 +776,7 @@ class EPLaunchWindow(Tk):
             cache.add_config(
                 self.workflow_manager.current_workflow.name,
                 selected_file_name,
-                {'weather': selected_recent_weather_string}
+                {'weather': str(new_weather_path)}
             )
         self._update_file_list()
 
@@ -875,7 +877,7 @@ class EPLaunchWindow(Tk):
         # assign the current workflow instance in the workflow manager
         self.workflow_manager.current_workflow = new_workflow
         # update the weather buttons accordingly depending on if the workflow uses weather inputs
-        self._set_weather_widget_state(ACTIVE if new_workflow.uses_weather else DISABLED)
+        self._set_weather_widget_state(NORMAL if new_workflow.uses_weather else DISABLED)
         # clear the output menu entirely, and set status conditionally
         self._repopulate_output_suffix_options()
         # now that the workflow has been set, repopulate the file list columns and the file list itself
@@ -885,13 +887,13 @@ class EPLaunchWindow(Tk):
     def _repopulate_output_suffix_options(self):
         sorted_suffixes = sorted(self.workflow_manager.current_workflow.output_suffixes)
         combobox_output_enabled = 'readonly' if len(sorted_suffixes) > 0 else 'disabled'
-        output_enabled = ACTIVE if len(sorted_suffixes) > 0 else DISABLED
+        output_enabled = NORMAL if len(sorted_suffixes) > 0 else DISABLED
         self.option_workflow_outputs.configure(state=combobox_output_enabled)
         self.button_open_output_file.configure(state=output_enabled)
 
         # rebuild the option menu if applicable
         current_selection = self._tk_var_output_suffix.get()
-        if output_enabled == ACTIVE:
+        if output_enabled == NORMAL:
             self.option_workflow_outputs['values'] = sorted_suffixes
             if current_selection not in sorted_suffixes:
                 self._tk_var_output_suffix.set(sorted_suffixes[0])
@@ -900,15 +902,15 @@ class EPLaunchWindow(Tk):
             self._tk_var_output_suffix.set('')
         self.option_workflow_outputs.selection_clear()
         suffixes = self.workflow_manager.current_workflow.output_suffixes
-        self.button_open_output_1.configure(state=ACTIVE if len(suffixes) > 0 else DISABLED)
+        self.button_open_output_1.configure(state=NORMAL if len(suffixes) > 0 else DISABLED)
         self._tk_var_output_1.set(suffixes[0] if len(suffixes) > 0 else '--')
-        self.button_open_output_2.configure(state=ACTIVE if len(suffixes) > 1 else DISABLED)
+        self.button_open_output_2.configure(state=NORMAL if len(suffixes) > 1 else DISABLED)
         self._tk_var_output_2.set(suffixes[1] if len(suffixes) > 1 else '--')
-        self.button_open_output_3.configure(state=ACTIVE if len(suffixes) > 2 else DISABLED)
+        self.button_open_output_3.configure(state=NORMAL if len(suffixes) > 2 else DISABLED)
         self._tk_var_output_3.set(suffixes[2] if len(suffixes) > 2 else '--')
-        self.button_open_output_4.configure(state=ACTIVE if len(suffixes) > 3 else DISABLED)
+        self.button_open_output_4.configure(state=NORMAL if len(suffixes) > 3 else DISABLED)
         self._tk_var_output_4.set(suffixes[3] if len(suffixes) > 3 else '--')
-        self.button_open_output_5.configure(state=ACTIVE if len(suffixes) > 4 else DISABLED)
+        self.button_open_output_5.configure(state=NORMAL if len(suffixes) > 4 else DISABLED)
         self._tk_var_output_5.set(suffixes[4] if len(suffixes) > 4 else '--')
         self._refresh_output_suffix_buttons_based_on_selection()
 
@@ -935,7 +937,7 @@ class EPLaunchWindow(Tk):
                 else:
                     all_files_have_this_suffix = False
                     break
-            button.configure(state=ACTIVE if all_files_have_this_suffix else DISABLED)
+            button.configure(state=NORMAL if all_files_have_this_suffix else DISABLED)
 
     def _refresh_output_suffix_buttons_based_on_selection(self):
         self._refresh_single_output_suffix_button(self._tk_var_output_1, self.button_open_output_1)

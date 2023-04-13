@@ -8,7 +8,7 @@ from eplaunch import NAME, VERSION
 readme_file = Path(__file__).parent.resolve() / 'README.md'
 readme_contents = readme_file.read_text()
 
-install_requires = ['PLAN-Tools>=0.5']
+install_requires = ['PLAN-Tools>=0.5', 'tkmacosx']
 if system() == 'Windows':
     install_requires.append('pypiwin32')
 
