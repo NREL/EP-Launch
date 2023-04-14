@@ -770,7 +770,6 @@ class EPLaunchWindow(Tk):
     def _handler_weather_recent_option_changed(self, new_weather_path: Path):
         """This is called when the recent weather option menu changes value"""
         self._tk_var_weather_recent.set(str(new_weather_path.name))
-        selected_recent_weather_string = self._tk_var_weather_recent.get()
         for selected_file_name in self.conf.file_selection:
             cache = CacheFile(self.conf.directory)
             cache.add_config(

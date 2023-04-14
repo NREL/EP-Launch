@@ -38,5 +38,24 @@ setup(
             'energyplus_launch_configure=eplaunch.configure:configure_cli',
             'energyplus_launch_workflow_tester=eplaunch.workflows.workflow_tester:cli'
         ]
-    }
+    },
+    classifiers=[
+        'Development Status :: 4 - Beta',
+        'Intended Audience :: Science/Research',
+        'Natural Language :: English',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python :: 3 :: Only',
+        'Topic :: Scientific/Engineering',
+        'Topic :: Scientific/Engineering :: Physics',
+        'Topic :: Utilities',
+    ],
+    platforms=[
+        'Linux (Tested on Ubuntu)', 'MacOSX', 'Windows'
+    ],
+    keywords=[
+        'energyplus_launch', 'ep_launch',
+        'EnergyPlus', 'eplus', 'Energy+',
+        'Building Simulation', 'Whole Building Energy Simulation',
+        'Heat Transfer', 'HVAC', 'Modeling',
+    ]
 )
