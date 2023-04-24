@@ -3,5 +3,5 @@
 # If you waste time on it, please add it here:
 # Total wasted time: 12 minutes
 NAME = "energyplus_launch"
-VERSION = "3.6.5"
+VERSION = "3.6.6"
 DOCS_URL = "https://ep-launch.readthedocs.io/en/latest/"
