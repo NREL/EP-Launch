@@ -24,7 +24,7 @@ setup(
     long_description=readme_contents,
     long_description_content_type='text/markdown',
     author="Jason Glazer and Edwin Lee for the United States Department of Energy",
-    install_requires=['PLAN-Tools>=0.6', 'tkmacosx'],
+    install_requires=['PLAN-Tools>=0.7', 'tkmacosx'],
     entry_points={
         'gui_scripts': [
             'energyplus_launch=eplaunch.tk_runner:main_gui',

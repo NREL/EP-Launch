@@ -10,4 +10,4 @@ nose
 wheel
 
 # for polishing up the Pip install
-PLAN-Tools==0.6
+PLAN-Tools==0.7
