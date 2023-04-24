@@ -23,7 +23,6 @@ jobs:
       - name: Run Tests
         run: nosetests
       - name: Coveralls
-        if: ${{ matrix.os == 'ubuntu-22.04' }}
         run: coveralls --service=github
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
