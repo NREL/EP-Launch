@@ -29,23 +29,31 @@ class WorkflowManager:
         """Locate the (EnergyPlus) workflow directories that are in predestined locations"""
         self.auto_found_workflow_dirs = []
         # then search for e+ workflows
-        search_roots: Dict[int, List[Path]] = {
-            Platform.WINDOWS: [Path(f"{c}:\\") for c in ascii_uppercase],
-            Platform.LINUX: [Path('/usr/local/bin/'), Path('/tmp/')],
-            Platform.MAC: [Path('/Applications/'), Path('/tmp/')],
-            Platform.UNKNOWN: [],
-        }
-        current_search_roots = search_roots[Platform.get_current_platform()]
+        if Platform.get_current_platform() == Platform.WINDOWS:
+            from ctypes import windll
+            bitmask = windll.kernel32.GetLogicalDrives()
+            roots: List[Path] = []
+            for letter in ascii_uppercase:
+                if bitmask & 1:
+                    roots.append(Path(f"{letter}:\\"))
+                bitmask >>= 1
+        elif Platform.get_current_platform() == Platform.LINUX:
+            roots = [Path('/usr/local/bin/'), Path('/tmp/'), Path('/opt')]
+        else:  # Assuming Platform.get_current_platform() == Platform.MAC:
+            roots = [Path('/Applications/'), Path('/tmp/')]
         search_names = ["EnergyPlus*", "EP*", "ep*", "E+*", "e+*"]
         if Platform.get_current_platform() == Platform.LINUX:
             search_names.append("energyplus*")  # add lower case check on case-sensitive file systems (typically Linux)
-        for search_root in current_search_roots:
-            for search_name in search_names:
-                eplus_folder_matches = search_root.glob(search_name)
-                for ep_folder in eplus_folder_matches:  # pragma: no cover, would have to install into system folders
-                    ep_workflow_dir = ep_folder / 'workflows'
-                    if ep_workflow_dir.exists():
-                        self.auto_found_workflow_dirs.append(ep_workflow_dir)
+        for search_root in roots:
+            try:
+                for search_name in search_names:
+                    eplus_folder_matches = search_root.glob(search_name)
+                    for ep_folder in eplus_folder_matches:  # pragma: no cover, would have to install in system folders
+                        ep_workflow_dir = ep_folder / 'workflows'
+                        if ep_workflow_dir.exists():
+                            self.auto_found_workflow_dirs.append(ep_workflow_dir)
+            except PermissionError:
+                continue  # just skip it, it could be like an empty DVD drive
 
     def instantiate_all_workflows(self, disable_builtins=False, extra_workflow_dir: Optional[Path] = None) -> None:
         this_file_directory_path = Path(__file__).parent.resolve()

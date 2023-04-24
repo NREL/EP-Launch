@@ -6,6 +6,7 @@ from mimetypes import guess_type
 from pathlib import Path
 from platform import system
 from queue import Queue
+from sys import version_info
 
 from subprocess import Popen
 from tkinter import Tk, PhotoImage, StringVar, Menu, DISABLED, Frame, Label, NSEW, E, VERTICAL, \
@@ -71,6 +72,9 @@ class EPLaunchWindow(Tk):
         self.pad = {'padx': 3, 'pady': 3}
         self.dd_only_string = '<No_Weather_File>'  # Can we change to just using blank?  It's fine for now.
         self.generic_dialogs = TkGenericDialog(self.pad)
+
+        # check the version of python for whether we can show extended UTF characters
+        self.extended_utf8 = version_info >= (3, 7, 6)
 
         # initialize variables which will track output dialogs
         self.dialog_counter: int = 0
@@ -247,9 +251,15 @@ class EPLaunchWindow(Tk):
         lf.grid(row=0, column=0, sticky=NS, **self.pad)
 
         lf = LabelFrame(container, text="Run Workflow on...")
-        b = Button(lf, text=u"\U000025B6 Selected File(s)", command=self._run_workflow_on_selection, state=NORMAL)
+        if self.extended_utf8:
+            b = Button(lf, text=u"\U000025B6 Selected File(s)", command=self._run_workflow_on_selection, state=NORMAL)
+        else:
+            b = Button(lf, text="Selected File(s)", command=self._run_workflow_on_selection, state=NORMAL)
         b.grid(row=0, column=0, sticky=EW, **self.pad)
-        b = Button(lf, text=u"\U000025B6 Current Group", command=self._run_workflow_on_group, state=NORMAL)
+        if self.extended_utf8:
+            b = Button(lf, text=u"\U000025B6 Current Group", command=self._run_workflow_on_group, state=NORMAL)
+        else:
+            b = Button(lf, text="Current Group", command=self._run_workflow_on_group, state=NORMAL)
         b.grid(row=1, column=0, sticky=EW, **self.pad)
         lf.grid_rowconfigure(ALL, weight=1)
         lf.grid_columnconfigure(ALL, weight=1)
@@ -259,22 +269,37 @@ class EPLaunchWindow(Tk):
         Label(lf, text="Recent: ", justify=RIGHT).grid(row=0, column=0, **self.pad)
         self.option_weather_recent = OptionMenu(lf, self._tk_var_weather_recent, '<weather>')
         self.option_weather_recent.grid(row=0, column=1, sticky=EW, **self.pad)
-        self.button_weather_select = Button(
-            lf, text=u"\U0001f325 Select Weather File...", command=self._open_weather_dialog
-        )
+        if self.extended_utf8:
+            self.button_weather_select = Button(
+                lf, text=u"\U0001f325 Select Weather File...", command=self._open_weather_dialog
+            )
+        else:
+            self.button_weather_select = Button(
+                lf, text="Select Weather File...", command=self._open_weather_dialog
+            )
         self.button_weather_select.grid(row=1, column=0, columnspan=2, sticky=EW, **self.pad)
         lf.grid_rowconfigure(ALL, weight=1)
         lf.grid_columnconfigure(ALL, weight=1)
         lf.grid(row=0, column=2, sticky=NS, **self.pad)
 
         lf = LabelFrame(container, text="Quicklinks")
-        self.button_open_in_text = Button(
-            lf, text=u"\U0001F5B9 Open File in Text Editor", command=self._open_text_editor, state=DISABLED
-        )
+        if self.extended_utf8:
+            self.button_open_in_text = Button(
+                lf, text=u"\U0001F5B9 Open File in Text Editor", command=self._open_text_editor, state=DISABLED
+            )
+        else:
+            self.button_open_in_text = Button(
+                lf, text="Open File in Text Editor", command=self._open_text_editor, state=DISABLED
+            )
         self.button_open_in_text.grid(row=0, column=0, columnspan=3, sticky=EW, **self.pad)
-        Button(
-            lf, text=u"\U0001F5C0 Open Dir in File Browser", command=self._open_file_browser, state=NORMAL
-        ).grid(row=1, column=0, columnspan=3, sticky=EW, **self.pad)
+        if self.extended_utf8:
+            Button(
+                lf, text=u"\U0001F5C0 Open Dir in File Browser", command=self._open_file_browser, state=NORMAL
+            ).grid(row=1, column=0, columnspan=3, sticky=EW, **self.pad)
+        else:
+            Button(
+                lf, text="Open Dir in File Browser", command=self._open_file_browser, state=NORMAL
+            ).grid(row=1, column=0, columnspan=3, sticky=EW, **self.pad)
         lf.grid_rowconfigure(ALL, weight=1)
         lf.grid_columnconfigure(ALL, weight=1)
         lf.grid(row=0, column=3, sticky=NS, **self.pad)
@@ -308,7 +333,10 @@ class EPLaunchWindow(Tk):
         self.option_workflow_outputs = Combobox(lf, textvariable=self._tk_var_output_suffix)
         self.option_workflow_outputs.grid(row=1, column=1, **self.pad)
         self.option_workflow_outputs['state'] = 'readonly'
-        self.button_open_output_file = Button(lf, text=u"\U0001f325 Open", command=self._open_output_file)
+        if self.extended_utf8:
+            self.button_open_output_file = Button(lf, text=u"\U0001f325 Open", command=self._open_output_file)
+        else:
+            self.button_open_output_file = Button(lf, text="Open", command=self._open_output_file)
         self.button_open_output_file.grid(row=1, column=2, **self.pad)
         lf.grid_columnconfigure(ALL, weight=1)
         lf.grid_rowconfigure(ALL, weight=1)
