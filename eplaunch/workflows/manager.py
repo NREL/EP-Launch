@@ -52,7 +52,7 @@ class WorkflowManager:
                         ep_workflow_dir = ep_folder / 'workflows'
                         if ep_workflow_dir.exists():
                             self.auto_found_workflow_dirs.append(ep_workflow_dir)
-            except PermissionError:
+            except PermissionError:  # pragma: no cover -- this could be quite hard to reproduce :)
                 continue  # just skip it, it could be like an empty DVD drive
 
     def instantiate_all_workflows(self, disable_builtins=False, extra_workflow_dir: Optional[Path] = None) -> None:
