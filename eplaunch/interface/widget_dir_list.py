@@ -21,9 +21,7 @@ class DirListWidget(Treeview):
         self.root_folder_image = PhotoImage(file=folder_icon_path)
         folder_closed_icon_path = this_file_dir / 'resources' / 'folder_closed.png'
         self.non_root_folder_image = PhotoImage(file=folder_closed_icon_path)
-        drive_root_icon_path = this_file_dir / 'resources' / 'drive_root.png'
-        self.drive_root_image = PhotoImage(file=drive_root_icon_path)
-        # load the drive root(s), initially closed, with a single dummy item inside so it allows expanding
+        # load the drive root(s), initially closed, with a single dummy item inside, so it allows expanding
         self.root_node_ids = []
         for r in DirListWidget.get_roots_by_platform():
             drive_root = self.insert('', END, text=r.anchor, open=False, tags=str(r))
