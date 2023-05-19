@@ -3,6 +3,7 @@ from fnmatch import fnmatch
 
 from json import dumps
 from mimetypes import guess_type
+from os import getenv
 from pathlib import Path
 from platform import system
 from queue import Queue
@@ -663,7 +664,9 @@ class EPLaunchWindow(Tk):
     def _new_dir_selected(self, selected_path: Path):
         self.previous_selected_directory = self.conf.directory
         self.conf.directory = selected_path
-        if len(self.conf.folders_recent) > 0 and self.conf.folders_recent[0] != selected_path:
+        if len(self.conf.folders_recent) == 0:
+            self.conf.folders_recent.appendleft(selected_path)
+        elif len(self.conf.folders_recent) > 0 and self.conf.folders_recent[0] != selected_path:
             self.conf.folders_recent.appendleft(selected_path)
         self._rebuild_recent_folder_menu()
         try:
@@ -743,7 +746,7 @@ class EPLaunchWindow(Tk):
         self.file_list.tree.set_files(control_list_rows)
         if previous_selected_files:
             self.file_list.tree.try_to_reselect(previous_selected_files)
-        self._rebuild_group_menu()
+        # self._rebuild_group_menu()
 
     def _is_file_stale(self, input_file_name: str) -> Optional[bool]:
         """
@@ -764,7 +767,9 @@ class EPLaunchWindow(Tk):
                 suffixes = ['.err']
             file_name_no_ext = full_file_path.with_suffix('').name
             for suffix in suffixes:
-                tentative_output_file_path = self.conf.directory / (file_name_no_ext + suffix)
+                output_sub_dir = f"EPLaunchRun_{file_name_no_ext}"
+                output_file_name = file_name_no_ext + suffix
+                tentative_output_file_path = self.conf.directory / output_sub_dir / output_file_name
                 if tentative_output_file_path.exists():
                     output_file_date = tentative_output_file_path.lstat().st_mtime
                     if output_file_date < input_file_date:
@@ -1306,6 +1311,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                     if self.conf.viewer_overrides[suffix_to_open] is not None:
                         # then the viewer override was found, and not None, so use it
                         Popen([str(self.conf.viewer_overrides[suffix_to_open]), new_path_str])
+                        continue
                 # if we make it this far, we didn't open it with a custom viewer, try to use the default
                 self._open_file_or_dir_with_default(new_path)
             elif eplus_specific_output_path.exists():
@@ -1313,6 +1319,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                     if self.conf.viewer_overrides[suffix_to_open] is not None:
                         # then the viewer override was found, and not None, so use it
                         Popen([str(self.conf.viewer_overrides[suffix_to_open]), eplus_specific_output_file])
+                        continue
                 # if we make it this far, we didn't open it with a custom viewer, try to use the default
                 self._open_file_or_dir_with_default(eplus_specific_output_path)
             else:
@@ -1390,7 +1397,6 @@ actually generated the requested outputs.  Any found output files are being open
             key.Close()
 
             # resolve the SystemRoot item
-            from os import getenv
             command = command.replace('%SystemRoot%', getenv('SystemRoot'))
 
             # then just take the program name by splitting any trailing % placeholders

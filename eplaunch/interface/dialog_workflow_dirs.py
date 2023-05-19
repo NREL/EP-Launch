@@ -20,6 +20,12 @@ class TkWorkflowsDialog(Toplevel):
         self.selected_index = -1
         # build the gui and call required modal methods
         self._build_gui()
+        self.update_idletasks()
+        self.geometry(
+            "%dx%d+%d+%d" % (
+                self.winfo_width(), self.winfo_height(), parent_window.winfo_x() + 25, parent_window.winfo_y() + 25
+            )
+        )
         self.grab_set()
         self.transient(parent_window)
 
