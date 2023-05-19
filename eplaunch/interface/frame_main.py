@@ -122,7 +122,7 @@ class EPLaunchWindow(Tk):
         self._init = False
 
         # finally set the initial directory and update the file listing
-        self.dir_tree.dir_list.refresh_listing(self.conf.directory)
+        self.dir_tree.dir_list.try_to_select_directory(self.conf.directory)
         self._update_file_list()
 
         # set the minimum size and redraw the app
@@ -349,9 +349,7 @@ class EPLaunchWindow(Tk):
         # create a sub paned window that is vertical to split the directory from the group box
         self.dir_files_pw = ttkPanedWindow(container, orient=HORIZONTAL)
         # the top part of this pane is simply the directory tree, add it with a heavier weight
-        self.dir_tree = DirListScrollableFrame(
-            self.dir_files_pw, on_select=self._new_dir_selected, on_root_changed=self._new_root_dir
-        )
+        self.dir_tree = DirListScrollableFrame(self.dir_files_pw, on_select=self._new_dir_selected)
         self.dir_files_pw.add(self.dir_tree, weight=1)
         self.file_list = FileListScrollableFrame(
             self.dir_files_pw, on_selection_changed=self._callback_file_selection_changed
@@ -570,7 +568,7 @@ class EPLaunchWindow(Tk):
             messagebox.showerror("Error", f"Could not navigate to group entry, it doesn't exist: {entry}")
             return
         self.conf.directory = entry.parent
-        self.dir_tree.dir_list.refresh_listing(self.conf.directory)
+        self.dir_tree.dir_list.try_to_select_directory(self.conf.directory)
         self._update_file_list()
         self.file_list.tree.try_to_reselect([entry.name])
 
@@ -615,7 +613,7 @@ class EPLaunchWindow(Tk):
 
     def _handle_favorite_folder_selection(self, folder_index: int):
         self.conf.directory = self.conf.folders_favorite[folder_index]
-        self.dir_tree.dir_list.refresh_listing(self.conf.directory)
+        self.dir_tree.dir_list.try_to_select_directory(self.conf.directory)
         self._update_file_list()
 
     def _rebuild_recent_folder_menu(self):
@@ -631,7 +629,7 @@ class EPLaunchWindow(Tk):
 
     def _handle_recent_folder_selection(self, folder_index: int):
         self.conf.directory = self.conf.folders_recent[folder_index]
-        self.dir_tree.dir_list.refresh_listing(self.conf.directory)
+        self.dir_tree.dir_list.try_to_select_directory(self.conf.directory)
         self._update_file_list()
 
     def _get_files_in_current_directory(self, workflow_file_patterns: List[str]) -> List[Tuple[str, str, str, str]]:
@@ -662,7 +660,7 @@ class EPLaunchWindow(Tk):
         file_list.sort(key=lambda x: x[0])
         return file_list
 
-    def _new_dir_selected(self, _: bool, selected_path: Path):
+    def _new_dir_selected(self, selected_path: Path):
         self.previous_selected_directory = self.conf.directory
         self.conf.directory = selected_path
         if len(self.conf.folders_recent) > 0 and self.conf.folders_recent[0] != selected_path:
@@ -673,9 +671,6 @@ class EPLaunchWindow(Tk):
             self._update_file_list()
         except Exception as e:  # noqa -- status_bar and things may not exist during initialization, just ignore
             print(str(e))  # log it to the console for fun
-
-    def _new_root_dir(self, new_root_path: Path):
-        self._new_dir_selected(True, new_root_path)
 
     def _update_file_list(self):
         """Update the file listing widget by querying the directory and cache contents, try to reselect current files"""
