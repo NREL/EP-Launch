@@ -1368,8 +1368,30 @@ actually generated the requested outputs.  Any found output files are being open
             if 'txt' in self.conf.viewer_overrides and self.conf.viewer_overrides['txt']:
                 text_editor_binary = str(self.conf.viewer_overrides['txt'])
                 Popen([text_editor_binary, full_path_str])
-            else:
-                self._open_file_or_dir_with_default(full_path_str)
+                return
+            if system() == 'Windows':
+                potential_program = self._find_default_text_editor_on_windows()
+                if potential_program != '':
+                    Popen([potential_program, full_path_str])
+                    return
+            # if neither of those work, just open with the default editor
+            self._open_file_or_dir_with_default(full_path_str)
+
+    @staticmethod
+    def _find_default_text_editor_on_windows() -> str:
+        from winreg import OpenKey, QueryValueEx, HKEY_CLASSES_ROOT
+        try:
+            key = OpenKey(HKEY_CLASSES_ROOT, '.txt')
+            default_value, _ = QueryValueEx(key, '')
+            key.Close()
+
+            key = OpenKey(HKEY_CLASSES_ROOT, default_value + r'\shell\open\command')
+            command, _ = QueryValueEx(key, '')
+            key.Close()
+
+            return command.strip('""')
+        except WindowsError:
+            return ''
 
     def _open_file_browser(self) -> None:
         self._open_file_or_dir_with_default(self.conf.directory)

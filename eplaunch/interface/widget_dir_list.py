@@ -39,7 +39,6 @@ class DirListWidget(Treeview):
 
     def _rebuild_single_node(self, item_id: str):
         item_details = self.item(item_id)
-        print(f"Building node with id {item_id} and details: {item_details}")
         item_path = Path(*item_details['tags'])
         # first delete any items from this node
         for item in self.get_children(item_id):
@@ -51,8 +50,7 @@ class DirListWidget(Treeview):
                 if f.is_dir():
                     raw_child_paths.append(f)
         except PermissionError:
-            print("Could not expand this folder, permission problem!")
-            self.insert(item_id, END, text="{error}", open=False, image=self.non_root_folder_image)
+            self.insert(item_id, END, text="{access_denied}", open=False, image=self.non_root_folder_image)
             return
         if len(raw_child_paths) == 0:
             self.insert(item_id, END, text="{empty}", open=False, image=self.non_root_folder_image)
