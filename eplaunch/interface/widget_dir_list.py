@@ -24,7 +24,7 @@ class DirListWidget(Treeview):
         # load the drive root(s), initially closed, with a single dummy item inside, so it allows expanding
         self.root_node_ids = []
         for r in DirListWidget.get_roots_by_platform():
-            drive_root = self.insert('', END, text=r.anchor, open=False, tags=str(r))
+            drive_root = self.insert('', END, text=r.anchor, open=False, tags=r.parts)
             self.root_node_ids.append(drive_root)
             self.insert(drive_root, END, text='{loading}', open=False, image=self.non_root_folder_image)
         # bind the click event
@@ -40,7 +40,7 @@ class DirListWidget(Treeview):
     def _rebuild_single_node(self, item_id: str):
         item_details = self.item(item_id)
         print(f"Building node with id {item_id} and details: {item_details}")
-        item_path = Path(item_details['tags'][0])
+        item_path = Path(*item_details['tags'])
         # first delete any items from this node
         for item in self.get_children(item_id):
             self.delete(item)
@@ -60,7 +60,7 @@ class DirListWidget(Treeview):
             new_child_file_paths = sorted(raw_child_paths)
             for path in new_child_file_paths:
                 new_child_id = self.insert(
-                    item_id, END, text=path.name, open=False, image=self.non_root_folder_image, tags=str(path)
+                    item_id, END, text=path.name, open=False, image=self.non_root_folder_image, tags=path.parts
                 )
                 self.insert(new_child_id, END, text="{loading}", open=False, image=self.non_root_folder_image)
 
@@ -85,7 +85,7 @@ class DirListWidget(Treeview):
         single_selected_item_id = self.selection()[0]
         item_contents = self.item(single_selected_item_id)
         if self.callback_on_new_selection:
-            selected_path = Path(item_contents['tags'][0])
+            selected_path = Path(*item_contents['tags'])
             self.callback_on_new_selection(selected_path)
 
     def try_to_select_directory(self, target_path: Path):
@@ -142,5 +142,5 @@ if __name__ == "__main__":
     root.title('Directory Listing Widget Demo')
     file_listing = DirListScrollableFrame(root)
     file_listing.pack(side=TOP, expand=True, fill=BOTH)
-    # file_listing.dir_list.try_to_select_directory(Path('/eplus/repos/1eplus'))
+    file_listing.dir_list.try_to_select_directory(Path('/eplus/repos/1eplus'))
     root.mainloop()
