@@ -1389,7 +1389,12 @@ actually generated the requested outputs.  Any found output files are being open
             command, _ = QueryValueEx(key, '')
             key.Close()
 
-            return command.strip('""')
+            # resolve the SystemRoot item
+            from os import getenv
+            command = command.replace('%SystemRoot%', getenv('SystemRoot'))
+
+            # then just take the program name by splitting any trailing % placeholders
+            return command.split('%')[0].strip()
         except WindowsError:
             return ''
 
