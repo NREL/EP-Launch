@@ -1365,9 +1365,20 @@ actually generated the requested outputs.  Any found output files are being open
             #     Popen(['xdg-open', full_path])
         else:  # assuming Mac
             if text_file_override:  # will open in the default text editor specifically
-                Popen(['open', '-t', full_path])
+                Popen(['open', '-e', full_path])
             else:
-                Popen(['open', full_path])
+                # alright, because we are trying to launch using `open`, we are severely limited
+                # in how much information we can get out of the running child process
+                # we can get info about the actual `open` process, but not the process that `open` spawns
+                # it is launched as a new process whose parent is simply launchd (root)
+                # I tried checking the running status of the open process, child subprocesses, and even
+                # some hacky tricks to check the incremental PID after the open call, and nothing worked
+                # reliably.  So I'm just going to pick a few known file extensions that I feel comfortable
+                # dispatching to a default program (htm, html, csv), and then send everything else to text
+                if full_path.endswith('htm') or full_path.endswith('html') or full_path.endswith('csv'):
+                    Popen(['open', full_path])
+                else:
+                    Popen(['open', '-e', full_path])
 
     def _open_text_editor(self) -> None:
         for file_name in self.conf.file_selection:
