@@ -4,6 +4,8 @@ from tkinter import Tk, Toplevel, StringVar, Button, EW, Entry, ALL, DISABLED, f
 from tkinter.ttk import Separator
 from typing import List, Optional
 
+from eplaunch.interface import set_dialog_geometry
+
 
 class TkWeatherDialog(Toplevel):
     CLOSE_SIGNAL_OK = 0
@@ -22,12 +24,7 @@ class TkWeatherDialog(Toplevel):
         # build the gui and call required modal methods
         self._define_tk_variables()
         self._build_gui(recent_files)
-        self.update_idletasks()
-        self.geometry(
-            "%dx%d+%d+%d" % (
-                self.winfo_width(), self.winfo_height(), parent_window.winfo_x() + 25, parent_window.winfo_y() + 25
-            )
-        )
+        set_dialog_geometry(self, parent_window)
         self.grab_set()
         self.transient(parent_window)
 

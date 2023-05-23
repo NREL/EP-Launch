@@ -4,6 +4,8 @@ from tkinter import Tk, Toplevel, Label, Listbox, SINGLE, Variable, Entry, DISAB
 from typing import Dict, List, Optional
 from pathlib import Path
 
+from eplaunch.interface import set_dialog_geometry
+
 
 class TkViewerDialog(Toplevel):
     CLOSE_SIGNAL_OK = 0
@@ -17,12 +19,7 @@ class TkViewerDialog(Toplevel):
         self.extension_to_viewer = dict_of_viewer_overrides
         self._define_tk_variables()
         self._build_gui()
-        self.update_idletasks()
-        self.geometry(
-            "%dx%d+%d+%d" % (
-                self.winfo_width(), self.winfo_height(), parent_window.winfo_x() + 25, parent_window.winfo_y() + 25
-            )
-        )
+        set_dialog_geometry(self, parent_window)
         self.grab_set()
         self.transient(parent_window)
 
