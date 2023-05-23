@@ -816,7 +816,7 @@ class EPLaunchWindow(Tk):
             )
         self._update_file_list()
 
-    def _set_weather_for_current_group(self):
+    def _apply_weather_to_a_file_list(self, list_of_file_paths: List[Path]):
         dialog_weather = TkWeatherDialog(self, list(self.conf.weathers_recent))
         self.wait_window(dialog_weather)
         if dialog_weather.exit_code == TkWeatherDialog.CLOSE_SIGNAL_CANCEL:
@@ -828,7 +828,7 @@ class EPLaunchWindow(Tk):
             if weather_file_to_use not in self.conf.weathers_recent:
                 self.conf.weathers_recent.appendleft(weather_file_to_use)
                 self._repopulate_recent_weather_list(weather_file_to_use)
-        for selected_path in self.conf.group_locations:
+        for selected_path in list_of_file_paths:
             workflow_directory_cache = CacheFile(selected_path.parent)
             workflow_directory_cache.add_config(
                 self.workflow_manager.current_workflow.name,
@@ -837,26 +837,12 @@ class EPLaunchWindow(Tk):
             )
         self._update_file_list()
 
+    def _set_weather_for_current_group(self):
+        self._apply_weather_to_a_file_list(self.conf.group_locations)
+
     def _open_weather_dialog(self) -> None:
-        dialog_weather = TkWeatherDialog(self, list(self.conf.weathers_recent))
-        self.wait_window(dialog_weather)
-        if dialog_weather.exit_code == TkWeatherDialog.CLOSE_SIGNAL_CANCEL:
-            return
-        if not dialog_weather.selected_weather_file:
-            weather_file_to_use = self.dd_only_string
-        else:
-            weather_file_to_use = dialog_weather.selected_weather_file
-            if weather_file_to_use not in self.conf.weathers_recent:
-                self.conf.weathers_recent.appendleft(weather_file_to_use)
-                self._repopulate_recent_weather_list(weather_file_to_use)
-        for selected_file_name in self.conf.file_selection:
-            workflow_directory_cache = CacheFile(self.conf.directory)
-            workflow_directory_cache.add_config(
-                self.workflow_manager.current_workflow.name,
-                selected_file_name,
-                {'weather': str(weather_file_to_use)}
-            )
-        self._update_file_list()
+        current_paths = [self.conf.directory / x for x in self.conf.file_selection]
+        self._apply_weather_to_a_file_list(current_paths)
 
     # endregion
 
@@ -1054,7 +1040,6 @@ class EPLaunchWindow(Tk):
             else:
                 # if we need weather, didn't find one in the cache, and didn't have a backup, ask for one now
                 recent_files = list(self.conf.weathers_recent)
-                # favorite_files = self.conf.weathers_favorite
                 w = TkWeatherDialog(self, recent_files, "*At least one file is missing a weather configuration*")
                 self.wait_window(w)
                 if w.exit_code == TkWeatherDialog.CLOSE_SIGNAL_CANCEL:
