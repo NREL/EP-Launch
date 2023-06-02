@@ -46,6 +46,7 @@ class EPLaunchWindow(Tk):
     # region Construction and GUI building functions
 
     def __init__(self):
+        fixup_taskbar_icon_on_windows(NAME)
         super().__init__(className=NAME)
         # set the form title and icon, basic stuff
         self.title("EnergyPlus Launch")
@@ -70,7 +71,6 @@ class EPLaunchWindow(Tk):
                 self.iconphoto(False, img)
             else:
                 print(f"Could not set icon for Windows, expecting to find it at {self.icon_path}")
-        fixup_taskbar_icon_on_windows(NAME)
         self.pad = {'padx': 3, 'pady': 3}
         self.dd_only_string = '<No_Weather_File>'  # Can we change to just using blank?  It's fine for now.
         self.generic_dialogs = TkGenericDialog(self.pad)
