@@ -1228,7 +1228,7 @@ EP-Launch has been around for many years as a part of the EnergyPlus distributio
 Starting with the 3.0 release, it has changed drastically, completely redesigned and rewritten.
 For full documentation or a quick start guide, click the "Open Docs" button below.
 This dialog will only be shown once, but documentation is available in the Help menu."""
-        self.generic_dialogs.display(
+        self.generic_dialogs.display_with_alt_button(
             self, 'Welcome to EP-Launch ' + VERSION, message, 'Open Documentation', self._open_documentation
         )
         self.conf.welcome_shown = True
