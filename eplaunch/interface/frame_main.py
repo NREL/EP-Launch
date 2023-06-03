@@ -201,7 +201,7 @@ class EPLaunchWindow(Tk):
         menu_nav.add_command(label="Add Current Folder to Favorites", command=self._add_folder_to_favorites)
         menu_nav.add_command(label="Remove Current Folder from Favorites", command=self._remove_folder_from_favorites)
         menu_nav.add_separator()
-        menu_nav.add_command(label="View Keyboard Shortcuts", command=self._open_shortcuts_dialog) 
+        menu_nav.add_command(label="View Keyboard Shortcuts", command=self._open_shortcuts_dialog)
         menubar.add_cascade(label="Navigation", menu=menu_nav)
 
         menu_group = Menu(menubar, tearoff=False)
