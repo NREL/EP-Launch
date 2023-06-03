@@ -200,6 +200,8 @@ class EPLaunchWindow(Tk):
         menu_nav.add_cascade(label="Favorites", menu=self.menu_nav_favorites)
         menu_nav.add_command(label="Add Current Folder to Favorites", command=self._add_folder_to_favorites)
         menu_nav.add_command(label="Remove Current Folder from Favorites", command=self._remove_folder_from_favorites)
+        menu_nav.add_separator()
+        menu_nav.add_command(label="View Keyboard Shortcuts", command=self._open_shortcuts_dialog) 
         menubar.add_cascade(label="Navigation", menu=menu_nav)
 
         menu_group = Menu(menubar, tearoff=False)
@@ -445,6 +447,7 @@ class EPLaunchWindow(Tk):
 
     def _handle_keyboard_press(self, event) -> None:
         # Update docs/navigation.rst whenever this set of keybindings changes
+        # Update self._list_keyboard_shortcuts() whenever this set of keybindings changes
         # relevant_modifiers
         # mod_shift = 0x1
         mod_control = 0x4
@@ -461,6 +464,19 @@ class EPLaunchWindow(Tk):
             self._cycle_through_group()
         elif event.keysym == 'z' and mod_control & event.state:
             self._navigate_to_previous_folder()
+
+    @staticmethod
+    def _list_keyboard_shortcuts() -> List[Tuple[str, str]]:
+        # Mimic the keyboard shortcuts in the function above
+        # It helps the dialog text look nice if you make sure the widths are uniform
+        return [
+            ("Control + F5", "Update File List"),
+            ("Control + w ", "Open Weather Dialog"),
+            ("Control + r ", "Run Workflow on Selected Files"),
+            ("Control + g ", "Run Workflow on Current Group"),
+            ("Control + m ", "Cycle Through Group Files"),
+            ("Control + z ", "Navigate to Previous Folder"),
+        ]
 
     # endregion
 
@@ -1233,6 +1249,11 @@ This dialog will only be shown once, but documentation is available in the Help 
         )
         self.conf.welcome_shown = True
         self.conf.latest_welcome_shown = VERSION
+
+    def _open_shortcuts_dialog(self, *_) -> None:
+        shortcuts = EPLaunchWindow._list_keyboard_shortcuts()
+        text = '\n'.join([f"{r[0]}:\t{r[1]}" for r in shortcuts])
+        self.generic_dialogs.display(self, "Available Keyboard Shortcuts", text)
 
     def _open_about(self) -> None:
         text = """
