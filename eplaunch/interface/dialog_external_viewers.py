@@ -4,7 +4,7 @@ from tkinter import Tk, Toplevel, Label, Listbox, SINGLE, Variable, Entry, DISAB
 from typing import Dict, List, Optional
 from pathlib import Path
 
-from eplaunch.interface import set_dialog_geometry
+from eplaunch.interface import set_dialog_geometry, set_frame_or_top_level_icon
 
 
 class TkViewerDialog(Toplevel):
@@ -13,6 +13,7 @@ class TkViewerDialog(Toplevel):
 
     def __init__(self, parent_window, list_of_suffixes: List[str], dict_of_viewer_overrides: Dict[str, Optional[Path]]):
         super().__init__()
+        set_frame_or_top_level_icon(self, Path(__file__).resolve().parent.parent / 'icons')
         self.title("Viewers")
         self.exit_code = self.CLOSE_SIGNAL_CANCEL
         self.suffixes = ['txt'] + list_of_suffixes

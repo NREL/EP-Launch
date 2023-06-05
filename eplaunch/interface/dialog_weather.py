@@ -8,7 +8,7 @@ else:
 from tkinter.ttk import Separator
 from typing import List, Optional
 
-from eplaunch.interface import set_dialog_geometry
+from eplaunch.interface import set_dialog_geometry, set_frame_or_top_level_icon
 
 
 class TkWeatherDialog(Toplevel):
@@ -19,6 +19,7 @@ class TkWeatherDialog(Toplevel):
 
     def __init__(self, parent_window, recent_files: List[Path], text: Optional[str] = None):
         super().__init__()
+        set_frame_or_top_level_icon(self, Path(__file__).resolve().parent.parent / 'icons')
         self.alt_text = text
         self.title("Choose Weather Configuration")
         # assume cancel to allow for closing the dialog with the X

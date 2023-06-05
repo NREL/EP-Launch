@@ -1,7 +1,8 @@
+from pathlib import Path
 from typing import Callable, Dict
 from tkinter import Tk, Label, Button, Toplevel, TOP, BOTH, LEFT
 
-from eplaunch.interface import set_dialog_geometry
+from eplaunch.interface import set_dialog_geometry, set_frame_or_top_level_icon
 
 
 class TkGenericDialog:
@@ -10,6 +11,7 @@ class TkGenericDialog:
 
     def display(self, parent_window: Tk, title: str, text: str):
         t = Toplevel(parent_window)
+        set_frame_or_top_level_icon(t, Path(__file__).resolve().parent.parent / 'icons')
         t.title(title)
         Label(t, justify=LEFT, text=text).pack(side=TOP, expand=True, fill=BOTH, **self.pad)
 

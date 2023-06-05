@@ -1,10 +1,14 @@
+from pathlib import Path
 from tkinter import Tk, Toplevel, Frame, TOP, Button, scrolledtext, BOTH, Scrollbar, BOTTOM, X, END
+
+from eplaunch.interface import set_frame_or_top_level_icon
 
 
 class TkOutputDialog(Toplevel):
 
     def __init__(self, parent_window, workflow_id, workflow_title: str, configuration: str, x: int, y: int):
         super().__init__(parent_window)
+        set_frame_or_top_level_icon(self, Path(__file__).resolve().parent.parent / 'icons')
         self.x = x
         self.y = y
         self.desired_width = 500

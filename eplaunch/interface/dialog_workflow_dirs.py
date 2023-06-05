@@ -4,7 +4,7 @@ from tkinter.filedialog import askdirectory
 from tkinter.messagebox import showerror
 from typing import List
 
-from eplaunch.interface import set_dialog_geometry
+from eplaunch.interface import set_dialog_geometry, set_frame_or_top_level_icon
 
 
 class TkWorkflowsDialog(Toplevel):
@@ -13,6 +13,7 @@ class TkWorkflowsDialog(Toplevel):
 
     def __init__(self, parent_window, current_workflow_dirs: List[Path], auto_found_workflow_dirs: List[Path]):
         super().__init__()
+        set_frame_or_top_level_icon(self, Path(__file__).resolve().parent.parent / 'icons')
         self.title("Choose Workflow Directories")
         # assume cancel to allow for closing the dialog with the X
         self.exit_code = self.CLOSE_SIGNAL_CANCEL
