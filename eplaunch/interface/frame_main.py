@@ -235,7 +235,7 @@ class EPLaunchWindow(Tk):
         menubar.add_cascade(label="Settings", menu=menu_settings)
 
         menu_help = Menu(menubar, tearoff=False)
-        menu_help.add_command(label="EP-Launch Documentation", command=self._open_documentation)
+        menu_help.add_command(label="EnergyPlus-Launch Documentation", command=self._open_documentation)
         menu_help.add_command(label="About...", command=self._open_about)
         menubar.add_cascade(label="Help", menu=menu_help)
 
@@ -490,7 +490,7 @@ class EPLaunchWindow(Tk):
         group_file_path = filedialog.askopenfilename(
             title="Load a new EPLaunch Group File",
             initialdir=self.conf.directory,
-            filetypes=(("EP-Launch Group Files", "*.epg3"),)
+            filetypes=(("EnergyPlus-Launch Group Files", "*.epg3"),)
         )
         if not group_file_path:
             return
@@ -506,7 +506,7 @@ class EPLaunchWindow(Tk):
         group_file_path = filedialog.asksaveasfilename(
             title="Save EPLaunch Group File",
             initialdir=self.conf.directory,
-            filetypes=(("EP-Launch Group Files", "*.epg3"),)
+            filetypes=(("EnergyPlus-Launch Group Files", "*.epg3"),)
         )
         if not group_file_path:
             return
@@ -1240,12 +1240,12 @@ class EPLaunchWindow(Tk):
         if self.conf.welcome_shown and VERSION == self.conf.latest_welcome_shown:
             return
         message = """
-EP-Launch has been around for many years as a part of the EnergyPlus distribution.
+EnergyPlus-Launch has been around for many years as a part of the EnergyPlus distribution.
 Starting with the 3.0 release, it has changed drastically, completely redesigned and rewritten.
 For full documentation or a quick start guide, click the "Open Docs" button below.
 This dialog will only be shown once, but documentation is available in the Help menu."""
         self.generic_dialogs.display_with_alt_button(
-            self, 'Welcome to EP-Launch ' + VERSION, message, 'Open Documentation', self._open_documentation
+            self, 'Welcome to EnergyPlus-Launch ' + VERSION, message, 'Open Documentation', self._open_documentation
         )
         self.conf.welcome_shown = True
         self.conf.latest_welcome_shown = VERSION
@@ -1257,12 +1257,12 @@ This dialog will only be shown once, but documentation is available in the Help 
 
     def _open_about(self) -> None:
         text = """
-EP-Launch
+EnergyPlus-Launch
 
-EP-Launch is a graphical workflow manager for EnergyPlus.
+EnergyPlus-Launch is a graphical workflow manager for EnergyPlus.
 Originally written in VB6 and released with essentially every version of EnergyPlus,
 it is now a cross platform Python tool.
-Users are encouraged to leverage EP-Launch and write their own workflow scripts
+Users are encouraged to leverage EnergyPlus-Launch and write their own workflow scripts
 to enable new capabilities.
 
 Version %s
@@ -1296,7 +1296,7 @@ OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         """ % VERSION
-        self.generic_dialogs.display(self, "About EP-Launch", text)
+        self.generic_dialogs.display(self, "About EnergyPlus-Launch", text)
 
     def _open_output_file_generic(self, suffix_to_open: str):
         if len(self.conf.file_selection) > 5:

@@ -1,4 +1,4 @@
-# EP-Launch3
+# EnergyPlus Launch
 
 [![GitHub release](https://img.shields.io/github/release/nrel/ep-launch.svg?style=for-the-badge)](https://github.com/nrel/ep-launch/releases/latest)
 

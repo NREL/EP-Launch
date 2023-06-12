@@ -1,7 +1,7 @@
 File/Folder Navigation
 ======================
 
-EP-Launch includes several ways to navigate between files and folders.
+EnergyPlus-Launch includes several ways to navigate between files and folders.
 
 Basic Navigation
 ----------------
@@ -25,7 +25,7 @@ Alternatively, to set a new root using a selection dialog, click the directory t
 Recent Folders
 --------------
 
-EP-Launch keeps track of the last few folders to which the user has navigated.
+EnergyPlus-Launch keeps track of the last few folders to which the user has navigated.
 If the user selects a folder and quickly wants to get back to the last folder, it will be available in the top menu under Navigation->Recent, as shown in the following figure:
 
 .. figure:: navigation2.png
@@ -37,7 +37,7 @@ There is also a shortcut to go back to the previously selected folder, which use
 Favorite Folders
 ----------------
 
-EP-Launch allows the user to persist a list of favorite folder locations.
+EnergyPlus-Launch allows the user to persist a list of favorite folder locations.
 If a user regularly works in a small set of folders, this can be an easy way to keep a constant list of folders in the program at all times.
 At any time, the user can select a new root directory from the list of folders as shown in the following figure:
 
@@ -47,10 +47,10 @@ At any time, the user can select a new root directory from the list of folders a
 
 The user can add and remove the current root folder from the list by using the menu options also shown in the figure.
 
-EP-Launch Groups
-----------------
+EnergyPlus-Launch Groups
+------------------------
 
-In addition to a single persistent favorites list, EP-Launch also supports the ability to save customized groups of files.
+In addition to a single persistent favorites list, EnergyPlus-Launch also supports the ability to save customized groups of files.
 Groups provide a quick list of files to run, and can be manipulated inside the application, or generated from outside.
 Groups can be saved and opened so that power users who may want a more "session-based" environment can easily manage different group files for different projects.
 When a user double clicks a file location from the groups entry, it will navigate to that folder and attempt to select that file as well.
@@ -62,13 +62,13 @@ The groups list is on the bottom of the window, as shown here:
 
 Management of the group happens through the Group options shown, and is generally straight-forward.
 Groups are saved as epg3 files, which are simply a list of file locations in a plain text file.
-These could be created externally and just loaded into EP-Launch for a given session.
-Note that EP-Launch does not do any background checks on whether the entries of a group currently exist, but will warn if you try to run an invalid entry.
+These could be created externally and just loaded into EnergyPlus-Launch for a given session.
+Note that EnergyPlus-Launch does not do any background checks on whether the entries of a group currently exist, but will warn if you try to run an invalid entry.
 A keyboard shortcut is available which allows the user to cycle through all entries of a group, using Ctrl-m.
 
 Once a group is in place, running the entire group of files with the currently selected workflow can be executed from the correct button on the top bar.
 A keyboard shortcut is also available to run the current group of files with the currently selected workflow, using Ctrl-g.
-Note that EP-Launch is just going to try to execute them directly, with minimal validation.
+Note that EnergyPlus-Launch is just going to try to execute them directly, with minimal validation.
 If you change workflows, the current group of files may no longer be valid.
 
 Keyboard Navigation

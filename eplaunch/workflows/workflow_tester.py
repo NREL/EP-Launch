@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-This file is a standalone EP-Launch workflow tester.
+This file is a standalone EnergyPlus-Launch workflow tester.
 It is called using a single argument, the path to a workflow file
 """
 

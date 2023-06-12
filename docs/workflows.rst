@@ -1,8 +1,8 @@
 Workflows
 =========
 
-Starting with EP-Launch 3.0, the code has been 100% rewritten from VB6 to Python, with an eye toward creating a cross-platform tool that can be developed, built, and packaged easily by many developers.
-Also at the heart of this new version of EP-Launch is something called "Workflows."
+Starting with EnergyPlus-Launch 3.0, the code has been 100% rewritten from VB6 to Python, with an eye toward creating a cross-platform tool that can be developed, built, and packaged easily by many developers.
+Also at the heart of this new version of EnergyPlus-Launch is something called "Workflows."
 
 Definition
 ----------
@@ -10,7 +10,7 @@ Definition
 A workflow can be defined as:
 
 - a Python class,
-- that inherits from an EP-Launch Workflow base class, and
+- that inherits from an EnergyPlus-Launch Workflow base class, and
 - properly overrides all abstract methods on the base class.
 
 Some additional interesting features:

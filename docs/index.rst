@@ -1,5 +1,5 @@
-Welcome to EP-Launch's documentation!
-=====================================
+Welcome to EnergyPlus Launch's documentation!
+=============================================
 
 .. toctree::
    :maxdepth: 2
