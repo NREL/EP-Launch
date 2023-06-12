@@ -144,6 +144,9 @@ class EPLaunchWindow(Tk):
         # bind key presses for the app
         self.bind('<Key>', self._handle_keyboard_press)
 
+        # and bind the focus event for the app
+        self.bind("<FocusIn>", self._handle_focus_in)
+
     def _define_tk_variables(self):
         self._tk_var_workflow_context = StringVar(value='<context>')
         self._tk_var_workflow_instance = StringVar(value='<instance>')
@@ -464,6 +467,18 @@ class EPLaunchWindow(Tk):
             self._cycle_through_group()
         elif event.keysym == 'z' and mod_control & event.state:
             self._navigate_to_previous_folder()
+
+    def _handle_focus_in(self, _event) -> None:
+        # This is firing twice, even on dummy hello world window examples.
+        # The event argument is supposed to have a .detail member which you
+        # can check to see if it equals NotifyAncestor and skip some callbacks.
+        # Unfortunately that is missing, so there's not much we can do.
+        # If we really needed to skip some, we could do a small timer that
+        # won't let two callbacks happen within 0.5s of each other or something.
+        # For now that's not necessary, but could be in the future.
+        # As of right now, the only reason we need this is to try to refresh
+        # the stale attribute, which should be accomplished with just the call here.
+        self._update_file_list()
 
     @staticmethod
     def _list_keyboard_shortcuts() -> List[Tuple[str, str]]:
