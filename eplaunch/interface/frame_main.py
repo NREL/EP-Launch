@@ -534,6 +534,8 @@ class EPLaunchWindow(Tk):
         )
         if not group_file_path:
             return
+        if not group_file_path.endswith('.epg3'):
+            group_file_path += '.epg3'
         group_file_path_object = Path(group_file_path)
         try:
             group_file_path_object.write_text('\n'.join([str(p) for p in self.conf.group_locations]))
