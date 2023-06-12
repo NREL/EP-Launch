@@ -823,9 +823,11 @@ class EPLaunchWindow(Tk):
         self.button_open_in_text['state'] = status
         # disable the IDF editor button, then possibly enable it
         self.button_idf_editor['state'] = DISABLED
-        if self.workflow_manager.current_workflow and system() == 'Windows':
-            if self.workflow_manager.current_workflow.is_energyplus:
-                self.button_idf_editor['state'] = NORMAL
+        if system() == 'Windows':
+            if self.workflow_manager.current_workflow:
+                if self.workflow_manager.current_workflow.is_energyplus:
+                    if len(self.conf.file_selection) > 0:
+                        self.button_idf_editor['state'] = NORMAL
         # update output buttons too
         self._refresh_output_suffix_buttons_based_on_selection()
 
@@ -1440,8 +1442,14 @@ actually generated the requested outputs.  Any found output files are being open
         if len(self.conf.file_selection) > 3:
             messagebox.showerror("File Selection Issue", "Select up to 3 files to open with IDF Editor.")
             return
+        any_skipped = False
         for f in self.conf.file_selection:
-            Popen([idf_editor_binary, self.conf.directory / f])
+            if f.endswith('idf') or f.endswith('imf'):
+                Popen([idf_editor_binary, self.conf.directory / f])
+            else:
+                any_skipped = True
+        if any_skipped:
+            messagebox.showerror("File Type Issue", "At least one file was skipped because it was not an IDF/IMF")
 
     @staticmethod
     def _find_default_text_editor_on_windows() -> str:
