@@ -191,6 +191,7 @@ class EPLaunchWindow(Tk):
         menu_file = Menu(menubar, tearoff=False)
         menu_file.add_command(label="Run Current Workflow on Selection", command=self._run_workflow_on_selection)
         menu_file.add_command(label="Run Current Workflow on Current Group", command=self._run_workflow_on_group)
+        menu_file.add_separator()
         menu_file.add_command(label="Quit", command=self._window_close)
         menubar.add_cascade(label="File", menu=menu_file)
 
@@ -208,18 +209,20 @@ class EPLaunchWindow(Tk):
         menubar.add_cascade(label="Navigation", menu=menu_nav)
 
         menu_group = Menu(menubar, tearoff=False)
-        menu_group.add_command(label="Clear Current Group", command=self._clear_group)
-        menu_group.add_command(label="Load new Group file...", command=self._load_new_group_file)
-        menu_group.add_command(label="Save Current Group to file...", command=self._save_group_file)
         menu_group.add_command(
             label="Add selected files to current group", command=self._add_current_files_to_group
         )
+        menu_group.add_command(label="Clear Current Group", command=self._clear_group)
+        menu_group.add_separator()
         menu_group.add_command(
             label="Set weather for current group", command=self._set_weather_for_current_group
         )
         menu_group.add_command(
             label="Cycle through current group entries", command=self._cycle_through_group
         )
+        menu_group.add_separator()
+        menu_group.add_command(label="Save Current Group to file...", command=self._save_group_file)
+        menu_group.add_command(label="Load File to Current Group...", command=self._load_new_group_file)
         menubar.add_cascade(label="Group", menu=menu_group)
 
         menu_settings = Menu(menubar, tearoff=False)
@@ -527,6 +530,9 @@ class EPLaunchWindow(Tk):
         self._rebuild_group_menu()
 
     def _save_group_file(self):
+        if len(self.conf.group_locations) == 0:
+            messagebox.showerror("File Selection Issue", "Group is currently empty, add files to group before saving!")
+            return
         group_file_path = filedialog.asksaveasfilename(
             title="Save EPLaunch Group File",
             initialdir=self.conf.directory,
