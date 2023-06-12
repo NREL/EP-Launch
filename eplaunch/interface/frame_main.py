@@ -289,7 +289,7 @@ class EPLaunchWindow(Tk):
         lf.grid_columnconfigure(ALL, weight=1)
         lf.grid(row=0, column=2, sticky=NS, **self.pad)
 
-        lf = LabelFrame(container, text="Quicklinks")
+        lf = LabelFrame(container, text="Open Selected File(s) or Directory")
         if self.extended_utf8:
             self.button_open_in_text = Button(
                 lf, text=u"\U0001F5B9 Open File in Text Editor", command=self._open_text_editor, state=DISABLED
@@ -298,15 +298,22 @@ class EPLaunchWindow(Tk):
             self.button_open_in_text = Button(
                 lf, text="Open File in Text Editor", command=self._open_text_editor, state=DISABLED
             )
-        self.button_open_in_text.grid(row=0, column=0, columnspan=3, sticky=EW, **self.pad)
+        self.button_open_in_text.grid(row=0, column=0, sticky=EW, **self.pad)
         if self.extended_utf8:
-            Button(
+            dir_button = Button(
                 lf, text=u"\U0001F5C0 Open Dir in File Browser", command=self._open_file_browser, state=NORMAL
-            ).grid(row=1, column=0, columnspan=3, sticky=EW, **self.pad)
+            )
         else:
-            Button(
+            dir_button = Button(
                 lf, text="Open Dir in File Browser", command=self._open_file_browser, state=NORMAL
-            ).grid(row=1, column=0, columnspan=3, sticky=EW, **self.pad)
+            )
+        dir_button.grid(row=1, column=0, sticky=EW, **self.pad)
+        idf_editor_icon_path = Path(__file__).resolve().parent / 'resources' / 'idf_editor_icon.png'
+        self.idf_editor_image = PhotoImage(file=str(idf_editor_icon_path))
+        self.button_idf_editor = Button(
+            lf, image=self.idf_editor_image, command=self._open_idf_editor, state=DISABLED
+        )
+        self.button_idf_editor.grid(row=0, rowspan=2, column=1, sticky=EW, **self.pad)
         lf.grid_rowconfigure(ALL, weight=1)
         lf.grid_columnconfigure(ALL, weight=1)
         lf.grid(row=0, column=3, sticky=NS, **self.pad)
@@ -478,6 +485,8 @@ class EPLaunchWindow(Tk):
         # For now that's not necessary, but could be in the future.
         # As of right now, the only reason we need this is to try to refresh
         # the stale attribute, which should be accomplished with just the call here.
+        # It's possible we also need to check the _event.widget to make sure we are only
+        # calling this when the main window is focused.
         self._update_file_list()
 
     @staticmethod
@@ -812,6 +821,12 @@ class EPLaunchWindow(Tk):
         self.conf.file_selection = selected_file_names
         status = NORMAL if len(self.conf.file_selection) > 0 else DISABLED
         self.button_open_in_text['state'] = status
+        # disable the IDF editor button, then possibly enable it
+        self.button_idf_editor['state'] = DISABLED
+        if self.workflow_manager.current_workflow and system() == 'Windows':
+            if self.workflow_manager.current_workflow.is_energyplus:
+                self.button_idf_editor['state'] = NORMAL
+        # update output buttons too
         self._refresh_output_suffix_buttons_based_on_selection()
 
     # endregion
@@ -1415,6 +1430,18 @@ actually generated the requested outputs.  Any found output files are being open
                     return
             # if neither of those work, just open with the default editor
             self._open_file_or_dir_with_default(full_path_str)
+
+    def _open_idf_editor(self) -> None:
+        # should only be able to get here if the current configuration/workflow/selection/platform allows it
+        workflow_context_dir = self.workflow_manager.current_workflow.workflow_directory
+        eplus_root_dir = workflow_context_dir.parent
+        idf_editor_dir = eplus_root_dir / 'PreProcess' / 'IDFEditor'
+        idf_editor_binary = idf_editor_dir / 'IDFEditor.exe'
+        if len(self.conf.file_selection) > 3:
+            messagebox.showerror("File Selection Issue", "Select up to 3 files to open with IDF Editor.")
+            return
+        for f in self.conf.file_selection:
+            Popen([idf_editor_binary, self.conf.directory / f])
 
     @staticmethod
     def _find_default_text_editor_on_windows() -> str:
