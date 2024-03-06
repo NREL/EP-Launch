@@ -55,11 +55,15 @@ class WorkflowManager:
             except PermissionError:  # pragma: no cover -- this could be quite hard to reproduce :)
                 continue  # just skip it, it could be like an empty DVD drive
 
-    def instantiate_all_workflows(self, disable_builtins=False, extra_workflow_dir: Optional[Path] = None) -> None:
+    def instantiate_all_workflows(self, disable_builtins=False, extra_workflow_dir: Optional[Path] = None,
+                                  skip_ep_search: bool = False) -> None:
         this_file_directory_path = Path(__file__).parent.resolve()
         this_project_root_dir = this_file_directory_path.parent
         built_in_workflow_dir = this_project_root_dir / 'workflows' / 'default'
-        all_workflow_directories = self.workflow_directories
+        if skip_ep_search:
+            all_workflow_directories = []
+        else:
+            all_workflow_directories = self.workflow_directories
         if disable_builtins:
             # don't add built-in default workflows
             pass
