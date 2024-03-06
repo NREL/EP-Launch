@@ -21,7 +21,7 @@ jobs:
       - name: Install Pip Dependencies
         run: pip install -r requirements.txt
       - name: Run Tests
-        run: nosetests
+        run: coverage run -m pytest
       - name: Coveralls
         run: coveralls --service=github
         env:
