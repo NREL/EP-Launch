@@ -3,6 +3,8 @@
 tmp_build
 EPLaunchInstall.exe
 cover/
+.eplaunch
+.vscode/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

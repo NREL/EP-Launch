@@ -2,6 +2,6 @@
 # Here's a time counter for how much time has been wasted by changing it to single quotes.
 # If you waste time on it, please add it here:
 # Total wasted time: 12 minutes
-NAME = "EP-Launch"
-VERSION = "3.0.0"
+NAME = "energyplus_launch"
+VERSION = "3.7.1"
 DOCS_URL = "https://ep-launch.readthedocs.io/en/latest/"

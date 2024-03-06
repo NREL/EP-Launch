@@ -1,108 +1,78 @@
 import json
 import os
+from typing import Tuple
+
+# TODO: this built-in eplaunch/utilities/version module should be removed, workflows should manage this themselves
 
 
 class Version:
 
-    def check_energyplus_version(self, file_path):
-        _, extension = os.path.splitext(file_path)
-        extension = extension.upper()
-        if extension == '.IDF':
-            found, string_version, number_version = self.check_idf_imf_energyplus_version(file_path)
-        elif extension == '.IMF':
-            found, string_version, number_version = self.check_idf_imf_energyplus_version(file_path)
+    @staticmethod
+    def check_energyplus_version(file_path: str) -> Tuple[bool, str, int]:
+        """Gets the version number information for a given EnergyPlus input file"""
+        extension = os.path.splitext(file_path)[1].upper()
+        if extension == '.IDF' or extension == '.IMF':
+            return Version.check_idf_imf_energyplus_version(file_path)
         elif extension == '.EPJSON':
-            found, string_version, number_version = self.check_json_energyplus_version(file_path)
+            return Version.check_json_energyplus_version(file_path)
         else:
-            found = False
-            string_version = ''
-            number_version = 0
-        return found, string_version, number_version
+            return False, '', 0
 
-    def check_idf_imf_energyplus_version(self, file_path):
-        found = False
-        current_version = ''
+    @staticmethod
+    def check_idf_imf_energyplus_version(file_path: str) -> Tuple[bool, str, int]:
+        """Attempts to read a version number from an IDF syntax file"""
+        # noinspection PyBroadException
         try:
             with open(file_path, "r") as f:
                 cur_line = f.readline()
                 while cur_line:
                     cur_line = cur_line.strip()
-                    if cur_line:
-                        if cur_line[0] != "!":
-                            cur_line = cur_line.upper()
-                            if "VERSION" in cur_line:
-                                cur_line = self.line_with_no_comment(cur_line)
-                                if ";" in cur_line:
-                                    poss_obj = cur_line
-                                else:
-                                    next_line = f.readline()
-                                    next_line = next_line.strip()
-                                    next_line = self.line_with_no_comment(next_line)
-                                    poss_obj = cur_line + next_line
-                                if poss_obj[-1] == ";":
-                                    poss_obj = poss_obj[:-1]
-                                fields = poss_obj.split(',')
-                                current_version = fields[1]
-                                found = True
-                                break
+                    if len(cur_line) > 0 and cur_line[0] != "!" and "VERSION" in cur_line.upper():
+                        cur_line = Version.line_with_no_comment(cur_line)
+                        if ";" in cur_line:  # one liner version object ("Version, 8.4;")
+                            poss_obj = cur_line
+                        else:  # hoping for a two-liner version object ("Version,\n  8.4;")
+                            next_line = Version.line_with_no_comment(f.readline().strip())
+                            poss_obj = cur_line + next_line
+                        hopeful_object = poss_obj[:-1] if poss_obj[-1] == ";" else poss_obj
+                        fields = hopeful_object.split(',')
+                        return True, fields[1], Version.numeric_version_from_string(fields[1])
                     cur_line = f.readline()  # get the next line
-            return found, current_version, self.numeric_version_from_string(current_version)
-        except Exception:
-            return False, '', ''
+        except:  # noqa: E722
+            return False, '', 0
 
-    def line_with_no_comment(self, in_string):
-        exclamation_point_pos = in_string.find("!")
-        if exclamation_point_pos >= 0:
-            out_string = in_string[0:exclamation_point_pos]
-            out_string = out_string.strip()
-        else:  # no explanation point found
-            out_string = in_string.strip()
-        return out_string
+    @staticmethod
+    def line_with_no_comment(in_string: str) -> str:
+        """Returns an IDF line with any comments removed"""
+        return in_string[0:in_string.find("!")].strip() if in_string.find("!") >= 0 else in_string.strip()
 
-    def numeric_version_from_string(self, string_version):
-        # if the version string has sha1 hash at the end remove it
-        words = string_version.split("-")
+    @staticmethod
+    def numeric_version_from_string(string_version: str) -> int:
+        """Gets the coded version string from a version string like 5.0.0-abcdef"""
+        parts = [int(x) for x in string_version.split("-")[0].split('.')]
+        return 10000 * parts[0] + 100 * parts[1]
+
+    @staticmethod
+    def numeric_version_from_dash_string(string_version: str) -> int:
+        """Gets the coded version string from a version string like V5-0-0"""
+        string_version = string_version[1:] if string_version[0] == 'V' else string_version
         # the rest of the version number should just be separated by periods
-        parts = words[0].split(".")
-        numeric_version = 0
-        parts = parts[:3]
-        # overwrite the patch number with a zero, or append a zero patch number
-        if len(parts) == 3:
-            parts[2] = 0
-        if len(parts) == 2:
-            parts.append("0")
-        for part in parts:
-            numeric_version = numeric_version * 100 + int(part)
-        return numeric_version
+        parts = [int(x) for x in string_version.split("-")]
+        return 10000 * parts[0] + 100 * parts[1]
 
-    def numeric_version_from_dash_string(self, string_version):
-        # remove leading 'V' if included
-        if string_version[0] == 'V':
-            string_version = string_version[1:]
-        # the rest of the version number should just be separated by periods
-        parts = string_version.split("-")
-        numeric_version = 0
-        # overwrite the patch number with a zero, or append a zero patch number
-        if len(parts) == 3:
-            parts[2] = 0
-        if len(parts) == 2:
-            parts.append("0")
-        for part in parts:
-            numeric_version = numeric_version * 100 + int(part)
-        return numeric_version
-
-    def string_version_from_number(self, version_number):
-        # converts a coded number like 50200 (fictional version 5.2) to string with leading zeros 'V050200'
+    @staticmethod
+    def string_version_from_number(version_number: int) -> str:
+        """Converts a coded number like 50200 (fictional version 5.2) to string with leading zeros 'V050200'"""
         return 'V' + str(version_number).zfill(6)
 
-    def check_json_energyplus_version(self, file_path):
-        with open(file_path, "r") as readfile:
-            data = json.load(readfile)
-        if 'Version' in data:
-            version_dict = data['Version']
-            field_dict = version_dict['Version 1']
-            if field_dict:
-                current_version = field_dict['version_identifier']
-                if current_version:
-                    return True, current_version, self.numeric_version_from_string(current_version)
-        return False, '', 0
+    @staticmethod
+    def check_json_energyplus_version(file_path: str) -> Tuple[bool, str, int]:
+        """Reads a version number from an EpJSON file"""
+        # noinspection PyBroadException
+        try:
+            with open(file_path, "r") as readfile:
+                data = json.load(readfile)
+            current_version = data['Version']['Version 1']['version_identifier']
+            return True, current_version, Version.numeric_version_from_string(current_version)
+        except:  # noqa: E722  # could be a file-not-found, a permission issue, a key error, a JSON exception.....
+            return False, '', 0

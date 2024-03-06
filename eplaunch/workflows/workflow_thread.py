@@ -1,35 +1,16 @@
-import threading
-
-import wx
+from pathlib import Path
+from threading import Thread
+from typing import Dict, Callable
 
 from eplaunch.workflows.base import EPLaunchWorkflowResponse1
 
-EVT_RESULT_ID = wx.NewId()
 
-
-def event_result(win, func):
-    """Define Result Event."""
-    win.Connect(-1, -1, EVT_RESULT_ID, func)
-
-
-class ResultEvent(wx.PyEvent):
-    """Simple event to carry arbitrary result data."""
-
-    def __init__(self, data):
-        """Init Result Event."""
-        wx.PyEvent.__init__(self)
-        self.SetEventType(EVT_RESULT_ID)
-        self.id = None
-        self.data = data
-
-
-class WorkflowThread(threading.Thread):
+class WorkflowThread(Thread):
     """Worker Thread Class."""
 
-    def __init__(self, identifier, notify_window, workflow_instance,
-                 run_directory, file_name, main_args):
+    def __init__(self, identifier: str, workflow_instance,
+                 run_directory: Path, file_name: str, main_args: Dict, done_callback: Callable):
         super().__init__()
-        self._notify_window = notify_window
         self._want_abort = 0
         self.id = identifier
         self.workflow_instance = workflow_instance
@@ -37,6 +18,7 @@ class WorkflowThread(threading.Thread):
         self.run_directory = run_directory
         self.file_name = file_name
         self.workflow_main_args = main_args
+        self.workflow_done_callback = done_callback
         self.start()
 
     def run(self):
@@ -57,10 +39,9 @@ class WorkflowThread(threading.Thread):
                 column_data=None
             )
         workflow_response.id = self.id
-        r = ResultEvent(workflow_response)
         try:
-            wx.PostEvent(self._notify_window, r)
-        except RuntimeError:
+            self.workflow_done_callback(workflow_response)
+        except RuntimeError:  # pragma: no cover  -- this is an exceedingly odd case
             pass
             # print("Could not post finished event to the GUI, did the GUI get force closed?")
 

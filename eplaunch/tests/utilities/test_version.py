@@ -75,7 +75,7 @@ class TestVersion(unittest.TestCase):
         is_version_found, version_string, version_number = self.v.check_energyplus_version(file_path)
         self.assertFalse(is_version_found)
         self.assertEqual('', version_string)
-        self.assertEqual('', version_number)
+        self.assertEqual(0, version_number)
 
     def test_numeric_version_from_dash_string(self):
         dash_string = 'V0-2'

@@ -1,5 +1,8 @@
 import os
+from pathlib import Path
+from typing import Dict, List
 
+from eplaunch import NAME, VERSION
 from eplaunch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1
 
 
@@ -12,22 +15,22 @@ class ColumnNames:
 
 class IDFDetailsWorkflow1(BaseEPLaunchWorkflow1):
 
-    def name(self):
-        return "IDF Details 1.0"
+    def name(self) -> str:
+        return "IDF Details"
 
-    def context(self):
-        return "EPLaunch 2.9.2"
+    def context(self) -> str:
+        return f"{NAME} {VERSION}"
 
-    def description(self):
+    def description(self) -> str:
         return "Retrieves IDF Details"
 
-    def get_file_types(self):
+    def get_file_types(self) -> List[str]:
         return ["*.idf"]
 
-    def get_output_suffixes(self):
+    def get_output_suffixes(self) -> List[str]:
         return []
 
-    def get_interface_columns(self):
+    def get_interface_columns(self) -> List[str]:
         return [
             ColumnNames.Version,
             ColumnNames.NumDesignDays,
@@ -35,8 +38,8 @@ class IDFDetailsWorkflow1(BaseEPLaunchWorkflow1):
             ColumnNames.NumZones
         ]
 
-    def main(self, run_directory, file_name, args):
-        self.callback("In IDFDetailsWorkflow.main(), about to process file")
+    def main(self, run_directory: Path, file_name: str, args: Dict) -> EPLaunchWorkflowResponse1:  # pragma: no cover
+        self.callback(f"In {type(self).__name__}, about to process file: {file_name}")
         file_path = os.path.join(run_directory, file_name)
         content = open(file_path).read()
         new_lines = []
@@ -78,7 +81,7 @@ class IDFDetailsWorkflow1(BaseEPLaunchWorkflow1):
             elif obj.upper().startswith('VERSION,'):
                 version_fields = obj.split(',')
                 version_id = version_fields[1]
-        self.callback("Completed IDFDetailsWorkflow.main()")
+        self.callback(f"Completed {type(self).__name__}")
         return EPLaunchWorkflowResponse1(
             success=True,
             message='Parsed IDF information successfully',

@@ -1,5 +1,5 @@
-Welcome to EP-Launch's documentation!
-=====================================
+Welcome to EnergyPlus Launch's documentation!
+=============================================
 
 .. toctree::
    :maxdepth: 2
@@ -8,8 +8,9 @@ Welcome to EP-Launch's documentation!
    intro
    cache
    workflows
-   mechanics
    eplus_versions
+   navigation
+   developers
 
 
 Indices and tables

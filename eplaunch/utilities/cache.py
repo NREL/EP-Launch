@@ -1,6 +1,8 @@
-import json
-import os
-import time
+from json import dumps, loads
+from os import path
+from pathlib import Path
+from time import sleep
+from typing import Dict, List
 
 from eplaunch.utilities.exceptions import EPLaunchFileException
 
@@ -11,10 +13,10 @@ except ImportError:  # pragma: no cover
     JSONDecodeError = ValueError
 
 #: This is used as the mutex queue, the list of unique directories being altered at a given time
-cache_files_currently_updating_or_writing = []
+cache_files_currently_updating_or_writing: List[Path] = []
 
 
-class CacheFile(object):
+class CacheFile:
     """
     Represents the file that is kept in each folder where workflows have been started
     Keeps track of the most recent state of the file, with some metadata that is workflow dependent
@@ -26,7 +28,7 @@ class CacheFile(object):
 
     - The worker should call the ok_to_continue() function, which will check the mutex and then wait a predetermined
       amount of time for the mutex to clear, or fail.
-    - The worker should check the return value of this function and if False, fail.  If True, it should setup a block
+    - The worker should check the return value of this function and if False, fail.  If True, it should set up a block
       on the directory by adding the current directory to the cache_files_currently_updating_or_writing array
     - The worker can then proceed to read the cache, modify ir, and write to disk
     - The worker must then release the mutex by removing the current directory from the list
@@ -41,7 +43,7 @@ class CacheFile(object):
     QueueCheckInterval = 0.1  # seconds
     QueueTotalCheckTime = 5  # seconds
 
-    def _print(self, message):
+    def _print(self, message) -> None:
         """
         Utility function for printing diagnostic messages -- useful for when debugging synchronous alterations
 
@@ -50,19 +52,19 @@ class CacheFile(object):
         """
         debug = False
         if debug:  # pragma: no cover
-            print("%s: %s" % (self.file_path, message))
+            print(f"{self.file_path}: {message}")
 
-    def __init__(self, working_directory):
+    def __init__(self, working_directory: Path):
         """
         Constructor for this class, stores the local file path and initializes the workflow_state
 
         :param working_directory:
         """
-        self.file_path = os.path.join(working_directory, self.FileName)
+        self.file_path = working_directory / self.FileName
         self._print("Created cache file")
         self.workflow_state = None
 
-    def _add_file_attribute(self, workflow_name, file_name, attribute, data, replace):
+    def _add_file_attribute(self, workflow_name, file_name, attribute, data, replace) -> None:
         """
         This function generically updates some attribute of a file within a given workflow context
         The hierarchy is:
@@ -84,7 +86,7 @@ class CacheFile(object):
 
         # if there is already a config for this workflow/file, update it
         # if something is missing from the structure, initialize it on each stage
-        self._print("Adding file attribute for workflow: %s, file: %s" % (workflow_name, file_name))
+        self._print(f"Adding file attribute for workflow: {workflow_name}, file: {file_name}")
         root = self.workflow_state[self.RootKey]
         if workflow_name in root:
             this_workflow = root[workflow_name]
@@ -109,20 +111,20 @@ class CacheFile(object):
         else:
             root[workflow_name] = {self.FilesKey: {file_name: {attribute: data}}}
 
-    def ok_to_continue(self):
+    def ok_to_continue(self) -> bool:
         """
         This function does the check-and-wait part of the mutex.  If the current directory is not blocked, it
         immediately returns.  If the current directory is blocked, it will attempt to check over a certain amount of
         time, at a tight interval, to wait on the mutex to be unlocked.  Ultimately if it can't pass, it returns False.
 
-        :return: True or False, whether it it safe to write to this cache
+        :return: True or False, whether it is safe to write to this cache
         """
         self._print("Checking if its ok to continue")
         if self.file_path not in cache_files_currently_updating_or_writing:
             return True
         self._print("Found this file in the writing data, trying to sleep through it")
         for i in range(int(self.QueueTotalCheckTime / self.QueueCheckInterval)):
-            time.sleep(self.QueueCheckInterval)
+            sleep(self.QueueCheckInterval)
             if self.file_path not in cache_files_currently_updating_or_writing:
                 self._print("Managed to sleep long enough, continuing!")
                 return True
@@ -132,7 +134,7 @@ class CacheFile(object):
         # there is an **incredibly** small chance we could have a new file pop in between the check above and later code
         # I will have to noodle on whether we want to worry about that possibility
 
-    def add_config(self, workflow_name, file_name, config_data):
+    def add_config(self, workflow_name, file_name, config_data) -> None:
         """
         This function is used to add a config data block for a workflow.  A config data block contains data that is
         generally thought of as "input data" for a workflow, such as a weather file for a simulation run.
@@ -142,7 +144,7 @@ class CacheFile(object):
         :param config_data: A map of data to write to this config section
         :return: None
         """
-        self._print("About to add a config attribute for workflow %s; file %s" % (workflow_name, file_name))
+        self._print(f"About to add a config attribute for workflow {workflow_name}; file {file_name}")
         if not self.ok_to_continue():
             pass  # somehow return an error...?
         cache_files_currently_updating_or_writing.append(self.file_path)
@@ -153,7 +155,7 @@ class CacheFile(object):
         cache_files_currently_updating_or_writing.remove(self.file_path)
         self._print("Cache file UN-locked")
 
-    def add_result(self, workflow_name, file_name, column_data):
+    def add_result(self, workflow_name, file_name, column_data) -> None:
         """
         This function is used to add a result data block for a workflow.  A result data block contains data that is
         generally thought of as "output data" for a workflow, such as energy usage for a simulation run.
@@ -164,7 +166,7 @@ class CacheFile(object):
                             the workflow itself as given by the get_interface_columns() method
         :return: None
         """
-        self._print("About to add a result attribute for workflow %s; file %s" % (workflow_name, file_name))
+        self._print(f"About to add a result attribute for workflow {workflow_name}; file {file_name}")
         if not self.ok_to_continue():
             pass  # somehow return an error...?
         cache_files_currently_updating_or_writing.append(self.file_path)
@@ -175,27 +177,27 @@ class CacheFile(object):
         cache_files_currently_updating_or_writing.remove(self.file_path)
         self._print("Cache file UN-locked")
 
-    def read(self):
+    def read(self) -> None:
         """
         Reads the existing cache file, if it exists, and stores the data in the workflow_state instance variable.
         If the cache file doesn't exist, this simply initializes the workflow_state instance variable.
 
         :return: None
         """
-        if os.path.exists(self.file_path):
+        if path.exists(self.file_path):
             try:
                 with open(self.file_path, 'r') as f:
                     body_text = f.read()
             except IOError:  # pragma: no cover  -- would be difficult to mock up this weird case
                 raise EPLaunchFileException(self.file_path, 'Could not open or read text from file')
             try:
-                self.workflow_state = json.loads(body_text)
+                self.workflow_state = loads(body_text)
             except JSONDecodeError:
                 raise EPLaunchFileException(self.file_path, 'Could not parse cache file JSON text')
         else:
             self.workflow_state = {self.RootKey: {}}
 
-    def write(self):
+    def write(self) -> None:
         """
         Writes out the workflow state to the previously determined cache file location
         Note that this function does not protect for thread-safety!  It is expected that functions who are
@@ -203,14 +205,14 @@ class CacheFile(object):
 
         :return: None
         """
-        body_text = json.dumps(self.workflow_state, indent=2)
+        body_text = dumps(self.workflow_state, indent=2)
         try:
             with open(self.file_path, 'w') as f:
                 f.write(body_text)
         except IOError:  # pragma: no cover  -- would be difficult to mock up this weird case
             raise EPLaunchFileException(self.file_path, 'Could not write cache file')
 
-    def get_files_for_workflow(self, current_workflow_name):
+    def get_files_for_workflow(self, current_workflow_name) -> Dict:
         """
         Gets a list of files that are found in this cache inside the given workflow name
 

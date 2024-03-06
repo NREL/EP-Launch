@@ -1,5 +1,7 @@
-import os
+from pathlib import Path
+from typing import Dict, List
 
+from eplaunch import NAME, VERSION
 from eplaunch.workflows.base import BaseEPLaunchWorkflow1, EPLaunchWorkflowResponse1
 
 
@@ -9,28 +11,27 @@ class ColumnNames:
 
 class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
 
-    def name(self):
+    def name(self) -> str:
         return "Get Site:Location"
 
-    def context(self):
-        return "EPLaunch 2.9.2"
+    def context(self) -> str:
+        return f"{NAME} {VERSION}"
 
-    def description(self):
+    def description(self) -> str:
         return "Retrieves the Site:Location name"
 
-    def get_file_types(self):
+    def get_file_types(self) -> List[str]:
         return ["*.idf"]
 
-    def get_output_suffixes(self):
+    def get_output_suffixes(self) -> List[str]:
         return []
 
-    def get_interface_columns(self):
+    def get_interface_columns(self) -> List[str]:
         return [ColumnNames.Location]
 
-    def main(self, run_directory, file_name, args):
-        self.callback("In SiteLocationWorkflow.main(), about to process file")
-        file_path = os.path.join(run_directory, file_name)
-        content = open(file_path).read()
+    def main(self, run_directory: Path, file_name: str, args: Dict) -> EPLaunchWorkflowResponse1:  # pragma: no cover
+        self.callback(f"In {type(self).__name__}, about to process file: {file_name}")
+        content = (run_directory / file_name).read_text()
         new_lines = []
         for line in content.split('\n'):
             if line.strip() == '':
@@ -54,7 +55,7 @@ class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
                 message='Could not parse location object!',
                 column_data={ColumnNames.Location: '*unknown*'}
             )
-        self.callback("Completed SiteLocationWorkflow.main()")
+        self.callback(f"Completed {type(self).__name__}")
         return EPLaunchWorkflowResponse1(
             success=True,
             message='Parsed Location object successfully',

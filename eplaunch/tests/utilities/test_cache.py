@@ -1,5 +1,6 @@
 import json
 import os
+import pathlib
 import tempfile
 import threading
 import time
@@ -20,7 +21,7 @@ def create_workflow_file_in_dir(cache_file_path, create_root=True):
 class TestCacheFileInitialization(unittest.TestCase):
 
     def setUp(self):
-        self.temp_dir = tempfile.mkdtemp()
+        self.temp_dir = pathlib.Path(tempfile.mkdtemp())
         self.test_cache_file_path = os.path.join(self.temp_dir, CF.FileName)
 
     def test_empty_directory_creates_cache_file(self):
@@ -49,7 +50,7 @@ class TestCacheFileInitialization(unittest.TestCase):
 class TestCacheFileAddingResults(unittest.TestCase):
 
     def setUp(self):
-        self.temp_dir = tempfile.mkdtemp()
+        self.temp_dir = pathlib.Path(tempfile.mkdtemp())
         self.test_cache_file_path = os.path.join(self.temp_dir, CF.FileName)
 
     def test_adding_result_to_existing_file(self):
@@ -81,7 +82,7 @@ class TestCacheFileAddingResults(unittest.TestCase):
 class TestCacheFileAddingConfig(unittest.TestCase):
 
     def setUp(self):
-        self.temp_dir = tempfile.mkdtemp()
+        self.temp_dir = pathlib.Path(tempfile.mkdtemp())
         self.test_cache_file_path = os.path.join(self.temp_dir, CF.FileName)
 
     def test_adding_config_to_existing_file(self):
@@ -113,8 +114,8 @@ class TestCacheFileAddingConfig(unittest.TestCase):
 class TestCacheFileUtilityFunctions(unittest.TestCase):
 
     def setUp(self):
-        self.temp_dir = tempfile.mkdtemp()
-        self.test_cache_file_path = os.path.join(self.temp_dir, CF.FileName)
+        self.temp_dir = pathlib.Path(tempfile.mkdtemp())
+        self.test_cache_file_path = self.temp_dir / CF.FileName
 
     def test_get_files_for_workflow(self):
         create_workflow_file_in_dir(self.test_cache_file_path)
@@ -139,8 +140,8 @@ class TestCacheFileUtilityFunctions(unittest.TestCase):
 class TestCacheFileOKToContinue(unittest.TestCase):
 
     def setUp(self):
-        self.temp_dir = tempfile.mkdtemp()
-        self.test_cache_file_path = os.path.join(self.temp_dir, CF.FileName)
+        self.temp_dir = pathlib.Path(tempfile.mkdtemp())
+        self.test_cache_file_path = self.temp_dir / CF.FileName
 
     @staticmethod
     def block_cache_then_release(cache_file_path):

@@ -1,8 +1,8 @@
-# EP-Launch3
+# EnergyPlus Launch
 
 [![GitHub release](https://img.shields.io/github/release/nrel/ep-launch.svg?style=for-the-badge)](https://github.com/nrel/ep-launch/releases/latest)
 
-Cross platform replacement for EP-Launch for EnergyPlus
+Cross platform replacement for EP-Launch for EnergyPlus, written in Python using the `tkinter` graphics library.
 
 ## Documentation
 
@@ -12,23 +12,26 @@ The project is documented (currently very sparsely) using Sphinx, and automatica
 
 ## Testing
 
-[![Unit Tests](https://img.shields.io/github/workflow/status/NREL/EP-Launch/Unit%20Tests?label=Unit%20Tests&logo=github&style=for-the-badge)](https://github.com/NREL/EP-Launch/actions?query=workflow%3A%22Unit+Tests%22)
-[![Coverage Status](https://img.shields.io/coveralls/github/NREL/EP-Launch?label=Coverage&logo=coveralls&style=for-the-badge)](https://coveralls.io/github/NREL/EP-Launch?branch=master)
-[![PEP8 Enforcement](https://img.shields.io/github/workflow/status/NREL/EP-Launch/Flake8?label=Flake8&logo=github&style=for-the-badge)](https://github.com/NREL/EP-Launch/actions?query=workflow%3AFlake8)
-[![Releases](https://img.shields.io/github/workflow/status/NREL/EP-Launch/Releases?label=Releases&logo=github&style=for-the-badge)](https://github.com/NREL/EP-Launch/actions?query=workflow%3AReleases)
+[![PEP8 Enforcement](https://img.shields.io/github/actions/workflow/status/NREL/EP-Launch/flake8.yml?label=Flake8&logo=github&style=for-the-badge)](https://github.com/NREL/EP-Launch/actions/workflows/flake8.yml)
+[![Unit Tests](https://img.shields.io/github/actions/workflow/status/NREL/EP-Launch/unit_tests.yml?label=Unit%20Tests&logo=github&style=for-the-badge)](https://github.com/NREL/EP-Launch/actions/workflows/unit_tests.yml)
+[![Coverage Status](https://img.shields.io/coveralls/github/NREL/EP-Launch?label=Coverage&logo=coveralls&style=for-the-badge)](https://coveralls.io/github/NREL/EP-Launch?branch=main)
 
 The project is tested using standard Python unit testing practices.
-Each commit is automatically tested with Github Actions on Windows, Mac, Ubuntu 18.04 and Ubuntu 20.04.
+Each commit is automatically tested with Github Actions on Windows, Mac, Ubuntu 20.04 and Ubuntu 22.04.
 The code coverage across platforms is collected on Coveralls.
-When a tag is created in the GitHub Repo, Github Actions builds downloadable packages.
+
+## Releases
+
+[![Releases](https://img.shields.io/github/actions/workflow/status/NREL/EP-Launch/pypi.yml?label=Releases&logo=github&style=for-the-badge)](https://github.com/NREL/EP-Launch/actions/workflows/pypi.yml)
+
+When a tag is created in the GitHub Repo, Github Actions builds a Python wheel and uploads it to PyPi: https://pypi.org/project/ep-launch/.
+The packages can be downloaded using standard `pip install energyplus-launch` commands.
+Once Pip installed, desktop shortcuts and launchers can be configured using the `energyplus-launch-configure` command from the same Python environment.
 
 ## Development
 
-This cross platform GUI application is built around the wxPython (Phoenix) framework.
-For details about all the nuances of installing this library, read through the requirements.txt file.
-Once you have wx installed, the only other dependency needed to run the program is `PyPubSub` via `pip install pypubsub`.
-The application can be run by executing the eplaunch/runner.py file.
-
-To run the unit test suite, make sure to have nose and coverage installed via: `pip install nose coverage`.
-Then execute `setup.py nosetests`.
+Basic development dependencies are installed with `pip install -r requirements.txt`.
+This cross platform GUI application is built around the tkinter framework, so no additional dependencies are needed for the GUI.
+The application can be run by executing the module as `python -m eplaunch` file.
+To run the unit test suite, simply execute `nosetests`.
 Unit test results will appear in the console, and coverage results will be in a `cover` directory.
