@@ -68,8 +68,8 @@ class TestVersion(unittest.TestCase):
         self.assertEqual('', version_string)
         self.assertEqual(0, version_number)
 
-    @unittest.skipUnless(Platform.get_current_platform() == Platform.LINUX,
-                         "Test badly encoded file on Linux systems, test fails on Windows")
+    @unittest.skipIf(Platform.get_current_platform() == Platform.WINDOWS,
+                     "Test badly encoded file on Linux systems, test fails on Windows")
     def test_check_energyplus_version_bad_file(self):
         file_path = os.path.join(os.path.dirname(__file__), "Minimal_820.idf")
         is_version_found, version_string, version_number = self.v.check_energyplus_version(file_path)

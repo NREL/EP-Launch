@@ -145,8 +145,10 @@ class CacheFile:
         :return: None
         """
         self._print(f"About to add a config attribute for workflow {workflow_name}; file {file_name}")
-        if not self.ok_to_continue():
-            pass  # somehow return an error...?
+        if not self.ok_to_continue():  # pragma: no cover
+            # I'm not sure if we should communicate this or not.
+            # For now let's print to the term, so that we might catch it for debugging
+            print("There was a problem adding a config to a cache file, something blocked for too long maybe?")
         cache_files_currently_updating_or_writing.append(self.file_path)
         self._print("Cache file locked")
         self.read()
@@ -167,8 +169,10 @@ class CacheFile:
         :return: None
         """
         self._print(f"About to add a result attribute for workflow {workflow_name}; file {file_name}")
-        if not self.ok_to_continue():
-            pass  # somehow return an error...?
+        if not self.ok_to_continue():  # pragma: no cover
+            # I'm not sure if we should communicate this or not.
+            # For now let's print to the term, so that we might catch it for debugging
+            print("There was a problem adding a config to a cache file, something blocked for too long maybe?")
         cache_files_currently_updating_or_writing.append(self.file_path)
         self._print("Cache file locked")
         self.read()

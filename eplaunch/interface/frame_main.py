@@ -490,7 +490,7 @@ class EPLaunchWindow(Tk):
         # the stale attribute, which should be accomplished with just the call here.
         # It's possible we also need to check the _event.widget to make sure we are only
         # calling this when the main window is focused.
-        self._update_file_list()
+        pass  # self._update_file_list()
 
     @staticmethod
     def _list_keyboard_shortcuts() -> List[Tuple[str, str]]:

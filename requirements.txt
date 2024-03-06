@@ -1,10 +1,10 @@
 # the one real runtime dependency, a lightweight pure python package that makes the UI look so nice on Mac
 tkmacosx
 
-# for running tests, you'll need the nose and coverage packages
+# for running tests, you'll need the pytest and coverage packages
 coverage
 coveralls  # really just for github, but it's fine
-nose
+pytest >= 7.1.2
 
 # for building wheels, mostly from github, but it's fine
 wheel

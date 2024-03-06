@@ -99,34 +99,30 @@ class FileListScrollableFrame(Frame):
         scrollbar.grid(row=0, column=1, sticky=NS)
 
 
-def printer(selection: List[str]) -> None:
-    print(selection)
-
-
-counter = 0
-
-
-def set_columns():
-    global counter
-    counter += 1
-    if counter == 1:
-        file_listing.tree.set_new_columns(['hi', 'world'])
-    elif counter == 2:
-        file_listing.tree.set_new_columns(['foo'])
-    elif counter == 3:
-        file_listing.tree.set_new_columns(['hello', 'world', 'bar'])
-    elif counter == 4:
-        file_listing.tree.set_new_columns()
-    elif counter == 5:
-        file_listing.tree.set_new_columns(['edwin', 'lee'])
-
-
 if __name__ == "__main__":
     from tkinter import Button, Tk
 
     root = Tk()
     root.title('File Listing Widget Demo')
 
+    def printer(selection: List[str]) -> None:
+        print(selection)
+
+    def set_columns():
+        global counter
+        counter += 1
+        if counter == 1:
+            file_listing.tree.set_new_columns(['hi', 'world'])
+        elif counter == 2:
+            file_listing.tree.set_new_columns(['foo'])
+        elif counter == 3:
+            file_listing.tree.set_new_columns(['hello', 'world', 'bar'])
+        elif counter == 4:
+            file_listing.tree.set_new_columns()
+        elif counter == 5:
+            file_listing.tree.set_new_columns(['edwin', 'lee'])
+
+    counter = 0
     file_listing = FileListScrollableFrame(root, printer)
     files = []
     for n in range(1, 100):
@@ -140,5 +136,5 @@ if __name__ == "__main__":
     file_listing.tree.set_files(files)
     file_listing.pack(side=TOP, expand=True, fill=BOTH)
     file_listing.tree.try_to_reselect(['FileName1.png', 'FileName3.png'])
-    Button(text="add columns", command=set_columns).pack(side=TOP, fill='x')
+    Button(text="Change columns", command=set_columns).pack(side=TOP, fill='x')
     root.mainloop()
