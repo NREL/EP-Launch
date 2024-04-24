@@ -18,7 +18,7 @@ class TestGetWorkflows(unittest.TestCase):
         self.assertEqual(0, len(self.workflow_manager.warnings))
 
     def test_empty_workflow_response(self):
-        self.workflow_manager.instantiate_all_workflows(disable_builtins=True)
+        self.workflow_manager.instantiate_all_workflows(disable_builtins=True, skip_ep_search=True)
         self.assertTrue(len(self.workflow_manager.workflows) == 0)
         self.assertEqual(0, len(self.workflow_manager.warnings))
 
@@ -38,7 +38,7 @@ class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
         with open(os.path.join(self.extra_workflow_dir, 'valid_workflow.py'), 'w') as f:
             f.write(file_contents)
         self.workflow_manager.instantiate_all_workflows(
-            extra_workflow_dir=self.extra_workflow_dir, disable_builtins=True
+            extra_workflow_dir=self.extra_workflow_dir, disable_builtins=True, skip_ep_search=True
         )
         self.assertTrue(len(self.workflow_manager.workflows) > 0)
         self.assertEqual(0, len(self.workflow_manager.warnings))
@@ -60,7 +60,7 @@ class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
         with open(os.path.join(self.extra_workflow_dir, 'bad_syntax_workflow.py'), 'w') as f:
             f.write(file_contents)
         self.workflow_manager.instantiate_all_workflows(
-            extra_workflow_dir=self.extra_workflow_dir, disable_builtins=True
+            extra_workflow_dir=self.extra_workflow_dir, disable_builtins=True, skip_ep_search=True
         )
         self.assertTrue(len(self.workflow_manager.workflows) == 0)
         self.assertGreater(len(self.workflow_manager.warnings), 0)
@@ -82,7 +82,7 @@ class SiteLocationWorkflow(UnknownWorkflowClass):
         with open(os.path.join(self.extra_workflow_dir, 'bad_base_workflow.py'), 'w') as f:
             f.write(file_contents)
         self.workflow_manager.instantiate_all_workflows(
-            extra_workflow_dir=self.extra_workflow_dir, disable_builtins=True
+            extra_workflow_dir=self.extra_workflow_dir, disable_builtins=True, skip_ep_search=True
         )
         self.assertTrue(len(self.workflow_manager.workflows) == 0)
         self.assertGreater(len(self.workflow_manager.warnings), 0)
@@ -97,7 +97,7 @@ class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
         with open(os.path.join(self.extra_workflow_dir, 'incomplete_workflow.py'), 'w') as f:
             f.write(file_contents)
         self.workflow_manager.instantiate_all_workflows(
-            extra_workflow_dir=self.extra_workflow_dir, disable_builtins=True
+            extra_workflow_dir=self.extra_workflow_dir, disable_builtins=True, skip_ep_search=True
         )
         self.assertTrue(len(self.workflow_manager.workflows) == 0)
         self.assertGreater(len(self.workflow_manager.warnings), 0)
@@ -120,7 +120,7 @@ class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
         with open(os.path.join(ep_workflow_dir, 'bad_base_workflow.py'), 'w') as f:
             f.write(file_contents)
         self.workflow_manager.instantiate_all_workflows(
-            extra_workflow_dir=ep_workflow_dir, disable_builtins=True
+            extra_workflow_dir=ep_workflow_dir, disable_builtins=True, skip_ep_search=True
         )
         self.assertTrue(len(self.workflow_manager.workflows) > 0)
         self.assertEqual(0, len(self.workflow_manager.warnings))
@@ -142,7 +142,7 @@ class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
         with open(os.path.join(self.extra_workflow_dir, 'exception_workflow.py'), 'w') as f:
             f.write(file_contents)
         self.workflow_manager.instantiate_all_workflows(
-            extra_workflow_dir=self.extra_workflow_dir, disable_builtins=True
+            extra_workflow_dir=self.extra_workflow_dir, disable_builtins=True, skip_ep_search=True
         )
         self.assertTrue(len(self.workflow_manager.workflows) == 0)
         self.assertIn('Unexpected error', self.workflow_manager.warnings[0])
@@ -153,6 +153,10 @@ class SiteLocationWorkflow(BaseEPLaunchWorkflow1):
         self.workflow_manager.reset_workflow_array('fake_context')
         self.assertTrue(len(self.workflow_manager.workflows) == 0)
 
-    def test_empty_auto_locator(self):
+    def test_auto_locator(self):  # pragma: no cover  -- one side of the IF block here will always miss
         self.workflow_manager.auto_find_workflow_directories()
-        self.assertEqual(0, len(self.workflow_manager.auto_found_workflow_dirs))
+        # on CI, this should result in an empty list, whereas on a dev machine it may or may not!
+        if 'CI' in os.environ:
+            self.assertEqual(0, len(self.workflow_manager.auto_found_workflow_dirs))
+        else:
+            self.assertIsInstance(self.workflow_manager.auto_found_workflow_dirs, list)
