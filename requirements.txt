@@ -1,13 +1,17 @@
-# the one real runtime dependency, a lightweight pure python package that makes the UI look so nice on Mac
+# the two runtime dependencies, a lightweight pure python package that makes the UI look so nice on Mac, and PLAN-Tools
 tkmacosx
+PLAN-Tools==0.7
+
+# for building docs we need sphinx
+sphinx
 
 # for running tests, you'll need the pytest and coverage packages
 coverage
 coveralls  # really just for github, but it's fine
 pytest >= 7.1.2
 
+# for code quality checks, we use flake8
+flake8
+
 # for building wheels, mostly from github, but it's fine
 wheel
-
-# for polishing up the Pip install
-PLAN-Tools==0.7
