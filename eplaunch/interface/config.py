@@ -100,8 +100,9 @@ class ConfigManager:
                     ]
                     if called_from_ep_cli:  # if we are called from E+ CLI, set the E+ dir directly from this file path
                         this_file = Path(__file__).resolve()
-                        transition_package_dir = this_file.parent
-                        python_lib_dir = transition_package_dir.parent
+                        interface_dir = this_file.parent
+                        ep_launch_package_dir = interface_dir.parent
+                        python_lib_dir = ep_launch_package_dir.parent
                         eplus_install_dir = python_lib_dir.parent
                         workflow_path = eplus_install_dir / 'workflows'
                         eplus_workflow = workflow_path / 'energyplus.py'
