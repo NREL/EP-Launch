@@ -45,7 +45,7 @@ class EPLaunchWindow(Tk):
 
     # region Construction and GUI building functions
 
-    def __init__(self):
+    def __init__(self, called_from_ep_cli: bool):
         fixup_taskbar_icon_on_windows(NAME)
         super().__init__(className=NAME)
         # set the form title and icon, basic stuff
@@ -84,7 +84,7 @@ class EPLaunchWindow(Tk):
 
         # create a config manager and load up the saved, or default, configuration
         self.conf = ConfigManager()
-        self.conf.load()
+        self.conf.load(called_from_ep_cli)
 
         # initialize some dir/file selection variables
         self.previous_selected_directory: Optional[Path] = None
