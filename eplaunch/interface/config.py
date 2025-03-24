@@ -2,6 +2,7 @@ from collections import deque
 from configparser import ConfigParser
 from json import loads, dumps
 from pathlib import Path
+from re import search
 from typing import Any, Dict, List, Optional
 
 
@@ -33,7 +34,7 @@ class ConfigManager:
         self.dir_file_paned_window_sash_position: int = 400
         self.list_group_paned_window_sash_position: int = 500
 
-    def load(self):
+    def load(self, called_from_ep_cli: bool):
         # load the config from the file on disk
         config_file_path = Path.home() / ConfigManager.config_file_name
         if not config_file_path.exists():
@@ -97,6 +98,22 @@ class ConfigManager:
                     self.workflow_directories = [
                         Path(p) for p in config.get('WorkflowDirectories', self.workflow_directories)
                     ]
+                    if called_from_ep_cli:  # if we are called from E+ CLI, set the E+ dir directly from this file path
+                        this_file = Path(__file__).resolve()
+                        interface_dir = this_file.parent
+                        ep_launch_package_dir = interface_dir.parent
+                        python_lib_dir = ep_launch_package_dir.parent
+                        eplus_install_dir = python_lib_dir.parent
+                        workflow_path = eplus_install_dir / 'workflows'
+                        eplus_workflow = workflow_path / 'energyplus.py'
+                        context_pattern = r"EnergyPlus-(\d+\.\d+\.\d+)-([0-9a-f]+)"
+                        context = search(context_pattern, eplus_workflow.read_text())
+                        version = context.group(1)
+                        sha = context.group(2)
+                        self.cur_workflow_name = f"EnergyPlus-{version} SI"
+                        self.cur_workflow_context = f"EnergyPlus-{version}-{sha}"
+                        if workflow_path not in self.workflow_directories:
+                            self.workflow_directories.append(workflow_path)
                     recent_folders = config.get('RecentFolders', self.folders_recent)
                     if recent_folders is not None:
                         for string_path in recent_folders:
