@@ -21,6 +21,9 @@ jobs:
       shell: bash
       run: pip install -r requirements.txt
 
+    - name: Install setuptools also
+      run: pip install setuptools
+
     - name: Build the Wheel
       shell: bash
       run: rm -rf dist/ build/ && python3 setup.py bdist_wheel sdist
